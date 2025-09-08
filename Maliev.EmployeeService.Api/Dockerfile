@@ -16,7 +16,7 @@ COPY ["Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj", "Maliev.Em
 RUN dotnet restore "./Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj"
 COPY . .
 WORKDIR "/src/Maliev.EmployeeService.Api"
-RUN dotnet build "./Maliev.CustomerService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Maliev.EmployeeService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
