@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.EmployeeService.Api.Models;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -8,9 +9,14 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [Route("employees/v{version:apiVersion}")]
 public class EmployeeController : ControllerBase
 {
-    [HttpGet("validate")]
-    public IActionResult Validate()
+    [HttpPost("validate")]
+    public IActionResult Validate([FromBody] UserValidationRequest request)
     {
+        if(request == null)
+        {
+            return BadRequest("Request body is null.");
+        }
+        
         return Ok();
     }
 }
