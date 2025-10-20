@@ -1,55 +1,78 @@
-using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
 
-namespace Maliev.EmployeeService.Api.Middleware
+namespace Maliev.EmployeeService.Api.Middleware;
+
+/// <summary>
+/// Global exception handling middleware that converts exceptions to standardized error responses
+/// </summary>
+public class ExceptionHandlingMiddleware
 {
-    public class ExceptionHandlingMiddleware
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+    private readonly IHostEnvironment _environment;
+
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger,
+        IHostEnvironment environment)
     {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-        private readonly IHostEnvironment _env;
+        _next = next;
+        _logger = logger;
+        _environment = environment;
+    }
 
-        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger, IHostEnvironment env)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
         {
-            _next = next;
-            _logger = logger;
-            _env = env;
+            await _next(context);
         }
-
-        public async Task InvokeAsync(HttpContext httpContext)
+        catch (Exception ex)
         {
-            try
-            {
-                await _next(httpContext);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
-                await HandleExceptionAsync(httpContext, ex);
-            }
-        }
-
-        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {
-            context.Response.ContentType = "application/problem+json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-
-            var problemDetails = new ProblemDetails
-            {
-                Status = (int)HttpStatusCode.InternalServerError,
-                Title = "An error occurred while processing your request.",
-                Type = "https://tools.ietf.org/html/rfc7807#section-3.1",
-                Detail = _env.IsDevelopment() ? exception.ToString() : "An unexpected error occurred."
-            };
-
-            if (_env.IsDevelopment())
-            {
-                problemDetails.Extensions.Add("traceId", context.TraceIdentifier);
-            }
-
-            var problemDetailsJson = JsonSerializer.Serialize(problemDetails);
-            await context.Response.WriteAsync(problemDetailsJson);
+            _logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
+            await HandleExceptionAsync(context, ex);
         }
     }
+
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        context.Response.ContentType = "application/json";
+
+        var (statusCode, message) = exception switch
+        {
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized access"),
+            ArgumentException => (HttpStatusCode.BadRequest, exception.Message),
+            KeyNotFoundException => (HttpStatusCode.NotFound, "Resource not found"),
+            InvalidOperationException => (HttpStatusCode.BadRequest, exception.Message),
+            _ => (HttpStatusCode.InternalServerError, "An internal server error occurred")
+        };
+
+        context.Response.StatusCode = (int)statusCode;
+
+        var errorResponse = new ErrorResponse
+        {
+            StatusCode = (int)statusCode,
+            Message = message,
+            Details = _environment.IsDevelopment() ? exception.ToString() : null,
+            Timestamp = DateTime.UtcNow,
+            Path = context.Request.Path
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, options));
+    }
+}
+
+public class ErrorResponse
+{
+    public int StatusCode { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string? Details { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string Path { get; set; } = string.Empty;
 }

@@ -1,0 +1,502 @@
+using FluentAssertions;
+using Maliev.EmployeeService.Application.DTOs;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Application.Queries;
+using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Domain.Enums;
+using Maliev.EmployeeService.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+namespace Maliev.EmployeeService.Tests.Unit.Queries;
+
+/// <summary>
+/// Unit tests for GetEmployeeDocumentsQueryHandler (T318)
+/// Tests document retrieval, filtering, and expiration calculation
+/// </summary>
+public class GetEmployeeDocumentsQueryHandlerTests
+{
+    private readonly Mock<IDocumentRepository> _mockDocumentRepository;
+    private readonly Mock<ILogger<GetEmployeeDocumentsQueryHandler>> _mockLogger;
+    private readonly GetEmployeeDocumentsQueryHandler _handler;
+
+    public GetEmployeeDocumentsQueryHandlerTests()
+    {
+        _mockDocumentRepository = new Mock<IDocumentRepository>();
+        _mockLogger = new Mock<ILogger<GetEmployeeDocumentsQueryHandler>>();
+
+        _handler = new GetEmployeeDocumentsQueryHandler(
+            _mockDocumentRepository.Object,
+            _mockLogger.Object);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithNoDocumentTypeFilter_ShouldReturnAllDocuments()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.IDDocument,
+                FileName = "passport.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-10),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 1024,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.HROnly,
+                IsArchived = false
+            },
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.EmploymentContract,
+                FileName = "contract.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-5),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 2048,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Employee,
+                IsArchived = false
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        result.Should().Contain(d => d.DocumentType == DocumentType.IDDocument);
+        result.Should().Contain(d => d.DocumentType == DocumentType.EmploymentContract);
+
+        _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAsync(
+            employeeId,
+            false,
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAndTypeAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<DocumentType>(),
+            It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithDocumentTypeFilter_ShouldReturnFilteredDocuments()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.Certificate,
+                FileName = "certification1.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-20),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 512,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Public,
+                IsArchived = false
+            },
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.Certificate,
+                FileName = "certification2.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-10),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 768,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Public,
+                IsArchived = false
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = DocumentType.Certificate,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAndTypeAsync(
+                employeeId,
+                DocumentType.Certificate,
+                false,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        result.Should().OnlyContain(d => d.DocumentType == DocumentType.Certificate);
+
+        _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAndTypeAsync(
+            employeeId,
+            DocumentType.Certificate,
+            false,
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithIncludeArchived_ShouldIncludeArchivedDocuments()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.OfferLetter,
+                FileName = "offer.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-100),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 1536,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Manager,
+                IsArchived = true // Archived document
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = true
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        result.First().IsArchived.Should().BeTrue();
+
+        _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAsync(
+            employeeId,
+            true,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithExpiredDocument_ShouldCalculateIsExpiredCorrectly()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.WorkPermit,
+                FileName = "workpermit.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-365),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 2048,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.HROnly,
+                IsArchived = false,
+                ExpirationDate = DateTime.UtcNow.AddDays(-30) // Expired 30 days ago
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        var doc = result.First();
+        doc.IsExpired.Should().BeTrue();
+        doc.DaysUntilExpiration.Should().BeNull(); // Expired documents have null days until expiration
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithExpiringDocument_ShouldCalculateDaysUntilExpirationCorrectly()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var expirationDate = DateTime.UtcNow.AddDays(45);
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.Certificate,
+                FileName = "certification.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-300),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 1024,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Public,
+                IsArchived = false,
+                ExpirationDate = expirationDate
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        var doc = result.First();
+        doc.IsExpired.Should().BeFalse();
+        doc.DaysUntilExpiration.Should().BeGreaterThan(0);
+        doc.DaysUntilExpiration.Should().BeLessThanOrEqualTo(45);
+        doc.DaysUntilExpiration.Should().BeGreaterThanOrEqualTo(44); // Account for time passage during test
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithNoExpirationDate_ShouldHaveNullExpirationFields()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.EmploymentContract,
+                FileName = "contract.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-10),
+                UploadedBy = uploaderId,
+                VersionNumber = 1,
+                FileSizeBytes = 2048,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Employee,
+                IsArchived = false,
+                ExpirationDate = null // No expiration
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        var doc = result.First();
+        doc.ExpirationDate.Should().BeNull();
+        doc.IsExpired.Should().BeFalse(); // No expiration date means not expired
+        doc.DaysUntilExpiration.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithUploaderName_ShouldMapUploadedByName()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var uploaderLegalName = new LegalName
+        {
+            FirstName = "John",
+            LastName = "Doe"
+        };
+
+        var uploaderEmployee = new Employee
+        {
+            Id = uploaderId,
+            EmployeeNumber = "HR001",
+            LegalName = uploaderLegalName,
+            EmploymentStatus = EmploymentStatus.Active,
+            StartDate = DateTime.UtcNow.AddYears(-2),
+            CreatedDate = DateTime.UtcNow.AddYears(-2)
+        };
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.IDDocument,
+                FileName = "passport.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-10),
+                UploadedBy = uploaderId,
+                UploadedByEmployee = uploaderEmployee, // Navigation property
+                VersionNumber = 1,
+                FileSizeBytes = 1024,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.HROnly,
+                IsArchived = false
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        result.First().UploadedByName.Should().Be("John Doe");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithNoUploaderInfo_ShouldReturnUnknownForUploadedByName()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var uploaderId = Guid.NewGuid();
+
+        var documents = new List<Document>
+        {
+            new Document
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employeeId,
+                DocumentType = DocumentType.Other,
+                FileName = "document.pdf",
+                UploadDate = DateTime.UtcNow.AddDays(-10),
+                UploadedBy = uploaderId,
+                UploadedByEmployee = null, // No navigation property loaded
+                VersionNumber = 1,
+                FileSizeBytes = 1024,
+                ContentType = "application/pdf",
+                AccessLevel = AccessLevel.Public,
+                IsArchived = false
+            }
+        };
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        result.First().UploadedByName.Should().Be("Unknown");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithNoDocuments_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var documents = new List<Document>();
+
+        var query = new GetEmployeeDocumentsQuery
+        {
+            EmployeeId = employeeId,
+            DocumentType = null,
+            IncludeArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByEmployeeIdAsync(employeeId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(documents);
+
+        // Act
+        var result = await _handler.HandleAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
+}
