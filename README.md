@@ -24,7 +24,7 @@ The Employee Service is a .NET 9.0 microservice that manages all aspects of the 
 - **Caching**: Redis (optional, falls back to in-memory)
 - **Authentication**: JWT Bearer tokens
 - **Authorization**: Role-based and resource-based policies
-- **API Documentation**: OpenAPI/Swagger with comprehensive XML comments
+- **API Documentation**: OpenAPI with Scalar UI (development only) and comprehensive XML comments
 - **Monitoring**: Prometheus metrics, Grafana dashboards
 - **Logging**: Serilog with structured logging and correlation IDs
 
@@ -291,9 +291,9 @@ dotnet run --project Maliev.EmployeeService.Api
 
 The service will be available at `https://localhost:7001` (HTTPS) or `http://localhost:5000` (HTTP).
 
-6. **Access Swagger documentation**:
+6. **Access API documentation (development only)**:
 
-Navigate to `https://localhost:7001/employees/swagger` to view the interactive API documentation.
+Navigate to `https://localhost:7001/employees/scalar/v1` to view the interactive Scalar API documentation.
 
 ### Running with Docker
 
@@ -371,7 +371,7 @@ GET    /v1/documents/{documentId}/download            - Download document
 POST   /v1/documents/{documentId}/versions            - Upload new version
 ```
 
-For complete API documentation with request/response examples, visit the Swagger UI at `/employees/swagger`.
+For complete API documentation with request/response examples, visit the Scalar UI at `/employees/scalar/v1` (development environment only).
 
 ## Configuration
 

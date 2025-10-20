@@ -1,6 +1,7 @@
 using System.Text;
 using FluentValidation;
 using HealthChecks.UI.Client;
+using Scalar.AspNetCore;
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Api.HealthChecks;
 using Maliev.EmployeeService.Api.Middleware;
@@ -628,76 +629,29 @@ try
     // Add Google Cloud Storage (Upload Service) health check
     healthChecksBuilder.AddCheck<GoogleCloudStorageHealthCheck>("gcs", tags: new[] { "readiness", "integration" });
 
-    // OpenAPI/Swagger
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen(options =>
+    // OpenAPI with Scalar (Development only)
+    if (builder.Environment.IsDevelopment())
     {
-        options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        builder.Services.AddOpenApi(options =>
         {
-            Title = "Employee Service API",
-            Version = "v1",
-            Description = "Employee lifecycle management API supporting profile management, organizational structure, team management, and leave tracking.",
-            Contact = new Microsoft.OpenApi.Models.OpenApiContact
+            options.AddDocumentTransformer((document, context, cancellationToken) =>
             {
-                Name = "Maliev Development Team",
-                Email = "dev@maliev.co.th"
-            }
-        });
-
-        // Include XML comments
-        var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        if (File.Exists(xmlPath))
-        {
-            options.IncludeXmlComments(xmlPath);
-        }
-
-        // JWT Bearer Authentication
-        options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-        {
-            Name = "Authorization",
-            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-            Description = @"JWT Authorization header using the Bearer scheme.
-
-Enter your JWT token in the text input below.
-
-Example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-
-**Note:** Do NOT include 'Bearer' prefix. Just paste the token."
-        });
-
-        options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-        {
-            {
-                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                document.Info = new Microsoft.OpenApi.Models.OpenApiInfo
                 {
-                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    Title = "Employee Service API",
+                    Version = "v1",
+                    Description = "Employee lifecycle management API supporting profile management, organizational structure, team management, and leave tracking.",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact
                     {
-                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                        Id = "Bearer"
+                        Name = "Maliev Development Team",
+                        Email = "dev@maliev.co.th"
                     }
-                },
-                Array.Empty<string>()
-            }
+                };
+
+                return Task.CompletedTask;
+            });
         });
-
-        // Tag descriptions
-        options.TagActionsBy(api =>
-        {
-            if (api.GroupName != null)
-            {
-                return new[] { api.GroupName };
-            }
-
-            var controllerName = api.ActionDescriptor.RouteValues["controller"];
-            return new[] { controllerName ?? "Unknown" };
-        });
-
-        options.DocInclusionPredicate((name, api) => true);
-    });
+    }
 
     var app = builder.Build();
 
@@ -727,12 +681,16 @@ Example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     // Response Compression (Phase 16 - T389)
     app.UseResponseCompression();
 
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    // OpenAPI with Scalar UI (Development only)
+    if (app.Environment.IsDevelopment())
     {
-        c.RoutePrefix = "swagger";
-        c.SwaggerEndpoint("/employees/swagger/v1/swagger.json", "Employee Service API v1");
-    });
+        app.MapOpenApi();
+        app.MapScalarApiReference(options =>
+        {
+            options.WithTitle("Employee Service API")
+                   .WithOpenApiRoutePattern("/openapi/{documentName}.json");
+        });
+    }
 
     app.UseHttpsRedirection();
     app.UseCors();

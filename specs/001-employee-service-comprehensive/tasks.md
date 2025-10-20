@@ -108,8 +108,8 @@
 
 ### API Configuration
 
-- [X] T031 [FOUND] Configure middleware pipeline in correct order (Swagger, HttpsRedirection, RateLimiter, Authentication, Authorization) in `Maliev.EmployeeService.Api/Program.cs`
-- [X] T032 [P] [FOUND] Configure Swagger with JWT authentication support in `Maliev.EmployeeService.Api/Configuration/ConfigureSwaggerOptions.cs`
+- [X] T031 [FOUND] Configure middleware pipeline in correct order (Scalar/OpenAPI, HttpsRedirection, RateLimiter, Authentication, Authorization) in `Maliev.EmployeeService.Api/Program.cs`
+- [X] T032 [P] [FOUND] Configure Scalar OpenAPI UI with JWT authentication support (development only) in `Maliev.EmployeeService.Api/Program.cs`
 - [X] T033 [P] [FOUND] Configure API versioning with Asp.Versioning library (default v1.0) in `Maliev.EmployeeService.Api/Program.cs`
 - [X] T034 [P] [FOUND] Setup memory cache (without SizeLimit) in `Maliev.EmployeeService.Api/Program.cs`
 - [X] T035 [FOUND] Create initial EF Core migration with `dotnet ef migrations add InitialCreate` in `Maliev.EmployeeService.Infrastructure/`
@@ -163,7 +163,7 @@
 - [x] T061 [US1] Integration test for GET `/employees/{id}` endpoint with TestServer and in-memory database in `Maliev.EmployeeService.Tests/Integration/EmployeesControllerTests.cs`
 - [x] T062 [US1] Integration test for emergency contact CRUD operations with authorization checks in `Maliev.EmployeeService.Tests/Integration/EmergencyContactsTests.cs`
 
-**Checkpoint**: User Story 1 is fully functional. Employees can view their profile and manage emergency contacts. Test with Swagger UI using Employee role JWT token.
+**Checkpoint**: User Story 1 is fully functional. Employees can view their profile and manage emergency contacts. Test with Scalar UI (development only, `/employees/scalar/v1`) using Employee role JWT token.
 
 ---
 
@@ -838,8 +838,8 @@
 
 ### Documentation
 
-- [X] T400 [P] [POLISH] Enhance Swagger documentation with XML comments for all endpoints
-- [X] T401 [P] [POLISH] Create API usage examples in Swagger for each endpoint
+- [X] T400 [P] [POLISH] Enhance Scalar API documentation with XML comments for all endpoints (development only)
+- [X] T401 [P] [POLISH] Create API usage examples in Scalar for each endpoint (development only)
 - [X] T402 [P] [POLISH] Document authentication flow and JWT token requirements in README.md
 - [X] T403 [P] [POLISH] Create database schema diagram with entity relationships
 - [X] T404 [P] [POLISH] Document deployment process and migration strategy in deployment-guide.md

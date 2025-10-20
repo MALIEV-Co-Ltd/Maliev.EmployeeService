@@ -479,6 +479,16 @@ HR and leadership need comprehensive reports on headcount, turnover, diversity, 
 - **FR-161**: Audit logs MUST be retained for minimum 7 years to satisfy legal requirements
 - **FR-162**: Audit logs MUST be searchable by date range, user, entity type, and action for compliance investigations
 
+### Non-Functional Requirements
+
+#### API Documentation
+
+- **NFR-001**: System MUST provide interactive API documentation using Scalar UI for OpenAPI specification
+- **NFR-002**: API documentation MUST be accessible at `/employees/scalar/v1` endpoint
+- **NFR-003**: API documentation MUST only be available in development environment, disabled in staging and production
+- **NFR-004**: API documentation MUST include JWT authentication configuration for testing authenticated endpoints
+- **NFR-005**: API documentation MUST display all available endpoints with request/response examples and data models
+
 ### Key Entities
 
 - **Employee**: Represents an individual employed by or affiliated with Maliev Co. Ltd. Attributes include employee ID, legal name, preferred name, personal identification (Thai national ID), date of birth, nationality, contact information (phones, emails), employment type (full-time, part-time, contractor, intern, consultant), employment status (active, on leave, suspended, terminated), job title, department, manager, work location ID (references Career Service work locations catalog for office locations like Bangkok Office, Chiang Mai Factory, or work arrangement like Remote/Hybrid), start date, probation end date, contract type, and termination date. Relationships to Department, Manager (self-referential), Leave Balances, Performance Reviews, Training Records, Documents, Emergency Contacts, Compensation History, and Work Authorization.

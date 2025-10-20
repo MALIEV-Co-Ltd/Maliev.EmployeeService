@@ -65,7 +65,7 @@ The Employee Service is a comprehensive microservice for managing HR master data
 ✅ **PASS**: Employee Service has its own PostgreSQL database (`employee_app_db`). No direct database access to other services. Integration via APIs (Career Service) and events (RabbitMQ).
 
 ### II. Explicit Contracts
-✅ **PASS**: All APIs documented via OpenAPI/Swagger. Contracts defined in `contracts/` directory:
+✅ **PASS**: All APIs documented via OpenAPI with Scalar UI (development only). Contracts defined in `contracts/` directory:
 - `employees-api.yaml` - Employee profile management
 - `leave-api.yaml` - Leave balances and requests
 - `departments-api.yaml` - Organizational structure
@@ -214,7 +214,7 @@ Maliev.EmployeeService/
 ├── Maliev.EmployeeService.Api/
 │   ├── Controllers/             # Employee, Leave, Department, Manager controllers
 │   ├── Middleware/              # Exception handling, request logging
-│   ├── Configurations/          # Swagger, authentication, authorization setup
+│   ├── Configurations/          # Scalar (dev), authentication, authorization setup
 │   ├── Models/                  # API request/response models
 │   ├── Dockerfile               # Multi-stage Docker build
 │   ├── Program.cs               # Application entry point
