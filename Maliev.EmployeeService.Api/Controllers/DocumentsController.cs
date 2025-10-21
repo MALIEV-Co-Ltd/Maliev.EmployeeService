@@ -278,6 +278,7 @@ public class DocumentsController : ControllerBase
     /// </summary>
     /// <param name="documentId">Document ID</param>
     /// <param name="versionNumber">Optional version number (downloads current version if not specified)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("{documentId:guid}/download")]
     [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -320,6 +321,7 @@ public class DocumentsController : ControllerBase
     /// Archive a document (soft delete)
     /// </summary>
     /// <param name="documentId">Document ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpDelete("{documentId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -354,6 +356,7 @@ public class DocumentsController : ControllerBase
     /// Restore an archived document
     /// </summary>
     /// <param name="documentId">Document ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("{documentId:guid}/restore")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -378,6 +381,7 @@ public class DocumentsController : ControllerBase
     /// Get expiring documents (HR only)
     /// </summary>
     /// <param name="daysUntilExpiration">Number of days until expiration</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("expiring")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(IEnumerable<DocumentDto>), StatusCodes.Status200OK)]

@@ -58,7 +58,7 @@ public class TeamsController : ControllerBase
     /// Get all active teams
     /// </summary>
     /// <returns>List of all active teams</returns>
-    [HttpGet]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllTeams(CancellationToken cancellationToken = default)
     {
@@ -86,7 +86,7 @@ public class TeamsController : ControllerBase
     /// </summary>
     /// <param name="teamId">Team ID</param>
     /// <returns>Team details including members</returns>
-    [HttpGet("{teamId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("{teamId:guid}")]
     [ProducesResponseType(typeof(TeamDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTeamDetails(
@@ -109,7 +109,7 @@ public class TeamsController : ControllerBase
     /// </summary>
     /// <param name="employeeId">Employee ID</param>
     /// <returns>List of teams for the employee</returns>
-    [HttpGet("employee/{employeeId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("employee/{employeeId:guid}")]
     [ProducesResponseType(typeof(List<TeamDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployeeTeams(
@@ -137,7 +137,7 @@ public class TeamsController : ControllerBase
     /// </summary>
     /// <param name="teamType">Team type (e.g., "Engineering", "Product", "Project")</param>
     /// <returns>List of teams matching the type</returns>
-    [HttpGet("by-type/{teamType}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("by-type/{teamType}")]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeamsByType(
         string teamType,
@@ -167,7 +167,7 @@ public class TeamsController : ControllerBase
     /// </summary>
     /// <param name="teamLeadId">Team lead employee ID</param>
     /// <returns>List of teams led by the employee</returns>
-    [HttpGet("by-team-lead/{teamLeadId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("by-team-lead/{teamLeadId:guid}")]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeamsByTeamLead(
         Guid teamLeadId,
@@ -197,7 +197,7 @@ public class TeamsController : ControllerBase
     /// </summary>
     /// <param name="command">Team creation details</param>
     /// <returns>Created team ID</returns>
-    [HttpPost]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpPost]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -239,7 +239,8 @@ public class TeamsController : ControllerBase
     /// Add a member to a team
     /// </summary>
     /// <param name="teamId">Team ID</param>
-    /// <param name="command">Member assignment details</param>
+    /// <param name="request">Member assignment details</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Success result</returns>
     [HttpPost("{teamId:guid}/members")]
     [Authorize(Policy = Policies.RequireHROrManager)]
@@ -279,7 +280,7 @@ public class TeamsController : ControllerBase
     /// <param name="teamId">Team ID</param>
     /// <param name="employeeId">Employee ID to remove</param>
     /// <returns>Success result</returns>
-    [HttpDelete("{teamId:guid}/members/{employeeId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpDelete("{teamId:guid}/members/{employeeId:guid}")]
     [Authorize(Policy = Policies.RequireHROrManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -337,7 +338,7 @@ public class TeamsController : ControllerBase
     /// <param name="teamId">Team ID</param>
     /// <param name="request">Updated team information</param>
     /// <returns>Success result</returns>
-    [HttpPut("{teamId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpPut("{teamId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -419,7 +420,7 @@ public class TeamsController : ControllerBase
     /// </summary>
     /// <param name="teamId">Team ID</param>
     /// <returns>Success result</returns>
-    [HttpDelete("{teamId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpDelete("{teamId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

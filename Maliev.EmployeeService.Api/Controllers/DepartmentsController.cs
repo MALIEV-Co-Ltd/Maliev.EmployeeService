@@ -54,7 +54,7 @@ public class DepartmentsController : ControllerBase
     /// Get all departments with hierarchical structure
     /// </summary>
     /// <returns>List of departments with parent/child relationships</returns>
-    [HttpGet]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllDepartments(CancellationToken cancellationToken)
     {
@@ -87,7 +87,7 @@ public class DepartmentsController : ControllerBase
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <returns>Department details with employees</returns>
-    [HttpGet("{departmentId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("{departmentId:guid}")]
     [ProducesResponseType(typeof(DepartmentDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDepartment(Guid departmentId, CancellationToken cancellationToken)
@@ -138,7 +138,7 @@ public class DepartmentsController : ControllerBase
     /// Get department hierarchy (org chart)
     /// </summary>
     /// <returns>Complete hierarchical structure of all departments</returns>
-    [HttpGet("hierarchy")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("hierarchy")]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDepartmentHierarchy(CancellationToken cancellationToken)
     {
@@ -168,7 +168,7 @@ public class DepartmentsController : ControllerBase
     /// Get departments approaching or at headcount limit
     /// </summary>
     /// <returns>List of departments needing attention</returns>
-    [HttpGet("capacity-alerts")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("capacity-alerts")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCapacityAlerts(CancellationToken cancellationToken)
@@ -194,7 +194,7 @@ public class DepartmentsController : ControllerBase
     /// </summary>
     /// <param name="createDto">Department creation data</param>
     /// <returns>Created department ID</returns>
-    [HttpPost]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpPost]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -233,7 +233,7 @@ public class DepartmentsController : ControllerBase
     /// <param name="departmentId">Department ID</param>
     /// <param name="includeSubDepartments">Include employees from subdepartments</param>
     /// <returns>List of employees</returns>
-    [HttpGet("{departmentId:guid}/employees")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("{departmentId:guid}/employees")]
     [ProducesResponseType(typeof(IEnumerable<EmployeeSummaryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDepartmentEmployees(
@@ -281,7 +281,7 @@ public class DepartmentsController : ControllerBase
     /// <param name="departmentId">Department ID</param>
     /// <param name="updateCommand">Department update data</param>
     /// <returns>Update result with any warnings</returns>
-    [HttpPut("{departmentId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpPut("{departmentId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -322,7 +322,7 @@ public class DepartmentsController : ControllerBase
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <returns>Deletion result</returns>
-    [HttpDelete("{departmentId:guid}")]
+    /// <param name="cancellationToken">Cancellation token</param>    [HttpDelete("{departmentId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

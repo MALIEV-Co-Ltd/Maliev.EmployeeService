@@ -46,6 +46,7 @@ public class WorkAuthorizationController : ControllerBase
     /// </summary>
     /// <param name="employeeId">Employee ID</param>
     /// <param name="command">Work authorization details</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("employees/{employeeId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
@@ -71,6 +72,7 @@ public class WorkAuthorizationController : ControllerBase
     /// </summary>
     /// <param name="employeeId">Employee ID</param>
     /// <param name="includeInactive">Include inactive authorizations</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("employees/{employeeId:guid}")]
     [ProducesResponseType(typeof(IEnumerable<WorkAuthorizationDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -95,6 +97,7 @@ public class WorkAuthorizationController : ControllerBase
     /// </summary>
     /// <param name="authId">Authorization ID</param>
     /// <param name="command">Updated authorization details</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("{authId:guid}")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -123,6 +126,7 @@ public class WorkAuthorizationController : ControllerBase
     /// Get work authorizations expiring within specified days
     /// </summary>
     /// <param name="daysUntilExpiration">Days until expiration threshold</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("expiring")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(IEnumerable<WorkAuthorizationDto>), StatusCodes.Status200OK)]
@@ -162,6 +166,7 @@ public class WorkAuthorizationController : ControllerBase
     /// Get work authorization compliance report
     /// </summary>
     /// <param name="daysUntilExpiration">Days until expiration threshold for "expiring soon"</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("compliance-report")]
     [Authorize(Policy = Policies.RequireHROrAdmin)]
     [ProducesResponseType(typeof(WorkAuthorizationComplianceReportDto), StatusCodes.Status200OK)]
