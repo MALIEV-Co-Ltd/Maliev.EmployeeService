@@ -652,7 +652,7 @@ try
     // OpenAPI with Scalar (Development only)
     if (builder.Environment.IsDevelopment())
     {
-        builder.Services.AddOpenApi(options =>
+        builder.Services.AddOpenApi("v1", options =>
         {
             options.AddDocumentTransformer((document, context, cancellationToken) =>
             {
@@ -664,7 +664,7 @@ try
                     Contact = new Microsoft.OpenApi.Models.OpenApiContact
                     {
                         Name = "Maliev Development Team",
-                        Email = "dev@maliev.co.th"
+                        Email = "dev@maliev.com"
                     }
                 };
 
@@ -704,11 +704,12 @@ try
     // OpenAPI with Scalar UI (Development only)
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi();
+        app.MapOpenApi("/openapi/v1.json");
         app.MapScalarApiReference(options =>
         {
-            options.WithTitle("Employee Service API")
-                   .WithOpenApiRoutePattern("/openapi/{documentName}.json");
+            options
+                .WithTitle("Employee Service API")
+                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
         });
     }
 
