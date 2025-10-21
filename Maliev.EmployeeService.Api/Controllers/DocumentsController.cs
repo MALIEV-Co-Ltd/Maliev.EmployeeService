@@ -54,6 +54,7 @@ public class DocumentsController : ControllerBase
     /// <param name="employeeId">Employee ID</param>
     /// <param name="documentType">Optional document type filter</param>
     /// <param name="includeArchived">Include archived documents</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("employees/{employeeId:guid}")]
     [ProducesResponseType(typeof(IEnumerable<DocumentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -104,6 +105,7 @@ public class DocumentsController : ControllerBase
     /// <param name="employeeId">Employee ID</param>
     /// <param name="dto">Document upload details</param>
     /// <param name="file">File to upload</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("employees/{employeeId:guid}")]
     [ProducesResponseType(typeof(UploadDocumentResultDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -165,6 +167,7 @@ public class DocumentsController : ControllerBase
     /// <param name="documentId">Document ID</param>
     /// <param name="changeDescription">Description of changes</param>
     /// <param name="file">File to upload</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("{documentId:guid}/versions")]
     [ProducesResponseType(typeof(UploadDocumentResultDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -229,6 +232,7 @@ public class DocumentsController : ControllerBase
     /// Get all versions of a document
     /// </summary>
     /// <param name="documentId">Document ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("{documentId:guid}/versions")]
     [ProducesResponseType(typeof(IEnumerable<DocumentVersionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
