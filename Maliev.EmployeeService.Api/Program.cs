@@ -652,25 +652,7 @@ try
     // OpenAPI with Scalar (Development only)
     if (builder.Environment.IsDevelopment())
     {
-        builder.Services.AddOpenApi("v1", options =>
-        {
-            options.AddDocumentTransformer((document, context, cancellationToken) =>
-            {
-                document.Info = new Microsoft.OpenApi.Models.OpenApiInfo
-                {
-                    Title = "Employee Service API",
-                    Version = "v1",
-                    Description = "Employee lifecycle management API supporting profile management, organizational structure, team management, and leave tracking.",
-                    Contact = new Microsoft.OpenApi.Models.OpenApiContact
-                    {
-                        Name = "Maliev Development Team",
-                        Email = "dev@maliev.com"
-                    }
-                };
-
-                return Task.CompletedTask;
-            });
-        });
+        builder.Services.AddOpenApi();
     }
 
     var app = builder.Build();
@@ -704,13 +686,8 @@ try
     // OpenAPI with Scalar UI (Development only)
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi("/openapi/v1.json");
-        app.MapScalarApiReference(options =>
-        {
-            options
-                .WithTitle("Employee Service API")
-                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
-        });
+        app.MapOpenApi();
+        app.MapScalarApiReference();
     }
 
     app.UseHttpsRedirection();
