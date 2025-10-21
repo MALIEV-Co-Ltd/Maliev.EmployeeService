@@ -1,0 +1,310 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using Maliev.EmployeeService.Application.Events;
+using Maliev.EmployeeService.Application.Commands;
+using Maliev.EmployeeService.Domain.ValueObjects;
+
+namespace Maliev.EmployeeService.Infrastructure.Messaging;
+
+/// <summary>
+/// Background service that consumes CandidateAccepted events from Career Service
+/// Automatically creates employee records and initiates onboarding workflow
+/// </summary>
+public class CandidateAcceptedEventConsumer : BackgroundService
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<CandidateAcceptedEventConsumer> _logger;
+    private readonly RabbitMqSettings _settings;
+    private IConnection? _connection;
+    private IChannel? _channel;
+
+    private const string QueueName = "career-service.candidate-accepted";
+    private const string DeadLetterQueueName = "career-service.candidate-accepted.dlq";
+    private const string DeadLetterExchange = "career-service.dlx";
+    private const int MaxRetryCount = 3;
+
+    public CandidateAcceptedEventConsumer(
+        IServiceProvider serviceProvider,
+        ILogger<CandidateAcceptedEventConsumer> logger,
+        IOptions<RabbitMqSettings> settings)
+    {
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+        _settings = settings.Value;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        if (!_settings.Enabled)
+        {
+            _logger.LogInformation("RabbitMQ is disabled. CandidateAcceptedEventConsumer will not start");
+            return;
+        }
+
+        _logger.LogInformation("CandidateAcceptedEventConsumer starting");
+
+        try
+        {
+            InitializeRabbitMQ();
+
+            if (_channel == null)
+            {
+                _logger.LogError("Failed to initialize RabbitMQ channel");
+                return;
+            }
+
+            var consumer = new EventingBasicConsumer(_channel);
+            consumer.Received += async (model, ea) =>
+            {
+                await ProcessMessageAsync(ea, stoppingToken);
+            };
+
+            _channel.BasicConsume(
+                queue: QueueName,
+                autoAck: false,
+                consumer: consumer);
+
+            _logger.LogInformation("CandidateAcceptedEventConsumer started successfully. Listening on queue: {QueueName}", QueueName);
+
+            // Keep the service running
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fatal error in CandidateAcceptedEventConsumer");
+            throw;
+        }
+    }
+
+    private void InitializeRabbitMQ()
+    {
+        try
+        {
+            var factory = new ConnectionFactory
+            {
+                HostName = _settings.HostName,
+                Port = _settings.Port,
+                UserName = _settings.UserName,
+                Password = _settings.Password,
+                VirtualHost = _settings.VirtualHost,
+                AutomaticRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+            };
+
+            _connection = factory.CreateConnection();
+            _channel = _connection.CreateChannel();
+
+            // Declare dead-letter exchange
+            _channel.ExchangeDeclare(
+                exchange: DeadLetterExchange,
+                type: ExchangeType.Direct,
+                durable: true);
+
+            // Declare dead-letter queue
+            _channel.QueueDeclare(
+                queue: DeadLetterQueueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+            _channel.QueueBind(
+                queue: DeadLetterQueueName,
+                exchange: DeadLetterExchange,
+                routingKey: QueueName);
+
+            // Declare main queue with dead-letter configuration
+            var queueArgs = new Dictionary<string, object>
+            {
+                { "x-dead-letter-exchange", DeadLetterExchange },
+                { "x-dead-letter-routing-key", QueueName },
+                { "x-message-ttl", 300000 } // 5 minutes TTL for retries
+            };
+
+            _channel.QueueDeclare(
+                queue: QueueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: queueArgs);
+
+            _channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+
+            _logger.LogInformation(
+                "RabbitMQ connection established. Queue: {QueueName}, DLQ: {DLQName}",
+                QueueName,
+                DeadLetterQueueName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initialize RabbitMQ connection");
+            throw;
+        }
+    }
+
+    private async Task ProcessMessageAsync(BasicDeliverEventArgs ea, CancellationToken cancellationToken)
+    {
+        var body = ea.Body.ToArray();
+        var message = Encoding.UTF8.GetString(body);
+
+        try
+        {
+            _logger.LogInformation(
+                "Received CandidateAccepted event. DeliveryTag: {DeliveryTag}",
+                ea.DeliveryTag);
+
+            var candidateEvent = JsonSerializer.Deserialize<CandidateAcceptedEvent>(
+                message,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (candidateEvent == null)
+            {
+                _logger.LogWarning("Failed to deserialize CandidateAccepted event. Message: {Message}", message);
+                _channel?.BasicNack(ea.DeliveryTag, false, false); // Send to DLQ
+                return;
+            }
+
+            // Process the event
+            await HandleCandidateAcceptedAsync(candidateEvent, cancellationToken);
+
+            // Acknowledge successful processing
+            _channel?.BasicAck(ea.DeliveryTag, false);
+            _logger.LogInformation(
+                "Successfully processed CandidateAccepted event for {ApplicantName}",
+                candidateEvent.ApplicantName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error processing CandidateAccepted event. DeliveryTag: {DeliveryTag}, Message: {Message}",
+                ea.DeliveryTag,
+                message);
+
+            // Check retry count
+            var retryCount = GetRetryCount(ea.BasicProperties);
+
+            if (retryCount < MaxRetryCount)
+            {
+                _logger.LogInformation(
+                    "Requeueing message for retry. Attempt {RetryCount} of {MaxRetries}",
+                    retryCount + 1,
+                    MaxRetryCount);
+
+                // Requeue for retry
+                _channel?.BasicNack(ea.DeliveryTag, false, true);
+            }
+            else
+            {
+                _logger.LogError(
+                    "Max retry count reached for message. Sending to dead-letter queue");
+
+                // Send to DLQ (no requeue)
+                _channel?.BasicNack(ea.DeliveryTag, false, false);
+            }
+        }
+    }
+
+    private async Task HandleCandidateAcceptedAsync(CandidateAcceptedEvent candidateEvent, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+
+        // Generate employee number (simple sequential for now)
+        var employeeNumber = $"EMP{DateTime.UtcNow:yyyyMMddHHmmss}";
+
+        // Create employee DTO from candidate event
+        var createEmployeeDto = new Maliev.EmployeeService.Application.DTOs.CreateEmployeeDto
+        {
+            EmployeeNumber = employeeNumber,
+            FirstName = GetFirstName(candidateEvent.ApplicantName),
+            MiddleName = GetMiddleName(candidateEvent.ApplicantName),
+            LastName = GetLastName(candidateEvent.ApplicantName),
+            WorkEmail = candidateEvent.ApplicantEmail,
+            PersonalEmail = candidateEvent.ApplicantEmail,
+            MobilePhone = candidateEvent.ApplicantPhone,
+            DateOfBirth = DateTime.UtcNow.AddYears(-25), // Default age, should be provided by Career Service
+            StartDate = candidateEvent.StartDate,
+            EmploymentType = Domain.Enums.EmploymentType.FullTime,
+            DepartmentId = candidateEvent.DepartmentId,
+            ManagerId = candidateEvent.ManagerId,
+            WorkLocationId = candidateEvent.WorkLocationId,
+            JobApplicationId = candidateEvent.CandidateId
+        };
+
+        var createEmployeeCommand = new CreateEmployeeCommand(createEmployeeDto);
+        var createEmployeeHandler = scope.ServiceProvider.GetRequiredService<CreateEmployeeCommandHandler>();
+
+        var result = await createEmployeeHandler.HandleAsync(createEmployeeCommand, cancellationToken);
+
+        if (!result.Success)
+        {
+            _logger.LogError(
+                "Failed to create employee from CandidateAccepted event. Candidate: {CandidateId}, Error: {Error}",
+                candidateEvent.CandidateId,
+                result.ErrorMessage);
+
+            throw new InvalidOperationException(
+                $"Failed to create employee: {result.ErrorMessage}");
+        }
+
+        _logger.LogInformation(
+            "Employee created from CandidateAccepted event. EmployeeId: {EmployeeId}, CandidateId: {CandidateId}",
+            result.EmployeeId,
+            candidateEvent.CandidateId);
+
+        // TODO: Initiate onboarding workflow (will be implemented in User Story 10)
+        // var startOnboardingCommand = new StartOnboardingCommand { EmployeeId = result.EmployeeId.Value };
+        // await startOnboardingHandler.HandleAsync(startOnboardingCommand, cancellationToken);
+    }
+
+    private int GetRetryCount(IBasicProperties? properties)
+    {
+        if (properties?.Headers == null)
+            return 0;
+
+        if (properties.Headers.TryGetValue("x-retry-count", out var value))
+        {
+            if (value is byte[] bytes)
+            {
+                return BitConverter.ToInt32(bytes, 0);
+            }
+        }
+
+        return 0;
+    }
+
+    private string GetFirstName(string fullName)
+    {
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length > 0 ? parts[0] : fullName;
+    }
+
+    private string? GetMiddleName(string fullName)
+    {
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length > 2 ? parts[1] : null;
+    }
+
+    private string GetLastName(string fullName)
+    {
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length > 1 ? parts[parts.Length - 1] : string.Empty;
+    }
+
+    public override void Dispose()
+    {
+        _channel?.Close();
+        _channel?.Dispose();
+        _connection?.Close();
+        _connection?.Dispose();
+
+        _logger.LogInformation("CandidateAcceptedEventConsumer disposed");
+
+        base.Dispose();
+    }
+}
