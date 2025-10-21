@@ -45,7 +45,8 @@ public class ManagersController : ControllerBase
     /// <param name="pageNumber">Page number (default: 1)</param>
     /// <param name="pageSize">Page size (default: 20, max: 100)</param>
     /// <returns>Paginated list of team members</returns>
-    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("{managerId:guid}/direct-reports")]
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpGet("{managerId:guid}/direct-reports")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -102,7 +103,8 @@ public class ManagersController : ControllerBase
     /// <param name="managerId">Manager's employee ID</param>
     /// <param name="depth">Maximum depth level (default: 3, max: 5)</param>
     /// <returns>Hierarchical org chart</returns>
-    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("{managerId:guid}/org-chart")]
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpGet("{managerId:guid}/org-chart")]
     [ProducesResponseType(typeof(OrgChartDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

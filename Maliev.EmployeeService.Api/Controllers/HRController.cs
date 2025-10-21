@@ -46,7 +46,8 @@ public class HRController : ControllerBase
     /// </summary>
     /// <param name="createDto">Employee creation data</param>
     /// <returns>Created employee ID</returns>
-    /// <param name="cancellationToken">Cancellation token</param>    [HttpPost("employees")]
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpPost("employees")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -84,7 +85,8 @@ public class HRController : ControllerBase
     /// <param name="employeeId">Employee ID</param>
     /// <param name="request">Transfer request details</param>
     /// <returns>Success result</returns>
-    /// <param name="cancellationToken">Cancellation token</param>    [HttpPut("employees/{employeeId:guid}/transfer-department")]
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpPut("employees/{employeeId:guid}/transfer-department")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -130,7 +132,8 @@ public class HRController : ControllerBase
     /// <param name="employeeId">Employee ID</param>
     /// <param name="request">Dotted-line manager assignment request</param>
     /// <returns>Success result</returns>
-    /// <param name="cancellationToken">Cancellation token</param>    [HttpPut("employees/{employeeId:guid}/dotted-line-manager")]
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpPut("employees/{employeeId:guid}/dotted-line-manager")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -179,7 +182,8 @@ public class HRController : ControllerBase
     /// </summary>
     /// <param name="managerId">Manager's employee ID</param>
     /// <returns>List of dotted-line reports</returns>
-    /// <param name="cancellationToken">Cancellation token</param>    [HttpGet("employees/{managerId:guid}/dotted-line-reports")]
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpGet("employees/{managerId:guid}/dotted-line-reports")]
     [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDottedLineReports(
