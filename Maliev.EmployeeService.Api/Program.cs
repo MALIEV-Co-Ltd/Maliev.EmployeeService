@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
 using HealthChecks.UI.Client;
@@ -135,8 +136,8 @@ try
     });
 
     // Redis Distributed Cache (Phase 16 - T385)
-    var redisConnectionString = builder.Configuration["REDIS_CONNECTION_STRING"];
-    var redisEnabled = bool.TryParse(builder.Configuration["REDIS_ENABLED"], out var isRedisEnabled) ? isRedisEnabled : true;
+    var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
+    var redisEnabled = bool.TryParse(builder.Configuration["Redis:Enabled"], out var isRedisEnabled) ? isRedisEnabled : true;
 
     if (redisEnabled && !builder.Environment.IsEnvironment("Testing"))
     {
@@ -322,12 +323,12 @@ try
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Services.BusinessMetricsService>();
 
     // MassTransit with RabbitMQ (User Story 10 - Onboarding/Offboarding Integration Events)
-    var rabbitmqHost = builder.Configuration["RABBITMQ_HOST"] ?? "localhost";
-    var rabbitmqPort = int.TryParse(builder.Configuration["RABBITMQ_PORT"], out var port) ? port : 5672;
-    var rabbitmqUser = builder.Configuration["RABBITMQ_USERNAME"] ?? "guest";
-    var rabbitmqPassword = builder.Configuration["RABBITMQ_PASSWORD"] ?? "guest";
-    var rabbitmqVhost = builder.Configuration["RABBITMQ_VHOST"] ?? "/";
-    var rabbitmqEnabled = bool.TryParse(builder.Configuration["RABBITMQ_ENABLED"], out var enabled) ? enabled : true;
+    var rabbitmqHost = builder.Configuration["RabbitMq:Host"] ?? "localhost";
+    var rabbitmqPort = int.TryParse(builder.Configuration["RabbitMq:Port"], out var port) ? port : 5672;
+    var rabbitmqUser = builder.Configuration["RabbitMq:Username"] ?? "guest";
+    var rabbitmqPassword = builder.Configuration["RabbitMq:Password"] ?? "guest";
+    var rabbitmqVhost = builder.Configuration["RabbitMq:VirtualHost"] ?? "/";
+    var rabbitmqEnabled = bool.TryParse(builder.Configuration["RabbitMq:Enabled"], out var enabled) ? enabled : true;
 
     if (rabbitmqEnabled)
     {
@@ -400,7 +401,8 @@ try
     // Polly v8 resilience policies (T026h): retry with exponential backoff, circuit breaker
     builder.Services.AddHttpClient<ICareerServiceClient, CareerServiceClient>(client =>
     {
-        var careerServiceUrl = builder.Configuration["CAREER_SERVICE_URL"];
+        var careerServiceUrl = builder.Configuration["ExternalServices:CareerService:BaseUrl"];
+        var timeoutSeconds = int.TryParse(builder.Configuration["ExternalServices:CareerService:TimeoutSeconds"], out var timeout) ? timeout : 30;
 
         if (string.IsNullOrEmpty(careerServiceUrl))
         {
@@ -412,13 +414,13 @@ try
             else
             {
                 throw new InvalidOperationException(
-                    "CAREER_SERVICE_URL not found in configuration. " +
+                    "ExternalServices:CareerService:BaseUrl not found in configuration. " +
                     "Ensure Google Secret Manager is properly configured.");
             }
         }
 
         client.BaseAddress = new Uri(careerServiceUrl);
-        client.Timeout = TimeSpan.FromSeconds(30);
+        client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
     })
     .AddStandardResilienceHandler(options =>
     {
@@ -447,7 +449,8 @@ try
     // Upload Service Configuration (User Story 9 - Document Management)
     builder.Services.AddHttpClient<IUploadServiceClient, UploadServiceClient>(client =>
     {
-        var uploadServiceUrl = builder.Configuration["UPLOAD_SERVICE_URL"];
+        var uploadServiceUrl = builder.Configuration["ExternalServices:UploadService:BaseUrl"];
+        var timeoutSeconds = int.TryParse(builder.Configuration["ExternalServices:UploadService:TimeoutSeconds"], out var uploadTimeout) ? uploadTimeout : 300;
 
         if (string.IsNullOrEmpty(uploadServiceUrl))
         {
@@ -459,13 +462,13 @@ try
             else
             {
                 throw new InvalidOperationException(
-                    "UPLOAD_SERVICE_URL not found in configuration. " +
+                    "ExternalServices:UploadService:BaseUrl not found in configuration. " +
                     "Ensure Google Secret Manager is properly configured.");
             }
         }
 
         client.BaseAddress = new Uri(uploadServiceUrl);
-        client.Timeout = TimeSpan.FromMinutes(5); // Longer timeout for file uploads
+        client.Timeout = TimeSpan.FromSeconds(timeoutSeconds); // Configured timeout for file uploads
     });
 
     Log.Information("Upload Service configured");
@@ -481,7 +484,7 @@ try
             // Development fallback
             if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = builder.Configuration["DATABASE_URL"] ??
+                connectionString = builder.Configuration["ConnectionStrings:EmployeeServiceDb"] ??
                     "Host=localhost;Port=5432;Database=employee_app_db;Username=postgres;Password=postgres";
                 Log.Warning("Using fallback connection string for development");
             }
@@ -508,30 +511,47 @@ try
         });
     }
 
-    // JWT Authentication
+    // JWT Authentication (RSA Asymmetric)
     if (!builder.Environment.IsEnvironment("Testing"))
     {
-        var jwtIssuer = builder.Configuration["JWT_ISSUER"] ?? "https://maliev.co.th";
-        var jwtAudience = builder.Configuration["JWT_AUDIENCE"] ?? "employee-service";
-        var jwtSecretKey = builder.Configuration["JWT_SECRET_KEY"];
+        var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "https://dev.api.maliev.com";
+        var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "https://dev.api.maliev.com";
+        var jwtPublicKey = builder.Configuration["Jwt:PublicKey"];
 
-        if (string.IsNullOrEmpty(jwtSecretKey))
+        SecurityKey? signingKey = null;
+
+        if (string.IsNullOrEmpty(jwtPublicKey))
         {
             if (builder.Environment.IsDevelopment())
             {
-                // Development-only fallback key
-                jwtSecretKey = "DevelopmentSecretKey32CharactersLong!!";
-                Log.Warning("Using development JWT secret key. DO NOT use in production!");
+                // Development-only fallback: Use symmetric key for local testing
+                var devKey = Encoding.UTF8.GetBytes("DevelopmentSecretKey32CharactersLong!!");
+                signingKey = null; // Will use symmetric key as fallback
+                Log.Warning("Jwt:PublicKey not found. Using development symmetric key. DO NOT use in production!");
             }
             else
             {
                 throw new InvalidOperationException(
-                    "JWT_SECRET_KEY not found in configuration. " +
-                    "Ensure Google Secret Manager is properly configured.");
+                    "Jwt:PublicKey not found in configuration. " +
+                    "Ensure Google Secret Manager is properly configured with maliev-shared-config.");
             }
         }
-
-        var key = Encoding.UTF8.GetBytes(jwtSecretKey);
+        else
+        {
+            // Parse RSA public key
+            try
+            {
+                var rsa = RSA.Create();
+                rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtPublicKey), out _);
+                signingKey = new RsaSecurityKey(rsa);
+                Log.Information("JWT RSA public key loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to parse JWT public key");
+                throw new InvalidOperationException("Invalid JWT public key format", ex);
+            }
+        }
 
         builder.Services.AddAuthentication(options =>
         {
@@ -550,7 +570,7 @@ try
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtIssuer,
                 ValidAudience = jwtAudience,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
+                IssuerSigningKey = signingKey ?? new SymmetricSecurityKey(Encoding.UTF8.GetBytes("DevelopmentSecretKey32CharactersLong!!")),
                 ClockSkew = TimeSpan.FromMinutes(5)
             };
 

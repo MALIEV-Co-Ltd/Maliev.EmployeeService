@@ -18,7 +18,7 @@ public class EncryptionService : IEncryptionService
     public EncryptionService(IConfiguration configuration)
     {
         // Try to get encryption key from configuration (Google Secret Manager)
-        var encryptionKeyBase64 = configuration["ENCRYPTION_KEY"];
+        var encryptionKeyBase64 = configuration["Encryption:Key"];
 
         if (string.IsNullOrEmpty(encryptionKeyBase64))
         {
@@ -35,7 +35,7 @@ public class EncryptionService : IEncryptionService
             else
             {
                 throw new InvalidOperationException(
-                    "ENCRYPTION_KEY not found in configuration. " +
+                    "Encryption:Key not found in configuration. " +
                     "Ensure Google Secret Manager is properly configured with the encryption key.");
             }
         }
