@@ -702,11 +702,12 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // Health check endpoints
+    // Health check endpoints (excluded from OpenAPI)
     app.MapGet("/liveness", () => Results.Ok(new { status = "Healthy", service = "Employee Service" }))
         .WithName("Liveness")
         .WithTags("Health")
-        .AllowAnonymous();
+        .AllowAnonymous()
+        .ExcludeFromDescription();
 
     app.MapHealthChecks("/readiness", new HealthCheckOptions
     {
@@ -715,13 +716,15 @@ try
     })
     .WithName("Readiness")
     .WithTags("Health")
-    .AllowAnonymous();
+    .AllowAnonymous()
+    .ExcludeFromDescription();
 
-    // Prometheus Metrics Endpoint (Constitution Principle X)
+    // Prometheus Metrics Endpoint (Constitution Principle X) - excluded from OpenAPI
     app.MapMetrics("/metrics")
         .WithName("Metrics")
         .WithTags("Monitoring")
-        .AllowAnonymous();
+        .AllowAnonymous()
+        .ExcludeFromDescription();
 
     app.MapControllers();
 
