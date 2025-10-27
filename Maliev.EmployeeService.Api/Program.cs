@@ -542,7 +542,24 @@ try
             try
             {
                 var rsa = RSA.Create();
-                rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(jwtPublicKey), out _);
+
+                // The public key from Google Secret Manager is double base64-encoded PEM format
+                // First decode to get the PEM string
+                var pemString = Encoding.UTF8.GetString(Convert.FromBase64String(jwtPublicKey));
+
+                // Extract base64 content from PEM format (remove headers)
+                var base64Key = pemString
+                    .Replace("-----BEGIN PUBLIC KEY-----", "")
+                    .Replace("-----END PUBLIC KEY-----", "")
+                    .Replace("\r", "")
+                    .Replace("\n", "")
+                    .Trim();
+
+                // Decode the base64 content to get raw DER bytes
+                var keyBytes = Convert.FromBase64String(base64Key);
+
+                // Import the DER-formatted public key
+                rsa.ImportSubjectPublicKeyInfo(keyBytes, out _);
                 signingKey = new RsaSecurityKey(rsa);
                 Log.Information("JWT RSA public key loaded successfully");
             }
