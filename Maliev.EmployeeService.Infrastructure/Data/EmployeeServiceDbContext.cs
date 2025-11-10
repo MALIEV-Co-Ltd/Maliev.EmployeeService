@@ -92,8 +92,10 @@ public class EmployeeServiceDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply all entity configurations from the current assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(EmployeeServiceDbContext).Assembly);
+        // Note: No separate IEntityTypeConfiguration classes exist in this assembly.
+        // All entity configurations are defined inline below.
+        // The previous ApplyConfigurationsFromAssembly call was causing a startup hang
+        // due to unnecessary assembly scanning when no configurations exist.
 
         // Configure schema
         modelBuilder.HasDefaultSchema("employee");
