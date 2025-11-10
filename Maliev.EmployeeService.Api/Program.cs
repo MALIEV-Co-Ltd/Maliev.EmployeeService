@@ -622,6 +622,8 @@ try
         Log.Information("Test authentication scheme configured for Testing environment");
     }
 
+    Log.Information("Configuring authorization policies...");
+
     // Authorization Policies (always registered, even in Testing environment)
     builder.Services.AddAuthorization(options =>
     {
@@ -646,6 +648,8 @@ try
 
     // Register custom authorization handler (must be Scoped due to ICurrentUserService dependency)
     builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Maliev.EmployeeService.Api.Security.ResourceAuthorizationHandler>();
+
+    Log.Information("Configuring health checks...");
 
     // Health Checks (Phase 16 - T398: Integration health checks)
     var healthChecksBuilder = builder.Services.AddHealthChecks()
@@ -672,15 +676,21 @@ try
         builder.Services.AddOpenApi();
     }
 
+    Log.Information("Building application...");
     var app = builder.Build();
+    Log.Information("Application built successfully");
 
     // Force initialization of metrics (triggers static constructors)
+    Log.Information("Initializing metrics...");
     System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Application.Services.BusinessMetricsService).TypeHandle);
     System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.BackgroundServices.BackgroundJobMetrics).TypeHandle);
     System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
+    Log.Information("Metrics initialized");
 
     // Set base path for all routes
     app.UsePathBase("/employees");
+
+    Log.Information("Configuring middleware pipeline...");
 
     // Middleware Pipeline (EXACT ORDER per CLAUDE.md)
     app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -704,7 +714,13 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        app.MapScalarApiReference();
+        app.MapScalarApiReference(options =>
+        {
+            options
+                .WithTitle("Employee Service API")
+                .WithTheme(ScalarTheme.Purple)
+                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        });
     }
 
     app.UseHttpsRedirection();
@@ -744,10 +760,12 @@ try
         .ExcludeFromDescription();
 
     app.MapControllers();
+    Log.Information("Endpoints mapped successfully");
 
     // Seed database in development environment
     if (app.Environment.IsDevelopment())
     {
+        Log.Information("Starting database seeding (Development mode)...");
         using (var scope = app.Services.CreateScope())
         {
             try
@@ -757,6 +775,7 @@ try
                 var seeder = new DatabaseSeeder(context, logger);
 
                 await seeder.SeedAllAsync();
+                Log.Information("Database seeding completed");
             }
             catch (Exception ex)
             {
@@ -765,7 +784,7 @@ try
         }
     }
 
-    Log.Information("Employee Service started successfully");
+    Log.Information("Employee Service started successfully - listening on port 8080");
     app.Run();
 }
 catch (Exception ex)
