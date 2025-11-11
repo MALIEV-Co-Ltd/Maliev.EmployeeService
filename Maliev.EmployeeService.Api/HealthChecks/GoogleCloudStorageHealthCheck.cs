@@ -28,7 +28,9 @@ public class GoogleCloudStorageHealthCheck : IHealthCheck
     {
         try
         {
-            var uploadServiceUrl = _configuration["UPLOAD_SERVICE_URL"] ?? "http://localhost:8082";
+            // Use the same configuration path as HttpClient registration in Program.cs
+            // This will be populated from Google Secret Manager via ExternalServices__UploadService__BaseUrl
+            var uploadServiceUrl = _configuration["ExternalServices:UploadService:BaseUrl"] ?? "http://localhost:8082";
 
             // Create HTTP client with timeout
             var httpClient = _httpClientFactory.CreateClient();
