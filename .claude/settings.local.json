@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(kubectl get secret:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(kubectl get deployment maliev-employee-service -n maliev-dev -o jsonpath='{.spec.template.spec.containers[0].image}')"
     ],
     "deny": [],
     "ask": []

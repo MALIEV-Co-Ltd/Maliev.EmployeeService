@@ -762,10 +762,14 @@ try
     app.MapControllers();
     Log.Information("Endpoints mapped successfully");
 
-    // Seed database in development environment
-    if (app.Environment.IsDevelopment())
+    // Seed database ONLY for local development (not Kubernetes)
+    // Database seeding blocks startup and is only needed for local development with empty database
+    // In Kubernetes, migrations handle schema and seeding is not required
+    var enableSeeding = app.Configuration.GetValue<bool>("Database:EnableSeeding", false);
+
+    if (app.Environment.IsDevelopment() && enableSeeding)
     {
-        Log.Information("Starting database seeding (Development mode)...");
+        Log.Information("Starting database seeding (Development mode with EnableSeeding=true)...");
         using (var scope = app.Services.CreateScope())
         {
             try
@@ -782,6 +786,10 @@ try
                 Log.Error(ex, "An error occurred while seeding the database");
             }
         }
+    }
+    else if (app.Environment.IsDevelopment())
+    {
+        Log.Information("Database seeding disabled (set Database:EnableSeeding=true to enable)");
     }
 
     Log.Information("Employee Service started successfully - listening on port 8080");
