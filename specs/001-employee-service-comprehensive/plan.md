@@ -13,11 +13,11 @@ The Employee Service is a comprehensive microservice for managing HR master data
 
 ## Technical Context
 
-**Language/Version**: .NET 9.0 (ASP.NET Core 9.0)
+**Language/Version**: .NET 10.0 (ASP.NET Core 9.0)
 **Primary Dependencies**:
 - ASP.NET Core 9.0 (Web API framework)
-- Entity Framework Core 9.0 (ORM)
-- Npgsql 9.0.2 (PostgreSQL driver)
+- Entity Framework Core 9.0.10 (ORM)
+- Npgsql 9.0.4 (PostgreSQL driver)
 - MediatR (CQRS implementation)
 - MassTransit (RabbitMQ integration)
 - FluentValidation (input validation)

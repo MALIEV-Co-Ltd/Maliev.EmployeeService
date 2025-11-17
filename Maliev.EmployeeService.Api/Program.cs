@@ -402,7 +402,7 @@ try
     builder.Services.AddHttpClient<ICareerServiceClient, CareerServiceClient>(client =>
     {
         var careerServiceUrl = builder.Configuration["ExternalServices:CareerService:BaseUrl"];
-        var timeoutSeconds = int.TryParse(builder.Configuration["ExternalServices:CareerService:TimeoutSeconds"], out var timeout) ? timeout : 30;
+        var timeoutSeconds = int.TryParse(builder.Configuration["ExternalServices:CareerService:TimeoutInSeconds"], out var timeout) ? timeout : 180;
 
         if (string.IsNullOrEmpty(careerServiceUrl))
         {
@@ -450,7 +450,7 @@ try
     builder.Services.AddHttpClient<IUploadServiceClient, UploadServiceClient>(client =>
     {
         var uploadServiceUrl = builder.Configuration["ExternalServices:UploadService:BaseUrl"];
-        var timeoutSeconds = int.TryParse(builder.Configuration["ExternalServices:UploadService:TimeoutSeconds"], out var uploadTimeout) ? uploadTimeout : 300;
+        var timeoutSeconds = int.TryParse(builder.Configuration["ExternalServices:UploadService:TimeoutInSeconds"], out var uploadTimeout) ? uploadTimeout : 180;
 
         if (string.IsNullOrEmpty(uploadServiceUrl))
         {
