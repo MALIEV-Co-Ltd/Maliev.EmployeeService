@@ -27,18 +27,14 @@ RUN dotnet publish "Maliev.EmployeeService.Api.csproj" -c Release -o /app/publis
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 dotnetuser && \
-    adduser --system --uid 1001 --ingroup dotnetuser dotnetuser
-
-# Copy published application
-COPY --from=publish /app/publish .
-
-# Change ownership to non-root user
-RUN chown -R dotnetuser:dotnetuser /app
+# Ensure 'app' owns the workdir (app user already exists in ASP.NET runtime image)
+RUN chown -R app:app /app
 
 # Switch to non-root user
-USER dotnetuser
+USER app
+
+# Copy published application (now owned by app)
+COPY --from=publish /app/publish .
 
 # Expose port
 EXPOSE 8080
