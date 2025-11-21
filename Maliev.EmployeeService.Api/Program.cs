@@ -136,23 +136,15 @@ try
     });
 
     // Redis Distributed Cache (Phase 16 - T385)
-    var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
-    var redisEnabled = bool.TryParse(builder.Configuration["Redis:Enabled"], out var isRedisEnabled) ? isRedisEnabled : true;
+    var redisConnectionString = builder.Configuration["Redis__Host"] ?? builder.Configuration["Redis:ConnectionString"];
+    var redisEnabled = bool.TryParse(builder.Configuration["Redis__Enabled"] ?? builder.Configuration["Redis:Enabled"], out var isRedisEnabled) ? isRedisEnabled : true;
 
     if (redisEnabled && !builder.Environment.IsEnvironment("Testing"))
     {
         if (string.IsNullOrEmpty(redisConnectionString))
         {
-            if (builder.Environment.IsDevelopment())
-            {
-                redisConnectionString = "localhost:6379";
-                Log.Warning("Using development Redis connection string: {RedisConnectionString}", redisConnectionString);
-            }
-            else
-            {
-                Log.Warning("REDIS_CONNECTION_STRING not found. Falling back to in-memory cache.");
-                redisEnabled = false;
-            }
+            Log.Warning("Redis connection string not configured (Redis__Host or Redis:ConnectionString) - Redis disabled");
+            redisEnabled = false;
         }
 
         if (redisEnabled)
