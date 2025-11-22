@@ -39,7 +39,7 @@ public class RabbitMQHealthCheck : IHealthCheck
             var probeResult = _busControl.GetProbeResult();
 
             // Check if we can read the probe result
-            using var reader = new System.IO.StringReader(probeResult.ToString());
+            using var reader = new System.IO.StringReader(probeResult.ToString()!);
             var resultText = await reader.ReadToEndAsync(cancellationToken);
 
             // Simple check: if the result contains error indicators, mark as unhealthy
