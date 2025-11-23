@@ -1,13 +1,46 @@
+# Multi-stage Docker build for Maliev.EmployeeService.Api
+# Based on MALIEV Co. Ltd. standard .NET 10 microservice template
+
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy project files and nuget.config (exclude Tests - filtered by .dockerignore)
+COPY nuget.config ./
+COPY Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj Maliev.EmployeeService.Api/
+COPY Maliev.EmployeeService.Data/Maliev.EmployeeService.Data.csproj Maliev.EmployeeService.Data/
+
+# Restore dependencies with private NuGet feed credentials
+RUN --mount=type=secret,id=nuget_username \
+    --mount=type=secret,id=nuget_password \
+    NUGET_USERNAME=$(cat /run/secrets/nuget_username) \
+    NUGET_PASSWORD=$(cat /run/secrets/nuget_password) \
+    dotnet restore Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj
+
+# Copy all source code
+COPY . .
+
+# Build and publish
+WORKDIR /src/Maliev.EmployeeService.Api
+RUN dotnet publish -c Release -o /app/publish --no-restore /p:UseAppHost=false
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Ensure 'app' user owns the workdir (app user already exists in ASP.NET runtime image)
+RUN chown -R app:app /app
+
 # Switch to non-root user
 USER app
 
 # Copy published application (now owned by app)
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 
 # Expose port
 EXPOSE 8080
 
-# Set environment variables
+# Set ASP.NET Core environment
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
@@ -15,5 +48,5 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8080/employees/liveness || exit 1
 
-# Start the application
+# Entry point
 ENTRYPOINT ["dotnet", "Maliev.EmployeeService.Api.dll"]
