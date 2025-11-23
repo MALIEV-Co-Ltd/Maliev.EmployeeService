@@ -1,35 +1,3 @@
-# Multi-stage build for Employee Service
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
-
-# Copy solution and project files
-COPY ["Maliev.EmployeeService.sln", "./"]
-COPY ["Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj", "Maliev.EmployeeService.Api/"]
-COPY ["Maliev.EmployeeService.Application/Maliev.EmployeeService.Application.csproj", "Maliev.EmployeeService.Application/"]
-COPY ["Maliev.EmployeeService.Domain/Maliev.EmployeeService.Domain.csproj", "Maliev.EmployeeService.Domain/"]
-COPY ["Maliev.EmployeeService.Infrastructure/Maliev.EmployeeService.Infrastructure.csproj", "Maliev.EmployeeService.Infrastructure/"]
-
-# Restore dependencies
-RUN dotnet restore "Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj"
-
-# Copy all source files
-COPY . .
-
-# Build the application
-WORKDIR "/src/Maliev.EmployeeService.Api"
-RUN dotnet build "Maliev.EmployeeService.Api.csproj" -c Release -o /app/build
-
-# Publish the application
-FROM build AS publish
-RUN dotnet publish "Maliev.EmployeeService.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-# Final stage - runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-WORKDIR /app
-
-# Ensure 'app' owns the workdir (app user already exists in ASP.NET runtime image)
-RUN chown -R app:app /app
-
 # Switch to non-root user
 USER app
 

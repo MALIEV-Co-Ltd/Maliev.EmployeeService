@@ -136,8 +136,8 @@ try
     });
 
     // Redis Distributed Cache (Phase 16 - T385)
-    var redisConnectionString = builder.Configuration["Redis__Host"] ?? builder.Configuration["Redis:ConnectionString"];
-    var redisEnabled = bool.TryParse(builder.Configuration["Redis__Enabled"] ?? builder.Configuration["Redis:Enabled"], out var isRedisEnabled) ? isRedisEnabled : true;
+    var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
+    var redisEnabled = bool.TryParse(builder.Configuration["Redis:Enabled"], out var isRedisEnabled) && isRedisEnabled;
 
     if (redisEnabled && !builder.Environment.IsEnvironment("Testing"))
     {
@@ -414,29 +414,7 @@ try
         client.BaseAddress = new Uri(careerServiceUrl);
         client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
     })
-    .AddStandardResilienceHandler(options =>
-    {
-        // Retry policy: 3 retries with exponential backoff
-        options.Retry.MaxRetryAttempts = 3;
-        options.Retry.Delay = TimeSpan.FromSeconds(1);
-        options.Retry.BackoffType = Polly.DelayBackoffType.Exponential;
-        options.Retry.UseJitter = true;
-        options.Retry.OnRetry = args =>
-        {
-            Log.Warning(
-                "Career Service retry {RetryCount} after {Delay}s due to: {Exception}",
-                args.AttemptNumber,
-                args.RetryDelay.TotalSeconds,
-                args.Outcome.Exception?.Message ?? "HTTP error");
-            return ValueTask.CompletedTask;
-        };
-
-        // Circuit breaker: opens after 5 consecutive failures, breaks for 30 seconds
-        options.CircuitBreaker.FailureRatio = 1.0;
-        options.CircuitBreaker.MinimumThroughput = 5;
-        options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
-        options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(60);
-    });
+    .AddStandardResilienceHandler();
 
     // Upload Service Configuration (User Story 9 - Document Management)
     builder.Services.AddHttpClient<IUploadServiceClient, UploadServiceClient>(client =>
@@ -461,7 +439,8 @@ try
 
         client.BaseAddress = new Uri(uploadServiceUrl);
         client.Timeout = TimeSpan.FromSeconds(timeoutSeconds); // Configured timeout for file uploads
-    });
+    })
+    .AddStandardResilienceHandler();
 
     Log.Information("Upload Service configured");
 
@@ -710,13 +689,17 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        app.MapScalarApiReference(options =>
+        app.MapScalarApiReference("/employees/scalar/v1", options =>
         {
             options
                 .WithTitle("Employee Service API")
                 .WithTheme(ScalarTheme.Purple)
                 .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
         });
+
+        // Redirect root to Scalar
+        app.MapGet("/", () => Results.Redirect("/employees/scalar/v1")).ExcludeFromDescription();
+        app.MapGet("/employees", () => Results.Redirect("/employees/scalar/v1")).ExcludeFromDescription();
     }
 
     app.UseHttpsRedirection();
