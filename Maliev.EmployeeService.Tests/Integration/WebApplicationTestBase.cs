@@ -1,9 +1,15 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text.Encodings.Web;
 using Maliev.EmployeeService.Api;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Maliev.EmployeeService.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -11,6 +17,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Xunit;
@@ -32,8 +41,9 @@ public abstract class WebApplicationTestBase : IClassFixture<CustomWebApplicatio
         _factory = factory;
         _client = factory.CreateClient();
 
-        // Set default authorization header for tests (optional - can be removed per test)
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "test-token");
+        // Set default authorization header with a valid test JWT token
+        var token = factory.CreateTestJwtToken();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     public virtual Task InitializeAsync() => Task.CompletedTask;
@@ -99,6 +109,15 @@ public abstract class WebApplicationTestBase : IClassFixture<CustomWebApplicatio
 
         return employee;
     }
+    protected void AuthenticateAs(Guid employeeId, string[]? roles = null)
+    {
+        var additionalClaims = new Dictionary<string, string>
+        {
+            { "employee_id", employeeId.ToString() }
+        };
+        var token = _factory.CreateTestJwtToken(employeeId.ToString(), roles, additionalClaims);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
 }
 
 /// <summary>
@@ -112,6 +131,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     // This ensures test data persists across HTTP requests
     private readonly string _databaseName = $"TestDb_{Guid.NewGuid()}";
 
+    // RSA key for test JWT tokens
+    private readonly RSA _testRsa;
+    private const string TestIssuer = "test-issuer";
+    private const string TestAudience = "test-audience";
+
+    public CustomWebApplicationFactory()
+    {
+        // Generate ephemeral RSA key for test JWT tokens
+        _testRsa = RSA.Create(2048);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((context, config) =>
@@ -121,7 +151,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             {
                 { "RABBITMQ_ENABLED", "false" }, // Disable RabbitMQ for tests
                 { "ASPNETCORE_ENVIRONMENT", "Testing" },
-                { "ConnectionStrings:EmployeeServiceDb", "Host=localhost;Database=test" } // Dummy connection string
+                { "ConnectionStrings:EmployeeServiceDb", "Host=localhost;Database=test" }, // Dummy connection string
+                { "Jwt:Issuer", TestIssuer },
+                { "Jwt:Audience", TestAudience },
+                { "Jwt:PublicKey", "dummy-key-will-be-replaced-by-test-rsa" }
                 // ENCRYPTION_KEY not provided - will use built-in development fallback
             });
         });
@@ -146,8 +179,80 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 options.ConfigureWarnings(warnings =>
                     warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning));
             });
+
+            // PostConfigure JWT Bearer options to use our test RSA key
+            // This works because we enabled AddJwtAuthentication() in Program.cs for Testing environment
+            services.PostConfigureAll<JwtBearerOptions>(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = TestIssuer,
+                    ValidAudience = TestAudience,
+                    IssuerSigningKey = new RsaSecurityKey(_testRsa),
+                    ClockSkew = TimeSpan.Zero // No clock skew for tests
+                };
+            });
         });
 
         builder.UseEnvironment("Testing");
+    }
+
+    /// <summary>
+    /// Creates a test JWT token with specified claims for integration testing.
+    /// </summary>
+    /// <param name="userId">User ID claim</param>
+    /// <param name="roles">User roles</param>
+    /// <param name="additionalClaims">Additional claims to include</param>
+    /// <returns>JWT token string</returns>
+    public string CreateTestJwtToken(string userId = "test-user", string[]? roles = null, Dictionary<string, string>? additionalClaims = null)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId),
+            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        // Add roles - include all roles needed for test access
+        roles ??= new[] { "Employee", "HRSpecialist", "HRGeneralist", "SystemAdministrator" };
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        // Add additional claims
+        if (additionalClaims != null)
+        {
+            foreach (var (key, value) in additionalClaims)
+            {
+                claims.Add(new Claim(key, value));
+            }
+        }
+
+        var credentials = new SigningCredentials(
+            new RsaSecurityKey(_testRsa),
+            SecurityAlgorithms.RsaSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: TestIssuer,
+            audience: TestAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _testRsa.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

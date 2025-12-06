@@ -17,7 +17,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/training")]
+[Route("employees/v{version:apiVersion}/training")]
 [Authorize]
 public class TrainingController : ControllerBase
 {
@@ -29,6 +29,9 @@ public class TrainingController : ControllerBase
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<TrainingController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TrainingController"/> class
+    /// </summary>
     public TrainingController(
         GetTrainingRecordsQueryHandler getTrainingRecordsHandler,
         GetTrainingComplianceReportQueryHandler getComplianceReportHandler,

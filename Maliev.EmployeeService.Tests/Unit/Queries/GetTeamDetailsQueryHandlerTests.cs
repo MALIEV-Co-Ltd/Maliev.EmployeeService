@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -38,7 +37,7 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
         _mockTeamRepository.Verify(x => x.GetWithMembersAsync(teamId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -68,15 +67,15 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(teamId);
-        result.Name.Should().Be("Engineering Team");
-        result.Description.Should().Be("Backend engineering team");
-        result.TeamType.Should().Be("Engineering");
-        result.TeamLeadId.Should().BeNull();
-        result.TeamLeadName.Should().BeNull();
-        result.IsActive.Should().BeTrue();
-        result.Members.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Equal(teamId, result!.Id);
+        Assert.Equal("Engineering Team", result.Name);
+        Assert.Equal("Backend engineering team", result.Description);
+        Assert.Equal("Engineering", result.TeamType);
+        Assert.Null(result.TeamLeadId);
+        Assert.Null(result.TeamLeadName);
+        Assert.True(result.IsActive);
+        Assert.Empty(result.Members);
     }
 
     [Fact]
@@ -126,9 +125,9 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.TeamLeadId.Should().Be(teamLeadId);
-        result.TeamLeadName.Should().Be("John Doe");
+        Assert.NotNull(result);
+        Assert.Equal(teamLeadId, result!.TeamLeadId);
+        Assert.Equal("John Doe", result.TeamLeadName);
     }
 
     [Fact]
@@ -229,24 +228,24 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Members.Should().HaveCount(2);
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.Members.Count);
 
         var member1Dto = result.Members.First(m => m.EmployeeId == member1Id);
-        member1Dto.EmployeeNumber.Should().Be("EMP001");
-        member1Dto.FullName.Should().Be("Jane Smith");
-        member1Dto.JobTitle.Should().Be("Senior Developer");
-        member1Dto.DepartmentName.Should().Be("Engineering Department");
-        member1Dto.IsPrimary.Should().BeTrue();
-        member1Dto.WorkEmail.Should().Be("jane.smith@company.com");
+        Assert.Equal("EMP001", member1Dto.EmployeeNumber);
+        Assert.Equal("Jane Smith", member1Dto.FullName);
+        Assert.Equal("Senior Developer", member1Dto.JobTitle);
+        Assert.Equal("Engineering Department", member1Dto.DepartmentName);
+        Assert.True(member1Dto.IsPrimary);
+        Assert.Equal("jane.smith@company.com", member1Dto.WorkEmail);
 
         var member2Dto = result.Members.First(m => m.EmployeeId == member2Id);
-        member2Dto.EmployeeNumber.Should().Be("EMP002");
-        member2Dto.FullName.Should().Be("Bob Johnson");
-        member2Dto.JobTitle.Should().Be("Developer");
-        member2Dto.DepartmentName.Should().Be("Engineering Department");
-        member2Dto.IsPrimary.Should().BeFalse();
-        member2Dto.WorkEmail.Should().Be("bob.johnson@company.com");
+        Assert.Equal("EMP002", member2Dto.EmployeeNumber);
+        Assert.Equal("Bob Johnson", member2Dto.FullName);
+        Assert.Equal("Developer", member2Dto.JobTitle);
+        Assert.Equal("Engineering Department", member2Dto.DepartmentName);
+        Assert.False(member2Dto.IsPrimary);
+        Assert.Equal("bob.johnson@company.com", member2Dto.WorkEmail);
     }
 
     [Fact]
@@ -275,9 +274,9 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.IsActive.Should().BeFalse();
-        result.ModifiedDate.Should().NotBeNull();
+        Assert.NotNull(result);
+        Assert.False(result!.IsActive);
+        Assert.NotNull(result.ModifiedDate);
     }
 
     [Fact]
@@ -336,9 +335,9 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Members.Should().HaveCount(1);
-        result.Members[0].DepartmentName.Should().BeNull();
+        Assert.NotNull(result);
+        Assert.Single(result!.Members);
+        Assert.Null(result.Members[0].DepartmentName);
     }
 
     [Fact]
@@ -410,8 +409,8 @@ public class GetTeamDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Members.Should().HaveCount(2);
-        result.Members.Should().AllSatisfy(m => m.IsPrimary.Should().BeTrue());
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.Members.Count);
+        Assert.All(result.Members, m => Assert.True(m.IsPrimary));
     }
 }

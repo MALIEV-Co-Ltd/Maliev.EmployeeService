@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -125,42 +124,42 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.TotalHeadcount.Should().Be(5);
-        result.AsOfDate.Should().Be(asOfDate);
+        Assert.NotNull(result);
+        Assert.Equal(5, result.TotalHeadcount);
+        Assert.Equal(asOfDate, result.AsOfDate);
 
         // Department breakdown
-        result.ByDepartment.Should().HaveCount(2);
+        Assert.Equal(2, result.ByDepartment.Count());
 
         var engineeringDept = result.ByDepartment.First(d => d.DepartmentName == "Engineering");
-        engineeringDept.Headcount.Should().Be(3);
-        engineeringDept.ManagerCount.Should().Be(1);
-        engineeringDept.IndividualContributorCount.Should().Be(2);
+        Assert.Equal(3, engineeringDept.Headcount);
+        Assert.Equal(1, engineeringDept.ManagerCount);
+        Assert.Equal(2, engineeringDept.IndividualContributorCount);
 
         var salesDept = result.ByDepartment.First(d => d.DepartmentName == "Sales");
-        salesDept.Headcount.Should().Be(2);
-        salesDept.ManagerCount.Should().Be(1);
-        salesDept.IndividualContributorCount.Should().Be(1);
+        Assert.Equal(2, salesDept.Headcount);
+        Assert.Equal(1, salesDept.ManagerCount);
+        Assert.Equal(1, salesDept.IndividualContributorCount);
 
         // Employment type breakdown
-        result.ByEmploymentType.Should().ContainKey("FullTime");
-        result.ByEmploymentType["FullTime"].Should().Be(3);
-        result.ByEmploymentType.Should().ContainKey("Contractor");
-        result.ByEmploymentType["Contractor"].Should().Be(1);
-        result.ByEmploymentType.Should().ContainKey("PartTime");
-        result.ByEmploymentType["PartTime"].Should().Be(1);
+        Assert.True(result.ByEmploymentType.ContainsKey("FullTime"));
+        Assert.Equal(3, result.ByEmploymentType["FullTime"]);
+        Assert.True(result.ByEmploymentType.ContainsKey("Contractor"));
+        Assert.Equal(1, result.ByEmploymentType["Contractor"]);
+        Assert.True(result.ByEmploymentType.ContainsKey("PartTime"));
+        Assert.Equal(1, result.ByEmploymentType["PartTime"]);
 
         // Tenure band breakdown
-        result.ByTenureBand.Should().ContainKey("0-1 years");
-        result.ByTenureBand["0-1 years"].Should().Be(1); // EMP003 (6 months)
-        result.ByTenureBand.Should().ContainKey("1-2 years");
-        result.ByTenureBand["1-2 years"].Should().Be(1); // EMP005 (1.5 years)
-        result.ByTenureBand.Should().ContainKey("2-3 years");
-        result.ByTenureBand["2-3 years"].Should().Be(1); // EMP002 (2 years)
-        result.ByTenureBand.Should().ContainKey("5-10 years");
-        result.ByTenureBand["5-10 years"].Should().Be(1); // EMP001 (7 years)
-        result.ByTenureBand.Should().ContainKey("10+ years");
-        result.ByTenureBand["10+ years"].Should().Be(1); // EMP004 (12 years)
+        Assert.True(result.ByTenureBand.ContainsKey("0-1 years"));
+        Assert.Equal(1, result.ByTenureBand["0-1 years"]); // EMP003 (6 months)
+        Assert.True(result.ByTenureBand.ContainsKey("1-2 years"));
+        Assert.Equal(1, result.ByTenureBand["1-2 years"]); // EMP005 (1.5 years)
+        Assert.True(result.ByTenureBand.ContainsKey("2-3 years"));
+        Assert.Equal(1, result.ByTenureBand["2-3 years"]); // EMP002 (2 years)
+        Assert.True(result.ByTenureBand.ContainsKey("5-10 years"));
+        Assert.Equal(1, result.ByTenureBand["5-10 years"]); // EMP001 (7 years)
+        Assert.True(result.ByTenureBand.ContainsKey("10+ years"));
+        Assert.Equal(1, result.ByTenureBand["10+ years"]); // EMP004 (12 years)
     }
 
     [Fact]
@@ -237,10 +236,10 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalHeadcount.Should().Be(2); // Only Engineering employees
-        result.ByDepartment.Should().HaveCount(1);
-        result.ByDepartment[0].DepartmentName.Should().Be("Engineering");
-        result.ByDepartment[0].Headcount.Should().Be(2);
+        Assert.Equal(2, result.TotalHeadcount); // Only Engineering employees
+        Assert.Single(result.ByDepartment);
+        Assert.Equal("Engineering", result.ByDepartment[0].DepartmentName);
+        Assert.Equal(2, result.ByDepartment[0].Headcount);
     }
 
     [Fact]
@@ -335,7 +334,7 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalHeadcount.Should().Be(2); // Only EMP001 and EMP005
+        Assert.Equal(2, result.TotalHeadcount); // Only EMP001 and EMP005
     }
 
     [Fact]
@@ -439,13 +438,13 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.ByTenureBand.Should().HaveCount(6);
-        result.ByTenureBand["0-1 years"].Should().Be(1);
-        result.ByTenureBand["1-2 years"].Should().Be(1);
-        result.ByTenureBand["2-3 years"].Should().Be(1);
-        result.ByTenureBand["3-5 years"].Should().Be(1);
-        result.ByTenureBand["5-10 years"].Should().Be(1);
-        result.ByTenureBand["10+ years"].Should().Be(1);
+        Assert.Equal(6, result.ByTenureBand.Count());
+        Assert.Equal(1, result.ByTenureBand["0-1 years"]);
+        Assert.Equal(1, result.ByTenureBand["1-2 years"]);
+        Assert.Equal(1, result.ByTenureBand["2-3 years"]);
+        Assert.Equal(1, result.ByTenureBand["3-5 years"]);
+        Assert.Equal(1, result.ByTenureBand["5-10 years"]);
+        Assert.Equal(1, result.ByTenureBand["10+ years"]);
     }
 
     [Fact]
@@ -464,10 +463,10 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalHeadcount.Should().Be(0);
-        result.ByDepartment.Should().BeEmpty();
-        result.ByEmploymentType.Should().BeEmpty();
-        result.ByTenureBand.Should().BeEmpty();
+        Assert.Equal(0, result.TotalHeadcount);
+        Assert.Empty(result.ByDepartment);
+        Assert.Empty(result.ByEmploymentType);
+        Assert.Empty(result.ByTenureBand);
     }
 
     [Fact]
@@ -532,7 +531,7 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalHeadcount.Should().Be(1); // Only Active employee
+        Assert.Equal(1, result.TotalHeadcount); // Only Active employee
     }
 
     [Fact]
@@ -586,10 +585,10 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalHeadcount.Should().Be(2);
-        result.ByDepartment.Should().HaveCount(1); // Only employees with departments
-        result.ByDepartment[0].DepartmentName.Should().Be("Engineering");
-        result.ByDepartment[0].Headcount.Should().Be(1);
+        Assert.Equal(2, result.TotalHeadcount);
+        Assert.Single(result.ByDepartment); // Only employees with departments
+        Assert.Equal("Engineering", result.ByDepartment[0].DepartmentName);
+        Assert.Equal(1, result.ByDepartment[0].Headcount);
     }
 
     [Fact]
@@ -675,9 +674,9 @@ public class GetHeadcountReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.ByDepartment[0].DepartmentName.Should().Be("Engineering");
-        result.ByDepartment[0].Headcount.Should().Be(3);
-        result.ByDepartment[1].DepartmentName.Should().Be("Legal");
-        result.ByDepartment[1].Headcount.Should().Be(1);
+        Assert.Equal("Engineering", result.ByDepartment[0].DepartmentName);
+        Assert.Equal(3, result.ByDepartment[0].Headcount);
+        Assert.Equal("Legal", result.ByDepartment[1].DepartmentName);
+        Assert.Equal(1, result.ByDepartment[1].Headcount);
     }
 }

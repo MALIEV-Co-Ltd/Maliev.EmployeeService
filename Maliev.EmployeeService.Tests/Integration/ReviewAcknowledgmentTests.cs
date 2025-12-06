@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -87,17 +86,17 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
 
         // Verify in database
         var updatedReview = await performanceReviewRepository.GetByIdAsync(reviewId);
-        updatedReview.Should().NotBeNull();
-        updatedReview!.AcknowledgedDate.Should().NotBeNull();
-        updatedReview.AcknowledgedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        updatedReview.Status.Should().Be("Acknowledged");
-        updatedReview.ModifiedBy.Should().Be(employeeId);
-        updatedReview.ModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Assert.NotNull(updatedReview);
+        Assert.NotNull(updatedReview!.AcknowledgedDate);
+        Assert.True(Math.Abs((updatedReview.AcknowledgedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
+        Assert.Equal("Acknowledged", updatedReview.Status);
+        Assert.Equal(employeeId, updatedReview.ModifiedBy);
+        Assert.True(Math.Abs((updatedReview.ModifiedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
     }
 
     [Fact]
@@ -123,8 +122,8 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("not found");
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.ErrorMessage);
     }
 
     [Fact]
@@ -198,13 +197,13 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("You can only acknowledge your own performance reviews");
+        Assert.False(result.Success);
+        Assert.Contains("You can only acknowledge your own performance reviews", result.ErrorMessage);
 
         // Verify review was not modified
         var unchangedReview = await performanceReviewRepository.GetByIdAsync(reviewId);
-        unchangedReview!.AcknowledgedDate.Should().BeNull();
-        unchangedReview.Status.Should().Be("Submitted");
+        Assert.Null(unchangedReview!.AcknowledgedDate);
+        Assert.Equal("Submitted", unchangedReview.Status);
     }
 
     [Fact]
@@ -278,12 +277,12 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("already acknowledged");
+        Assert.False(result.Success);
+        Assert.Contains("already acknowledged", result.ErrorMessage);
 
         // Verify acknowledgment date was not changed
         var unchangedReview = await performanceReviewRepository.GetByIdAsync(reviewId);
-        unchangedReview!.AcknowledgedDate.Should().BeCloseTo(originalAcknowledgedDate, TimeSpan.FromMilliseconds(1));
+        Assert.True(Math.Abs((unchangedReview!.AcknowledgedDate!.Value - originalAcknowledgedDate).TotalMilliseconds) <= 1);
     }
 
     [Fact]
@@ -353,8 +352,8 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("draft performance review");
+        Assert.False(result.Success);
+        Assert.Contains("draft performance review", result.ErrorMessage);
     }
 
     [Fact]
@@ -458,18 +457,18 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var result2 = await handler.HandleAsync(command2);
 
         // Assert
-        result1.Success.Should().BeTrue();
-        result2.Success.Should().BeFalse();
-        result2.ErrorMessage.Should().Contain("You can only acknowledge your own performance reviews");
+        Assert.True(result1.Success);
+        Assert.False(result2.Success);
+        Assert.Contains("You can only acknowledge your own performance reviews", result2.ErrorMessage);
 
         // Verify only review1 was acknowledged
         var updatedReview1 = await performanceReviewRepository.GetByIdAsync(review1Id);
         var updatedReview2 = await performanceReviewRepository.GetByIdAsync(review2Id);
 
-        updatedReview1!.AcknowledgedDate.Should().NotBeNull();
-        updatedReview1.Status.Should().Be("Acknowledged");
+        Assert.NotNull(updatedReview1!.AcknowledgedDate);
+        Assert.Equal("Acknowledged", updatedReview1.Status);
 
-        updatedReview2!.AcknowledgedDate.Should().BeNull();
-        updatedReview2.Status.Should().Be("Submitted");
+        Assert.Null(updatedReview2!.AcknowledgedDate);
+        Assert.Equal("Submitted", updatedReview2.Status);
     }
 }

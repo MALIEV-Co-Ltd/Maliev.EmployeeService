@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -62,21 +61,21 @@ public class GetTeamQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TeamMembers.Should().HaveCount(5); // First page of 5
-        result.TotalCount.Should().Be(10);
-        result.PageNumber.Should().Be(1);
-        result.PageSize.Should().Be(5);
-        result.TotalPages.Should().Be(2);
+        Assert.Equal(5, result.TeamMembers.Count()); // First page of 5
+        Assert.Equal(10, result.TotalCount);
+        Assert.Equal(1, result.PageNumber);
+        Assert.Equal(5, result.PageSize);
+        Assert.Equal(2, result.TotalPages);
 
         // Verify first employee
         var firstMember = result.TeamMembers.First();
-        firstMember.EmployeeNumber.Should().Be("EMP001");
-        firstMember.FullName.Should().Be("FirstName1 LastName1");
-        firstMember.PreferredName.Should().Be("Preferred1");
-        firstMember.JobTitle.Should().Be("Developer 1");
-        firstMember.DepartmentName.Should().Be("Engineering");
-        firstMember.EmploymentStatus.Should().Be(EmploymentStatus.Active);
-        firstMember.DirectReportsCount.Should().Be(0);
+        Assert.Equal("EMP001", firstMember.EmployeeNumber);
+        Assert.Equal("FirstName1 LastName1", firstMember.FullName);
+        Assert.Equal("Preferred1", firstMember.PreferredName);
+        Assert.Equal("Developer 1", firstMember.JobTitle);
+        Assert.Equal("Engineering", firstMember.DepartmentName);
+        Assert.Equal(EmploymentStatus.Active, firstMember.EmploymentStatus);
+        Assert.Equal(0, firstMember.DirectReportsCount);
     }
 
     [Fact]
@@ -110,13 +109,13 @@ public class GetTeamQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TeamMembers.Should().HaveCount(5); // Second page of 5
-        result.PageNumber.Should().Be(2);
-        result.TotalPages.Should().Be(2);
+        Assert.Equal(5, result.TeamMembers.Count()); // Second page of 5
+        Assert.Equal(2, result.PageNumber);
+        Assert.Equal(2, result.TotalPages);
 
         // Verify it returns employees 6-10
-        result.TeamMembers.First().EmployeeNumber.Should().Be("EMP006");
-        result.TeamMembers.Last().EmployeeNumber.Should().Be("EMP010");
+        Assert.Equal("EMP006", result.TeamMembers.First().EmployeeNumber);
+        Assert.Equal("EMP010", result.TeamMembers.Last().EmployeeNumber);
     }
 
     [Fact]
@@ -134,9 +133,9 @@ public class GetTeamQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TeamMembers.Should().BeEmpty();
-        result.TotalCount.Should().Be(0);
-        result.TotalPages.Should().Be(0);
+        Assert.Empty(result.TeamMembers);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.TotalPages);
     }
 
     [Fact]
@@ -181,8 +180,8 @@ public class GetTeamQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TeamMembers.Should().HaveCount(1);
-        result.TeamMembers.First().DirectReportsCount.Should().Be(3);
+        Assert.Single(result.TeamMembers);
+        Assert.Equal(3, result.TeamMembers.First().DirectReportsCount);
     }
 
     [Fact]
@@ -216,9 +215,9 @@ public class GetTeamQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TeamMembers.Should().HaveCount(2); // Last page has only 2 items
-        result.TotalCount.Should().Be(7);
-        result.TotalPages.Should().Be(2);
+        Assert.Equal(2, result.TeamMembers.Count()); // Last page has only 2 items
+        Assert.Equal(7, result.TotalCount);
+        Assert.Equal(2, result.TotalPages);
     }
 
     [Fact]
@@ -252,8 +251,8 @@ public class GetTeamQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TeamMembers.Should().HaveCount(20); // Default page size
-        result.PageSize.Should().Be(20);
-        result.TotalPages.Should().Be(2);
+        Assert.Equal(20, result.TeamMembers.Count()); // Default page size
+        Assert.Equal(20, result.PageSize);
+        Assert.Equal(2, result.TotalPages);
     }
 }

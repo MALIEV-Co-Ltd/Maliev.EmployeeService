@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
 using Xunit;
@@ -36,9 +35,9 @@ public class EncryptionServiceTests
         var encrypted = _encryptionService.Encrypt(salary);
 
         // Assert
-        encrypted.Should().NotBeNullOrEmpty();
-        encrypted.Should().NotBe(salary);
-        _encryptionService.IsEncrypted(encrypted).Should().BeTrue();
+        Assert.False(string.IsNullOrEmpty(encrypted));
+        Assert.NotEqual(salary, encrypted);
+        Assert.True(_encryptionService.IsEncrypted(encrypted));
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        decrypted.Should().Be(originalSalary);
+        Assert.Equal(originalSalary, decrypted);
     }
 
     [Fact]
@@ -66,7 +65,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        decrypted.Should().Be(largeSalary);
+        Assert.Equal(largeSalary, decrypted);
     }
 
     [Theory]
@@ -81,7 +80,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        decrypted.Should().Be(salary);
+        Assert.Equal(salary, decrypted);
     }
 
     [Fact]
@@ -95,11 +94,11 @@ public class EncryptionServiceTests
         var encrypted2 = _encryptionService.Encrypt(salary);
 
         // Assert - Different IV ensures different ciphertext
-        encrypted1.Should().NotBe(encrypted2);
+        Assert.NotEqual(encrypted2, encrypted1);
 
         // But both should decrypt to the same value
-        _encryptionService.Decrypt(encrypted1).Should().Be(salary);
-        _encryptionService.Decrypt(encrypted2).Should().Be(salary);
+        Assert.Equal(salary, _encryptionService.Decrypt(encrypted1));
+        Assert.Equal(salary, _encryptionService.Decrypt(encrypted2));
     }
 
     [Fact]
@@ -112,7 +111,7 @@ public class EncryptionServiceTests
         var encrypted = _encryptionService.Encrypt(emptyString);
 
         // Assert
-        encrypted.Should().Be(emptyString);
+        Assert.Equal(emptyString, encrypted);
     }
 
     [Fact]
@@ -125,7 +124,7 @@ public class EncryptionServiceTests
         var encrypted = _encryptionService.Encrypt(nullValue!);
 
         // Assert
-        encrypted.Should().BeNull();
+        Assert.Null(encrypted);
     }
 
     [Fact]
@@ -138,7 +137,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(emptyString);
 
         // Assert
-        decrypted.Should().Be(emptyString);
+        Assert.Equal(emptyString, decrypted);
     }
 
     [Fact]
@@ -151,7 +150,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(plainText);
 
         // Assert - Should return as-is since it's not encrypted
-        decrypted.Should().Be(plainText);
+        Assert.Equal(plainText, decrypted);
     }
 
     [Fact]
@@ -165,7 +164,7 @@ public class EncryptionServiceTests
         var isEncrypted = _encryptionService.IsEncrypted(encrypted);
 
         // Assert
-        isEncrypted.Should().BeTrue();
+        Assert.True(isEncrypted);
     }
 
     [Fact]
@@ -178,7 +177,7 @@ public class EncryptionServiceTests
         var isEncrypted = _encryptionService.IsEncrypted(plainText);
 
         // Assert
-        isEncrypted.Should().BeFalse();
+        Assert.False(isEncrypted);
     }
 
     [Fact]
@@ -191,7 +190,7 @@ public class EncryptionServiceTests
         var isEncrypted = _encryptionService.IsEncrypted(emptyString);
 
         // Assert
-        isEncrypted.Should().BeFalse();
+        Assert.False(isEncrypted);
     }
 
     [Fact]
@@ -204,7 +203,7 @@ public class EncryptionServiceTests
         var isEncrypted = _encryptionService.IsEncrypted(nullValue!);
 
         // Assert
-        isEncrypted.Should().BeFalse();
+        Assert.False(isEncrypted);
     }
 
     [Fact]
@@ -217,10 +216,10 @@ public class EncryptionServiceTests
         var encrypted = _encryptionService.Encrypt(sensitiveData);
 
         // Assert
-        encrypted.Should().NotContain("123");
-        encrypted.Should().NotContain("45");
-        encrypted.Should().NotContain("6789");
-        encrypted.Should().NotContain("SSN");
+        Assert.DoesNotContain("123", encrypted);
+        Assert.DoesNotContain("45", encrypted);
+        Assert.DoesNotContain("6789", encrypted);
+        Assert.DoesNotContain("SSN", encrypted);
     }
 
     [Fact]
@@ -234,7 +233,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        decrypted.Should().Be(dataWithSpecialChars);
+        Assert.Equal(dataWithSpecialChars, decrypted);
     }
 
     [Fact]
@@ -248,7 +247,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        decrypted.Should().Be(unicodeData);
+        Assert.Equal(unicodeData, decrypted);
     }
 
     [Fact]
@@ -262,7 +261,7 @@ public class EncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        decrypted.Should().Be(longText);
-        decrypted.Length.Should().Be(5000);
+        Assert.Equal(longText, decrypted);
+        Assert.Equal(5000, decrypted.Length);
     }
 }

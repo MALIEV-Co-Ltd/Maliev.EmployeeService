@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -60,15 +59,15 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var createResult = await createHandler.HandleAsync(createCommand);
 
         // Assert goal created
-        createResult.Success.Should().BeTrue();
-        createResult.GoalId.Should().NotBeEmpty();
+        Assert.True(createResult.Success);
+        Assert.True(createResult.GoalId.HasValue && createResult.GoalId.Value != Guid.Empty);
 
         var goalId = createResult.GoalId!.Value;
         var createdGoal = await goalRepository.GetByIdAsync(goalId);
-        createdGoal.Should().NotBeNull();
-        createdGoal!.CompletionStatus.Should().Be(GoalStatus.NotStarted);
-        createdGoal.ProgressUpdates.Should().BeNullOrEmpty();
-        createdGoal.CompletedDate.Should().BeNull();
+        Assert.NotNull(createdGoal);
+        Assert.Equal(GoalStatus.NotStarted, createdGoal!.CompletionStatus);
+        Assert.True(createdGoal.ProgressUpdates == null || createdGoal.ProgressUpdates.Count() == 0);
+        Assert.Null(createdGoal.CompletedDate);
 
         // Step 2: Update progress - started working
         var updateHandler = new UpdateGoalProgressCommandHandler(
@@ -85,13 +84,13 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var updateResult1 = await updateHandler.HandleAsync(updateCommand1);
 
         // Assert first update
-        updateResult1.Success.Should().BeTrue();
+        Assert.True(updateResult1.Success);
 
         Context.ChangeTracker.Clear();
         var goalAfterUpdate1 = await goalRepository.GetByIdAsync(goalId);
-        goalAfterUpdate1!.CompletionStatus.Should().Be(GoalStatus.InProgress);
-        goalAfterUpdate1.ProgressUpdates.Should().Contain("Started studying AWS documentation");
-        goalAfterUpdate1.CompletedDate.Should().BeNull();
+        Assert.Equal(GoalStatus.InProgress, goalAfterUpdate1!.CompletionStatus);
+        Assert.Contains("Started studying AWS documentation", goalAfterUpdate1.ProgressUpdates);
+        Assert.Null(goalAfterUpdate1.CompletedDate);
 
         // Step 3: Another progress update
         var updateCommand2 = new UpdateGoalProgressCommand(
@@ -103,13 +102,13 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var updateResult2 = await updateHandler.HandleAsync(updateCommand2);
 
         // Assert second update
-        updateResult2.Success.Should().BeTrue();
+        Assert.True(updateResult2.Success);
 
         Context.ChangeTracker.Clear();
         var goalAfterUpdate2 = await goalRepository.GetByIdAsync(goalId);
-        goalAfterUpdate2!.ProgressUpdates.Should().Contain("Started studying AWS documentation");
-        goalAfterUpdate2.ProgressUpdates.Should().Contain("Completed 60% of training modules");
-        goalAfterUpdate2.CompletionStatus.Should().Be(GoalStatus.InProgress);
+        Assert.Contains("Started studying AWS documentation", goalAfterUpdate2!.ProgressUpdates);
+        Assert.Contains("Completed 60% of training modules", goalAfterUpdate2.ProgressUpdates);
+        Assert.Equal(GoalStatus.InProgress, goalAfterUpdate2.CompletionStatus);
 
         // Step 4: Final update - mark as completed
         var completeCommand = new UpdateGoalProgressCommand(
@@ -121,16 +120,16 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var completeResult = await updateHandler.HandleAsync(completeCommand);
 
         // Assert completion
-        completeResult.Success.Should().BeTrue();
+        Assert.True(completeResult.Success);
 
         Context.ChangeTracker.Clear();
         var completedGoal = await goalRepository.GetByIdAsync(goalId);
-        completedGoal!.CompletionStatus.Should().Be(GoalStatus.Completed);
-        completedGoal.CompletedDate.Should().NotBeNull();
-        completedGoal.CompletedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        completedGoal.ProgressUpdates.Should().Contain("Passed AWS certification exam with score of 89%");
-        completedGoal.ProgressUpdates.Should().Contain("Started studying AWS documentation");
-        completedGoal.ProgressUpdates.Should().Contain("Completed 60% of training modules");
+        Assert.Equal(GoalStatus.Completed, completedGoal!.CompletionStatus);
+        Assert.NotNull(completedGoal.CompletedDate);
+        Assert.True(Math.Abs((completedGoal.CompletedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
+        Assert.Contains("Passed AWS certification exam with score of 89%", completedGoal.ProgressUpdates);
+        Assert.Contains("Started studying AWS documentation", completedGoal.ProgressUpdates);
+        Assert.Contains("Completed 60% of training modules", completedGoal.ProgressUpdates);
     }
 
     [Fact]
@@ -203,11 +202,11 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var result = await createHandler.HandleAsync(createCommand);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         var createdGoal = await goalRepository.GetByIdAsync(result.GoalId!.Value);
-        createdGoal!.PerformanceReviewId.Should().Be(reviewId);
-        createdGoal.EmployeeId.Should().Be(employeeId);
+        Assert.Equal(reviewId, createdGoal!.PerformanceReviewId);
+        Assert.Equal(employeeId, createdGoal.EmployeeId);
     }
 
     [Fact]
@@ -296,21 +295,21 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var allGoals = await goalRepository.GetByEmployeeIdAsync(employeeId);
-        allGoals.Should().HaveCount(3);
+        Assert.Equal(3, allGoals.Count());
 
         var completedGoal = allGoals.First(g => g.Id == result1.GoalId!.Value);
-        completedGoal.CompletionStatus.Should().Be(GoalStatus.Completed);
-        completedGoal.CompletedDate.Should().NotBeNull();
+        Assert.Equal(GoalStatus.Completed, completedGoal.CompletionStatus);
+        Assert.NotNull(completedGoal.CompletedDate);
 
         var inProgressGoal = allGoals.First(g => g.Id == result2.GoalId!.Value);
-        inProgressGoal.CompletionStatus.Should().Be(GoalStatus.InProgress);
-        inProgressGoal.CompletedDate.Should().BeNull();
-        inProgressGoal.ProgressUpdates.Should().Contain("Conducted first mentoring session");
+        Assert.Equal(GoalStatus.InProgress, inProgressGoal.CompletionStatus);
+        Assert.Null(inProgressGoal.CompletedDate);
+        Assert.Contains("Conducted first mentoring session", inProgressGoal.ProgressUpdates);
 
         var notStartedGoal = allGoals.First(g => g.Id == result3.GoalId!.Value);
-        notStartedGoal.CompletionStatus.Should().Be(GoalStatus.NotStarted);
-        notStartedGoal.CompletedDate.Should().BeNull();
-        notStartedGoal.ProgressUpdates.Should().BeNullOrEmpty();
+        Assert.Equal(GoalStatus.NotStarted, notStartedGoal.CompletionStatus);
+        Assert.Null(notStartedGoal.CompletedDate);
+        Assert.True(notStartedGoal.ProgressUpdates == null || notStartedGoal.ProgressUpdates.Count() == 0);
     }
 
     [Fact]
@@ -368,7 +367,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
             "Goal cancelled due to project scope change");
 
         var cancelResult = await updateHandler.HandleAsync(cancelCommand);
-        cancelResult.Success.Should().BeTrue();
+        Assert.True(cancelResult.Success);
 
         // Act - Try to update cancelled goal
         var updateCommand = new UpdateGoalProgressCommand(
@@ -380,14 +379,14 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var updateResult = await updateHandler.HandleAsync(updateCommand);
 
         // Assert
-        updateResult.Success.Should().BeFalse();
-        updateResult.ErrorMessage.Should().Contain("Cannot update a cancelled goal");
+        Assert.False(updateResult.Success);
+        Assert.Contains("Cannot update a cancelled goal", updateResult.ErrorMessage);
 
         Context.ChangeTracker.Clear();
         var goal = await goalRepository.GetByIdAsync(goalId);
-        goal!.CompletionStatus.Should().Be(GoalStatus.Cancelled);
-        goal.ProgressUpdates.Should().Contain("Goal cancelled due to project scope change");
-        goal.ProgressUpdates.Should().NotContain("Trying to reactivate cancelled goal");
+        Assert.Equal(GoalStatus.Cancelled, goal!.CompletionStatus);
+        Assert.Contains("Goal cancelled due to project scope change", goal.ProgressUpdates);
+        Assert.DoesNotContain("Trying to reactivate cancelled goal", goal.ProgressUpdates);
     }
 
     [Fact]
@@ -473,19 +472,19 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
         var completedGoal = await goalRepository.GetByIdAsync(goalId);
 
-        completedGoal!.CompletionStatus.Should().Be(GoalStatus.Completed);
-        completedGoal.CompletedDate.Should().NotBeNull();
+        Assert.Equal(GoalStatus.Completed, completedGoal!.CompletionStatus);
+        Assert.NotNull(completedGoal.CompletedDate);
 
         // Verify all updates are maintained in order
         foreach (var update in updates)
         {
-            completedGoal.ProgressUpdates.Should().Contain(update);
+            Assert.Contains(update, completedGoal.ProgressUpdates);
         }
-        completedGoal.ProgressUpdates.Should().Contain("Product successfully launched!");
+        Assert.Contains("Product successfully launched!", completedGoal.ProgressUpdates);
 
         // Verify updates are in chronological order (newline separated)
         var updatesArray = completedGoal.ProgressUpdates!.Split('\n');
-        updatesArray.Should().HaveCountGreaterThanOrEqualTo(updates.Length);
+        Assert.True(updatesArray.Length >= updates.Length);
     }
 
     [Fact]
@@ -555,12 +554,12 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var reopenResult = await updateHandler.HandleAsync(reopenCommand);
 
         // Assert
-        reopenResult.Success.Should().BeFalse();
-        reopenResult.ErrorMessage.Should().Contain("Cannot reopen a completed goal");
-        reopenResult.ErrorMessage.Should().Contain("Create a new goal instead");
+        Assert.False(reopenResult.Success);
+        Assert.Contains("Cannot reopen a completed goal", reopenResult.ErrorMessage);
+        Assert.Contains("Create a new goal instead", reopenResult.ErrorMessage);
 
         Context.ChangeTracker.Clear();
         var goal = await goalRepository.GetByIdAsync(goalId);
-        goal!.CompletionStatus.Should().Be(GoalStatus.Completed);
+        Assert.Equal(GoalStatus.Completed, goal!.CompletionStatus);
     }
 }

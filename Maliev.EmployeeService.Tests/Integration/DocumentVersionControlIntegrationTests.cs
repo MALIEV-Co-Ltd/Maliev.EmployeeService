@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -123,16 +122,16 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var result = await versionHandler.HandleAsync(versionCommand);
 
         // Assert
-        result.Should().NotBeNull();
-        result.VersionNumber.Should().Be(2);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.VersionNumber);
 
         Context.ChangeTracker.Clear();
         var updatedDocument = await documentRepository.GetByIdAsync(uploadResult.DocumentId);
 
-        updatedDocument.Should().NotBeNull();
-        updatedDocument!.VersionNumber.Should().Be(2);
-        updatedDocument.FileName.Should().Be("contract_v2.pdf");
-        updatedDocument.FileSizeBytes.Should().Be(2048);
+        Assert.NotNull(updatedDocument);
+        Assert.Equal(2, updatedDocument!.VersionNumber);
+        Assert.Equal("contract_v2.pdf", updatedDocument.FileName);
+        Assert.Equal(2048, updatedDocument.FileSizeBytes);
     }
 
     [Fact]
@@ -244,13 +243,13 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
             .OrderBy(dv => dv.VersionNumber)
             .ToListAsync();
 
-        versionHistory.Should().HaveCount(1);
-        versionHistory[0].VersionNumber.Should().Be(1);
-        versionHistory[0].FileName.Should().Be("passport_v1.pdf");
-        versionHistory[0].StoragePath.Should().Be("documents/passport_v1.pdf");
-        versionHistory[0].FileSizeBytes.Should().Be(1024);
-        versionHistory[0].ChangeDescription.Should().Be("Previous version archived");
-        versionHistory[0].UploadedBy.Should().Be(uploader.Id);
+        Assert.Single(versionHistory);
+        Assert.Equal(1, versionHistory[0].VersionNumber);
+        Assert.Equal("passport_v1.pdf", versionHistory[0].FileName);
+        Assert.Equal("documents/passport_v1.pdf", versionHistory[0].StoragePath);
+        Assert.Equal(1024, versionHistory[0].FileSizeBytes);
+        Assert.Equal("Previous version archived", versionHistory[0].ChangeDescription);
+        Assert.Equal(uploader.Id, versionHistory[0].UploadedBy);
     }
 
     [Fact]
@@ -366,11 +365,11 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
             .OrderBy(dv => dv.VersionNumber)
             .ToListAsync();
 
-        updatedDocument!.VersionNumber.Should().Be(4);
-        updatedDocument.FileName.Should().Be("cert_v4.pdf");
+        Assert.Equal(4, updatedDocument!.VersionNumber);
+        Assert.Equal("cert_v4.pdf", updatedDocument.FileName);
 
-        versionHistory.Should().HaveCount(3); // Versions 1, 2, and 3
-        versionHistory.Select(v => v.VersionNumber).Should().ContainInOrder(1, 2, 3);
+        Assert.Equal(3, versionHistory.Count()); // Versions 1, 2, and 3
+        Assert.Equal(new[] { 1, 2, 3 }, versionHistory.Select(v => v.VersionNumber).ToArray());
     }
 
     [Fact]
@@ -423,7 +422,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
 
         // Verify no version history was created
         var versionCount = await Context.DocumentVersions.CountAsync();
-        versionCount.Should().Be(0);
+        Assert.Equal(0, versionCount);
     }
 
     [Fact]
@@ -526,10 +525,10 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
             .ToListAsync();
 
         // Assert
-        history.Should().HaveCount(2);
-        history[0].VersionNumber.Should().Be(2); // Most recent first
-        history[0].ChangeDescription.Should().Be("First update");
-        history[1].VersionNumber.Should().Be(1);
-        history[1].ChangeDescription.Should().Be("Initial version");
+        Assert.Equal(2, history.Count());
+        Assert.Equal(2, history[0].VersionNumber); // Most recent first
+        Assert.Equal("First update", history[0].ChangeDescription);
+        Assert.Equal(1, history[1].VersionNumber);
+        Assert.Equal("Initial version", history[1].ChangeDescription);
     }
 }

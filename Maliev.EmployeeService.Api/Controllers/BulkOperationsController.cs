@@ -16,7 +16,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/bulk")]
+[Route("employees/v{version:apiVersion}/bulk")]
 [Authorize]
 public class BulkOperationsController : ControllerBase
 {
@@ -26,6 +26,9 @@ public class BulkOperationsController : ControllerBase
     private readonly BulkSalaryIncreaseCommandHandler _salaryIncreaseHandler;
     private readonly ICurrentUserService _currentUserService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BulkOperationsController"/> class
+    /// </summary>
     public BulkOperationsController(
         ExportEmployeesQueryHandler exportHandler,
         GetBulkJobStatusQueryHandler statusHandler,

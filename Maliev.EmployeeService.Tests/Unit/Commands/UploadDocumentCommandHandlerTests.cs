@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -118,11 +117,11 @@ public class UploadDocumentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.DocumentId.Should().NotBeEmpty();
-        result.FileName.Should().Be("passport.pdf");
-        result.FileSizeBytes.Should().Be(5);
-        result.VersionNumber.Should().Be(1);
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.DocumentId);
+        Assert.Equal("passport.pdf", result.FileName);
+        Assert.Equal(5, result.FileSizeBytes);
+        Assert.Equal(1, result.VersionNumber);
 
         _mockUploadServiceClient.Verify(x => x.UploadAsync(
             "passport.pdf",
@@ -238,8 +237,8 @@ public class UploadDocumentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.DocumentId.Should().NotBeEmpty();
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.DocumentId);
 
         _mockDocumentRepository.Verify(x => x.AddAsync(
             It.Is<Document>(d =>
@@ -301,7 +300,7 @@ public class UploadDocumentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
+        Assert.NotNull(result);
 
         _mockDocumentRepository.Verify(x => x.AddAsync(
             It.Is<Document>(d =>
@@ -367,7 +366,7 @@ public class UploadDocumentCommandHandlerTests
         var afterUpload = DateTime.UtcNow;
 
         // Assert
-        result.Should().NotBeNull();
+        Assert.NotNull(result);
 
         _mockDocumentRepository.Verify(x => x.AddAsync(
             It.Is<Document>(d =>
@@ -431,7 +430,7 @@ public class UploadDocumentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
+        Assert.NotNull(result);
 
         _mockDocumentRepository.Verify(x => x.AddAsync(
             It.Is<Document>(d =>

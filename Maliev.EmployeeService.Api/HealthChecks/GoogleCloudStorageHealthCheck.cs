@@ -12,6 +12,12 @@ public class GoogleCloudStorageHealthCheck : IHealthCheck
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleCloudStorageHealthCheck> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GoogleCloudStorageHealthCheck"/> class
+    /// </summary>
+    /// <param name="httpClientFactory">The HTTP client factory</param>
+    /// <param name="configuration">The configuration instance</param>
+    /// <param name="logger">The logger instance</param>
     public GoogleCloudStorageHealthCheck(
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
@@ -22,6 +28,12 @@ public class GoogleCloudStorageHealthCheck : IHealthCheck
         _logger = logger;
     }
 
+    /// <summary>
+    /// Checks the health of the Google Cloud Storage connection
+    /// </summary>
+    /// <param name="context">The health check context</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the health check result</returns>
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)

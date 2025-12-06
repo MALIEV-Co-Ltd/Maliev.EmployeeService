@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -79,9 +78,9 @@ public class RecordCompensationChangeCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.CompensationRecordId.Should().NotBeNull();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.NotNull(result.CompensationRecordId);
+        Assert.Null(result.ErrorMessage);
 
         _mockCompensationRepository.Verify(x => x.CreateAsync(
             It.Is<CompensationRecord>(cr =>
@@ -127,9 +126,9 @@ public class RecordCompensationChangeCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.CompensationRecordId.Should().BeNull();
-        result.ErrorMessage.Should().Contain("Salary amount must be greater than zero");
+        Assert.False(result.Success);
+        Assert.Null(result.CompensationRecordId);
+        Assert.Contains("Salary amount must be greater than zero", result.ErrorMessage);
 
         _mockCompensationRepository.Verify(x => x.CreateAsync(It.IsAny<CompensationRecord>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -166,9 +165,9 @@ public class RecordCompensationChangeCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.CompensationRecordId.Should().BeNull();
-        result.ErrorMessage.Should().Contain("Salary amount must be greater than zero");
+        Assert.False(result.Success);
+        Assert.Null(result.CompensationRecordId);
+        Assert.Contains("Salary amount must be greater than zero", result.ErrorMessage);
 
         _mockCompensationRepository.Verify(x => x.CreateAsync(It.IsAny<CompensationRecord>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -210,7 +209,7 @@ public class RecordCompensationChangeCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         _mockCompensationRepository.Verify(x => x.CreateAsync(
             It.Is<CompensationRecord>(cr =>
@@ -257,7 +256,7 @@ public class RecordCompensationChangeCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         _mockCompensationRepository.Verify(x => x.CreateAsync(
             It.Is<CompensationRecord>(cr =>
@@ -306,7 +305,7 @@ public class RecordCompensationChangeCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         _mockCompensationRepository.Verify(x => x.CreateAsync(
             It.Is<CompensationRecord>(cr => cr.CreatedBy == currentUserId),

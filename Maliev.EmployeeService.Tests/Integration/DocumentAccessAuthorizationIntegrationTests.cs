@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Services;
 using Maliev.EmployeeService.Domain.Entities;
@@ -71,9 +70,9 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             otherUser, document, Role.HRGeneralist);
 
         // Assert
-        canAccessAsEmployee.Should().BeTrue("public documents should be accessible by all employees");
-        canAccessAsManager.Should().BeTrue("public documents should be accessible by managers");
-        canAccessAsHR.Should().BeTrue("public documents should be accessible by HR");
+        Assert.True(canAccessAsEmployee); // public documents should be accessible by all employees
+        Assert.True(canAccessAsManager); // public documents should be accessible by managers
+        Assert.True(canAccessAsHR); // public documents should be accessible by HR
     }
 
     [Fact]
@@ -132,8 +131,8 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             otherEmployee.Id, document, Role.Employee);
 
         // Assert
-        ownerCanAccess.Should().BeTrue("document owner should be able to access their own document");
-        otherEmployeeCanAccess.Should().BeFalse("other employees should not access employee-level documents");
+        Assert.True(ownerCanAccess); // document owner should be able to access their own document
+        Assert.False(otherEmployeeCanAccess); // other employees should not access employee-level documents
     }
 
     [Fact]
@@ -205,9 +204,9 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             otherEmployee.Id, document, Role.Employee);
 
         // Assert
-        employeeCanAccess.Should().BeTrue("employee should access their own manager-level document");
-        managerCanAccess.Should().BeTrue("manager should access their direct report's document");
-        otherEmployeeCanAccess.Should().BeFalse("unrelated employee should not access manager-level document");
+        Assert.True(employeeCanAccess); // employee should access their own manager-level document
+        Assert.True(managerCanAccess); // manager should access their direct report's document
+        Assert.False(otherEmployeeCanAccess); // unrelated employee should not access manager-level document
     }
 
     [Fact]
@@ -278,9 +277,9 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             hrSpecialist.Id, document, Role.HRSpecialist);
 
         // Assert
-        employeeCanAccess.Should().BeFalse("regular employees should not access HR-only documents");
-        hrGeneralistCanAccess.Should().BeTrue("HR generalists should access HR-only documents");
-        hrSpecialistCanAccess.Should().BeTrue("HR specialists should access HR-only documents");
+        Assert.False(employeeCanAccess); // regular employees should not access HR-only documents
+        Assert.True(hrGeneralistCanAccess); // HR generalists should access HR-only documents
+        Assert.True(hrSpecialistCanAccess); // HR specialists should access HR-only documents
     }
 
     [Fact]
@@ -351,9 +350,9 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             hrSpecialist.Id, document, Role.HRSpecialist);
 
         // Assert
-        employeeCanAccess.Should().BeFalse("regular employees should not access HR specialist-only documents");
-        hrGeneralistCanAccess.Should().BeFalse("HR generalists should not access HR specialist-only documents");
-        hrSpecialistCanAccess.Should().BeTrue("HR specialists should access HR specialist-only documents");
+        Assert.False(employeeCanAccess); // regular employees should not access HR specialist-only documents
+        Assert.False(hrGeneralistCanAccess); // HR generalists should not access HR specialist-only documents
+        Assert.True(hrSpecialistCanAccess); // HR specialists should access HR specialist-only documents
     }
 
     [Fact]
@@ -428,7 +427,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             var canAccess = await authorizationService.CanViewDocumentAsync(
                 admin.Id, document, Role.SystemAdministrator);
 
-            canAccess.Should().BeTrue($"system administrator should access document with {document.AccessLevel} access level");
+            Assert.True(canAccess, $"system administrator should access document with {document.AccessLevel} access level");
         }
     }
 
@@ -488,7 +487,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
             otherEmployee.Id, archivedDocument, Role.Employee);
 
         // Assert
-        ownerCanAccess.Should().BeTrue("document owner should access their archived documents");
-        otherEmployeeCanAccess.Should().BeFalse("archived documents should still respect access control");
+        Assert.True(ownerCanAccess); // document owner should access their archived documents
+        Assert.False(otherEmployeeCanAccess); // archived documents should still respect access control
     }
 }

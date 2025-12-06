@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -125,20 +124,20 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.StartDate.Should().Be(startDate);
-        result.EndDate.Should().Be(endDate);
+        Assert.NotNull(result);
+        Assert.Equal(startDate, result.StartDate);
+        Assert.Equal(endDate, result.EndDate);
 
         // Headcount at start: 6, Headcount at end: 4, Average: 5
-        result.AverageHeadcount.Should().Be(5);
-        result.TotalTerminations.Should().Be(2);
+        Assert.Equal(5, result.AverageHeadcount);
+        Assert.Equal(2, result.TotalTerminations);
 
         // Turnover rate = (2 / 5) * 100 = 40%
-        result.TurnoverRate.Should().Be(40.00m);
+        Assert.Equal(40.00m, result.TurnoverRate);
 
         // Note: Voluntary/Involuntary not implemented in current schema
-        result.VoluntaryTerminations.Should().Be(0);
-        result.InvoluntaryTerminations.Should().Be(0);
+        Assert.Equal(0, result.VoluntaryTerminations);
+        Assert.Equal(0, result.InvoluntaryTerminations);
     }
 
     [Fact]
@@ -234,9 +233,9 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalTerminations.Should().Be(1); // Only Engineering termination
-        result.ByDepartment.Should().HaveCount(1);
-        result.ByDepartment[0].DepartmentName.Should().Be("Engineering");
+        Assert.Equal(1, result.TotalTerminations); // Only Engineering termination
+        Assert.Single(result.ByDepartment);
+        Assert.Equal("Engineering", result.ByDepartment[0].DepartmentName);
     }
 
     [Fact]
@@ -310,22 +309,22 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.MonthlyTrend.Should().HaveCount(3);
+        Assert.Equal(3, result.MonthlyTrend.Count());
 
         // January 2024
         var january = result.MonthlyTrend.First(m => m.Month == 1);
-        january.Year.Should().Be(2024);
-        january.MonthName.Should().NotBeEmpty();
-        january.Terminations.Should().Be(1);
-        january.AverageHeadcount.Should().BeGreaterThan(0);
+        Assert.Equal(2024, january.Year);
+        Assert.NotEmpty(january.MonthName);
+        Assert.Equal(1, january.Terminations);
+        Assert.True(january.AverageHeadcount > 0);
 
         // February 2024
         var february = result.MonthlyTrend.First(m => m.Month == 2);
-        february.Terminations.Should().Be(1);
+        Assert.Equal(1, february.Terminations);
 
         // March 2024
         var march = result.MonthlyTrend.First(m => m.Month == 3);
-        march.Terminations.Should().Be(0);
+        Assert.Equal(0, march.Terminations);
     }
 
     [Fact]
@@ -348,11 +347,11 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.AverageHeadcount.Should().Be(0);
-        result.TotalTerminations.Should().Be(0);
-        result.TurnoverRate.Should().Be(0);
-        result.ByDepartment.Should().BeEmpty();
-        result.MonthlyTrend.Should().HaveCount(12); // 12 months, all zero
+        Assert.Equal(0, result.AverageHeadcount);
+        Assert.Equal(0, result.TotalTerminations);
+        Assert.Equal(0, result.TurnoverRate);
+        Assert.Empty(result.ByDepartment);
+        Assert.Equal(12, result.MonthlyTrend.Count()); // 12 months, all zero
     }
 
     [Fact]
@@ -409,9 +408,9 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.AverageHeadcount.Should().Be(2);
-        result.TotalTerminations.Should().Be(0);
-        result.TurnoverRate.Should().Be(0);
+        Assert.Equal(2, result.AverageHeadcount);
+        Assert.Equal(0, result.TotalTerminations);
+        Assert.Equal(0, result.TurnoverRate);
     }
 
     [Fact]
@@ -523,18 +522,18 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.ByDepartment.Should().HaveCount(2);
+        Assert.Equal(2, result.ByDepartment.Count());
 
         // Ordered by turnover rate descending
         var engineeringResult = result.ByDepartment.First(d => d.DepartmentName == "Engineering");
-        engineeringResult.Headcount.Should().Be(3); // 2 active + 1 terminated
-        engineeringResult.Terminations.Should().Be(1);
-        engineeringResult.TurnoverRate.Should().BeApproximately(33.33m, 0.01m); // 1/3 = 33.33%
+        Assert.Equal(3, engineeringResult.Headcount); // 2 active + 1 terminated
+        Assert.Equal(1, engineeringResult.Terminations);
+        Assert.True(Math.Abs(engineeringResult.TurnoverRate - 33.33m) <= 0.01m); // 1/3 = 33.33%
 
         var salesResult = result.ByDepartment.First(d => d.DepartmentName == "Sales");
-        salesResult.Headcount.Should().Be(3);
-        salesResult.Terminations.Should().Be(0);
-        salesResult.TurnoverRate.Should().Be(0);
+        Assert.Equal(3, salesResult.Headcount);
+        Assert.Equal(0, salesResult.Terminations);
+        Assert.Equal(0, salesResult.TurnoverRate);
     }
 
     [Fact]
@@ -620,6 +619,6 @@ public class GetTurnoverAnalysisQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalTerminations.Should().Be(1); // Only EMP003
+        Assert.Equal(1, result.TotalTerminations); // Only EMP003
     }
 }

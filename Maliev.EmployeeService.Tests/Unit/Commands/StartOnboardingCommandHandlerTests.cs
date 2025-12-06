@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -84,7 +83,7 @@ public class StartOnboardingCommandHandlerTests
         var result = await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
-        result.Should().Be(employeeId);
+        Assert.Equal(employeeId, result);
 
         // Verify checklist creation
         _onboardingRepositoryMock.Verify(
@@ -125,7 +124,7 @@ public class StartOnboardingCommandHandlerTests
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _handler.HandleAsync(command, CancellationToken.None));
 
-        exception.Message.Should().Contain(employeeId.ToString());
+        Assert.Contains(employeeId.ToString(), exception.Message);
 
         // Verify no checklist or event created
         _onboardingRepositoryMock.Verify(
@@ -264,7 +263,7 @@ public class StartOnboardingCommandHandlerTests
         await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
-        capturedChecklist.Should().NotBeNull();
-        capturedChecklist.Should().Contain(item => item.ItemDescription.Contains("leadership"));
+        Assert.NotNull(capturedChecklist);
+        Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("leadership"));
     }
 }

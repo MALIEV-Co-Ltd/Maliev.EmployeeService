@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -111,30 +110,30 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         });
 
         // Assert
-        result.TotalHeadcount.Should().Be(4);
-        result.ByDepartment.Should().HaveCount(2);
+        Assert.Equal(4, result.TotalHeadcount);
+        Assert.Equal(2, result.ByDepartment.Count());
 
         var engDept = result.ByDepartment.First(d => d.DepartmentName == "Engineering");
-        engDept.Headcount.Should().Be(2);
-        engDept.ManagerCount.Should().Be(1); // EMP001
-        engDept.IndividualContributorCount.Should().Be(1); // EMP002
+        Assert.Equal(2, engDept.Headcount);
+        Assert.Equal(1, engDept.ManagerCount); // EMP001
+        Assert.Equal(1, engDept.IndividualContributorCount); // EMP002
 
         var salesResult = result.ByDepartment.First(d => d.DepartmentName == "Sales");
-        salesResult.Headcount.Should().Be(2);
+        Assert.Equal(2, salesResult.Headcount);
 
         // Tenure bands
-        result.ByTenureBand.Should().ContainKey("0-1 years");
-        result.ByTenureBand["0-1 years"].Should().Be(1); // EMP002
-        result.ByTenureBand.Should().ContainKey("1-2 years");
-        result.ByTenureBand["1-2 years"].Should().Be(1); // EMP004
-        result.ByTenureBand.Should().ContainKey("3-5 years");
-        result.ByTenureBand["3-5 years"].Should().Be(1); // EMP003
-        result.ByTenureBand.Should().ContainKey("10+ years");
-        result.ByTenureBand["10+ years"].Should().Be(1); // EMP001
+        Assert.True(result.ByTenureBand.ContainsKey("0-1 years"));
+        Assert.Equal(1, result.ByTenureBand["0-1 years"]); // EMP002
+        Assert.True(result.ByTenureBand.ContainsKey("1-2 years"));
+        Assert.Equal(1, result.ByTenureBand["1-2 years"]); // EMP004
+        Assert.True(result.ByTenureBand.ContainsKey("3-5 years"));
+        Assert.Equal(1, result.ByTenureBand["3-5 years"]); // EMP003
+        Assert.True(result.ByTenureBand.ContainsKey("10+ years"));
+        Assert.Equal(1, result.ByTenureBand["10+ years"]); // EMP001
 
         // Employment types
-        result.ByEmploymentType["FullTime"].Should().Be(3);
-        result.ByEmploymentType["Contractor"].Should().Be(1);
+        Assert.Equal(3, result.ByEmploymentType["FullTime"]);
+        Assert.Equal(1, result.ByEmploymentType["Contractor"]);
     }
 
     [Fact]
@@ -219,28 +218,28 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         });
 
         // Assert
-        result.StartDate.Should().Be(startDate);
-        result.EndDate.Should().Be(endDate);
-        result.TotalTerminations.Should().Be(1);
+        Assert.Equal(startDate, result.StartDate);
+        Assert.Equal(endDate, result.EndDate);
+        Assert.Equal(1, result.TotalTerminations);
 
         // Headcount at start: 4, Headcount at end: 3, Average: 3.5 ≈ 3 (integer division)
-        result.AverageHeadcount.Should().BeGreaterThanOrEqualTo(3);
+        Assert.True(result.AverageHeadcount >= 3);
 
         // Turnover rate should be positive
-        result.TurnoverRate.Should().BeGreaterThan(0);
-        result.TurnoverRate.Should().BeLessThanOrEqualTo(50); // 1/3 = 33.33%
+        Assert.True(result.TurnoverRate > 0);
+        Assert.True(result.TurnoverRate <= 50); // 1/3 = 33.33%
 
         // Department breakdown
-        result.ByDepartment.Should().HaveCount(1);
-        result.ByDepartment[0].DepartmentName.Should().Be("Engineering");
-        result.ByDepartment[0].Terminations.Should().Be(1);
+        Assert.Single(result.ByDepartment);
+        Assert.Equal("Engineering", result.ByDepartment[0].DepartmentName);
+        Assert.Equal(1, result.ByDepartment[0].Terminations);
 
         // Monthly trend should have 12 months
-        result.MonthlyTrend.Should().HaveCount(12);
+        Assert.Equal(12, result.MonthlyTrend.Count());
 
         // June should have 1 termination
         var juneData = result.MonthlyTrend.First(m => m.Month == 6);
-        juneData.Terminations.Should().Be(1);
+        Assert.Equal(1, juneData.Terminations);
     }
 
     [Fact]
@@ -333,28 +332,28 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         });
 
         // Assert
-        result.Should().NotBeNull();
-        result.IsPreview.Should().BeFalse();
-        result.JobId.Should().NotBeNull();
-        result.TotalEmployees.Should().Be(2);
+        Assert.NotNull(result);
+        Assert.False(result.IsPreview);
+        Assert.NotNull(result.JobId);
+        Assert.Equal(2, result.TotalEmployees);
 
         // Verify new compensation records were created
         var newCompensation = await Context.Set<CompensationRecord>()
             .Where(c => c.ChangeReason == "Annual Review 2024")
             .ToListAsync();
 
-        newCompensation.Should().HaveCount(2);
-        newCompensation.Should().Contain(c => c.SalaryAmount == "110000.00"); // 100000 * 1.1 formatted as "110000.00"
-        newCompensation.Should().Contain(c => c.SalaryAmount == "88000.00"); // 80000 * 1.1 formatted as "88000.00"
+        Assert.Equal(2, newCompensation.Count());
+        Assert.Contains(newCompensation, c => c.SalaryAmount == "110000.00"); // 100000 * 1.1
+        Assert.Contains(newCompensation, c => c.SalaryAmount == "88000.00"); // 80000 * 1.1
 
         // Verify bulk job was created
         var job = await Context.Set<BulkJob>()
             .FirstOrDefaultAsync(j => j.JobId == result.JobId!.Value);
 
-        job.Should().NotBeNull();
-        job!.JobType.Should().Be("BulkSalaryIncrease");
-        job.TotalRecords.Should().Be(2);
-        job.SuccessfulRecords.Should().Be(2);
+        Assert.NotNull(job);
+        Assert.Equal("BulkSalaryIncrease", job!.JobType);
+        Assert.Equal(2, job.TotalRecords);
+        Assert.Equal(2, job.SuccessfulRecords);
     }
 
     [Fact]
@@ -438,11 +437,11 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         });
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results.Should().HaveCount(1);
-        result.Results[0].EmployeeNumber.Should().Be("EMP001");
-        result.Results[0].Title.Should().Contain("Senior");
-        result.Results[0].DepartmentName.Should().Be("Engineering");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Results);
+        Assert.Equal("EMP001", result.Results[0].EmployeeNumber);
+        Assert.Contains("Senior", result.Results[0].Title);
+        Assert.Equal("Engineering", result.Results[0].DepartmentName);
     }
 
     [Fact]
@@ -488,15 +487,15 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         });
 
         // Assert
-        result.TotalCount.Should().Be(25);
-        result.Page.Should().Be(2);
-        result.PageSize.Should().Be(10);
-        result.TotalPages.Should().Be(3); // 25 / 10 = 3 pages
-        result.Results.Should().HaveCount(10);
+        Assert.Equal(25, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(10, result.PageSize);
+        Assert.Equal(3, result.TotalPages); // 25 / 10 = 3 pages
+        Assert.Equal(10, result.Results.Count());
 
         // Page 2 should contain EMP011 to EMP020
-        result.Results[0].EmployeeNumber.Should().Be("EMP011");
-        result.Results[9].EmployeeNumber.Should().Be("EMP020");
+        Assert.Equal("EMP011", result.Results[0].EmployeeNumber);
+        Assert.Equal("EMP020", result.Results[9].EmployeeNumber);
     }
 
     [Fact]
@@ -569,6 +568,6 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         });
 
         // Assert
-        result.TotalHeadcount.Should().Be(1); // Only EMP001
+        Assert.Equal(1, result.TotalHeadcount); // Only EMP001
     }
 }

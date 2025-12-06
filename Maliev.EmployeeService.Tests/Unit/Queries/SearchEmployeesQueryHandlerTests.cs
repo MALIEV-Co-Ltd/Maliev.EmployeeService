@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -61,10 +60,10 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results.Should().HaveCount(1);
-        result.Results[0].EmployeeNumber.Should().Be("EMP001");
-        result.Results[0].FullName.Should().Contain("John");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Results);
+        Assert.Equal("EMP001", result.Results[0].EmployeeNumber);
+        Assert.Contains("John", result.Results[0].FullName);
     }
 
     [Fact]
@@ -114,9 +113,9 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(2); // Both Doe employees
-        result.Results.Should().HaveCount(2);
-        result.Results.Should().OnlyContain(r => r.FullName.Contains("Doe"));
+        Assert.Equal(2, result.TotalCount); // Both Doe employees
+        Assert.Equal(2, result.Results.Count());
+        Assert.All(result.Results, r => Assert.Contains("Doe", r.FullName));
     }
 
     [Fact]
@@ -156,8 +155,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].EmployeeNumber.Should().Be("EMP001");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal("EMP001", result.Results[0].EmployeeNumber);
     }
 
     [Fact]
@@ -199,8 +198,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].Email.Should().Be("john.doe@maliev.com");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal("john.doe@maliev.com", result.Results[0].Email);
     }
 
     [Fact]
@@ -254,9 +253,9 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].DepartmentId.Should().Be(engineeringDeptId);
-        result.Results[0].DepartmentName.Should().Be("Engineering");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(engineeringDeptId, result.Results[0].DepartmentId);
+        Assert.Equal("Engineering", result.Results[0].DepartmentName);
     }
 
     [Fact]
@@ -298,8 +297,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].Title.Should().Contain("Engineer");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Contains("Engineer", result.Results[0].Title);
     }
 
     [Fact]
@@ -340,8 +339,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].EmploymentStatus.Should().Be("Active");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal("Active", result.Results[0].EmploymentStatus);
     }
 
     [Fact]
@@ -388,8 +387,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].ManagerId.Should().Be(managerId);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(managerId, result.Results[0].ManagerId);
     }
 
     [Fact]
@@ -420,11 +419,11 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(100);
-        result.Page.Should().Be(2);
-        result.PageSize.Should().Be(25);
-        result.TotalPages.Should().Be(4); // 100 / 25 = 4
-        result.Results.Should().HaveCount(25);
+        Assert.Equal(100, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(25, result.PageSize);
+        Assert.Equal(4, result.TotalPages); // 100 / 25 = 4
+        Assert.Equal(25, result.Results.Count());
     }
 
     [Fact]
@@ -454,8 +453,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.PageSize.Should().Be(200); // Max enforced
-        result.Results.Should().HaveCount(200);
+        Assert.Equal(200, result.PageSize); // Max enforced
+        Assert.Equal(200, result.Results.Count());
     }
 
     [Fact]
@@ -509,9 +508,9 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Results[0].FullName.Should().Contain("Anderson"); // Alice Anderson
-        result.Results[1].FullName.Should().Contain("Baker"); // Bob Baker
-        result.Results[2].FullName.Should().Contain("Brown"); // Charlie Brown
+        Assert.Contains("Anderson", result.Results[0].FullName); // Alice Anderson
+        Assert.Contains("Baker", result.Results[1].FullName); // Bob Baker
+        Assert.Contains("Brown", result.Results[2].FullName); // Charlie Brown
     }
 
     [Fact]
@@ -565,9 +564,9 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Results[0].HireDate.Should().Be(new DateTime(2024, 1, 1));
-        result.Results[1].HireDate.Should().Be(new DateTime(2024, 3, 1));
-        result.Results[2].HireDate.Should().Be(new DateTime(2024, 6, 1));
+        Assert.Equal(new DateTime(2024, 1, 1), result.Results[0].HireDate);
+        Assert.Equal(new DateTime(2024, 3, 1), result.Results[1].HireDate);
+        Assert.Equal(new DateTime(2024, 6, 1), result.Results[2].HireDate);
     }
 
     [Fact]
@@ -628,8 +627,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(1);
-        result.Results[0].EmployeeNumber.Should().Be("EMP001");
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal("EMP001", result.Results[0].EmployeeNumber);
     }
 
     [Fact]
@@ -659,8 +658,8 @@ public class SearchEmployeesQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalCount.Should().Be(0);
-        result.Results.Should().BeEmpty();
-        result.TotalPages.Should().Be(0);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Empty(result.Results);
+        Assert.Equal(0, result.TotalPages);
     }
 }

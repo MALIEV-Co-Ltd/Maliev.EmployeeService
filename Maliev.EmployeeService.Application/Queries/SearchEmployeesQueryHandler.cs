@@ -1,5 +1,6 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Application.Mapping;
 using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -98,23 +99,7 @@ public class SearchEmployeesQueryHandler
             .ToList();
 
         // Map to DTOs
-        var results = employees.Select(e => new EmployeeSearchItemDto
-        {
-            Id = e.Id,
-            EmployeeNumber = e.EmployeeNumber,
-            FullName = e.LegalName?.FullName ?? "Unknown",
-            PreferredName = e.PreferredName,
-            Email = e.ContactInformation?.WorkEmail ?? string.Empty,
-            Title = e.JobTitle,
-            DepartmentName = e.Department?.Name,
-            DepartmentId = e.DepartmentId,
-            ManagerName = e.Manager?.LegalName?.FullName,
-            ManagerId = e.ManagerId,
-            EmploymentStatus = e.EmploymentStatus.ToString(),
-            EmploymentType = e.EmploymentType.ToString(),
-            HireDate = e.StartDate,
-            TerminationDate = e.TerminationDate
-        }).ToList();
+        var results = employees.Select(e => e.ToEmployeeSearchItemDto()).ToList();
 
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 

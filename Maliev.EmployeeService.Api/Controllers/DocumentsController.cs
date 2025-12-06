@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/documents")]
+[Route("employees/v{version:apiVersion}/documents")]
 [Authorize]
 public class DocumentsController : ControllerBase
 {
@@ -28,6 +28,9 @@ public class DocumentsController : ControllerBase
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<DocumentsController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DocumentsController"/> class
+    /// </summary>
     public DocumentsController(
         UploadDocumentCommandHandler uploadDocumentHandler,
         UploadDocumentVersionCommandHandler uploadVersionHandler,

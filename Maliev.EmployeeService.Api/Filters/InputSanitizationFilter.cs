@@ -11,11 +11,19 @@ public class InputSanitizationFilter : IActionFilter
 {
     private readonly ILogger<InputSanitizationFilter> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InputSanitizationFilter"/> class
+    /// </summary>
+    /// <param name="logger">The logger instance</param>
     public InputSanitizationFilter(ILogger<InputSanitizationFilter> logger)
     {
         _logger = logger;
     }
 
+    /// <summary>
+    /// Sanitizes action arguments before action execution
+    /// </summary>
+    /// <param name="context">The action executing context</param>
     public void OnActionExecuting(ActionExecutingContext context)
     {
         // Sanitize all action arguments
@@ -63,6 +71,10 @@ public class InputSanitizationFilter : IActionFilter
         }
     }
 
+    /// <summary>
+    /// Called after action execution (no operation required for this filter)
+    /// </summary>
+    /// <param name="context">The action executed context</param>
     public void OnActionExecuted(ActionExecutedContext context)
     {
         // No action needed after execution

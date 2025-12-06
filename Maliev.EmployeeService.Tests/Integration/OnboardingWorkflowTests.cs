@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -83,9 +82,9 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
             .Where(c => c.EmployeeId == employee.Id)
             .ToListAsync();
 
-        checklist.Should().NotBeEmpty();
-        checklist.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("email account"));
+        Assert.NotEmpty(checklist);
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("email account"));
 
         // Verify integration event was published with correct data
         _eventPublisherMock.Verify(
@@ -117,9 +116,9 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var initialStatusQuery = new GetOnboardingStatusQuery { EmployeeId = employee.Id };
         var initialStatus = await _getStatusHandler.HandleAsync(initialStatusQuery, CancellationToken.None);
 
-        initialStatus.TotalItems.Should().BeGreaterThan(0);
-        initialStatus.CompletedItems.Should().Be(0);
-        initialStatus.CompletionPercentage.Should().Be(0m);
+        Assert.True(initialStatus.TotalItems > 0);
+        Assert.Equal(0, initialStatus.CompletedItems);
+        Assert.Equal(0m, initialStatus.CompletionPercentage);
 
         // Complete first item
         var firstItem = initialStatus.ChecklistItems.First();
@@ -136,10 +135,9 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var updatedStatus = await _getStatusHandler.HandleAsync(updatedStatusQuery, CancellationToken.None);
 
         // Assert
-        updatedStatus.CompletedItems.Should().Be(1);
-        updatedStatus.CompletionPercentage.Should().BeGreaterThan(0m);
-        updatedStatus.ChecklistItems.Should().Contain(item =>
-            item.Id == firstItem.Id &&
+        Assert.Equal(1, updatedStatus.CompletedItems);
+        Assert.True(updatedStatus.CompletionPercentage > 0m);
+        Assert.Contains(updatedStatus.ChecklistItems, item => item.Id == firstItem.Id &&
             item.CompletionStatus == true &&
             item.Notes == "Completed successfully");
     }
@@ -164,8 +162,8 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
             .Where(c => c.EmployeeId == employee.Id)
             .ToListAsync();
 
-        checklist.Should().Contain(item => item.ItemDescription.Contains("leadership"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("management training"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("leadership"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("management training"));
     }
 
     [Fact]
@@ -188,8 +186,8 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
             .Where(c => c.EmployeeId == employee.Id)
             .ToListAsync();
 
-        checklist.Should().Contain(item => item.ItemDescription.Contains("safety training"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("safety equipment"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("safety training"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("safety equipment"));
     }
 
     [Fact]
@@ -215,7 +213,7 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var status = await _getStatusHandler.HandleAsync(statusQuery, CancellationToken.None);
 
         // Assert
-        status.ChecklistItems.Should().Contain(item => item.IsOverdue == true,
+        Assert.True(status.ChecklistItems.Any(item => item.IsOverdue == true),
             "Some items should be overdue since start date is in the past");
     }
 
@@ -249,11 +247,11 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var completedItem = await Context.OnboardingChecklists.FindAsync(itemToComplete.Id);
-        completedItem.Should().NotBeNull();
-        completedItem!.CompletionStatus.Should().BeTrue();
-        completedItem.CompletedDate.Should().NotBeNull();
-        completedItem.CompletedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        completedItem.Notes.Should().Be("Test completion");
+        Assert.NotNull(completedItem);
+        Assert.True(completedItem!.CompletionStatus);
+        Assert.NotNull(completedItem.CompletedDate);
+        Assert.True(Math.Abs((completedItem.CompletedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
+        Assert.Equal("Test completion", completedItem.Notes);
     }
 
     /// <summary>

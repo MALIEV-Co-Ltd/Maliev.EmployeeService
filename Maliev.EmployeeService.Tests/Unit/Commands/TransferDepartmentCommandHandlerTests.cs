@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -81,12 +80,12 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
 
-        employee.DepartmentId.Should().Be(newDepartmentId);
-        employee.ModifiedBy.Should().NotBeNull();
-        employee.ModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Assert.Equal(newDepartmentId, employee.DepartmentId);
+        Assert.NotNull(employee.ModifiedBy);
+        Assert.True(Math.Abs((employee.ModifiedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
 
         _mockEmployeeRepository.Verify(x => x.Update(employee), Times.Once);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -110,8 +109,8 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Employee not found");
+        Assert.False(result.Success);
+        Assert.Contains("Employee not found", result.ErrorMessage);
 
         _mockEmployeeRepository.Verify(x => x.Update(It.IsAny<Employee>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -142,8 +141,8 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("inactive employee");
+        Assert.False(result.Success);
+        Assert.Contains("inactive employee", result.ErrorMessage);
     }
 
     [Fact]
@@ -174,8 +173,8 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Target department not found");
+        Assert.False(result.Success);
+        Assert.Contains("Target department not found", result.ErrorMessage);
     }
 
     [Fact]
@@ -215,8 +214,8 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("inactive department");
+        Assert.False(result.Success);
+        Assert.Contains("inactive department", result.ErrorMessage);
     }
 
     [Fact]
@@ -257,8 +256,8 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("already in this department");
+        Assert.False(result.Success);
+        Assert.Contains("already in this department", result.ErrorMessage);
     }
 
     [Fact]
@@ -307,9 +306,9 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("headcount limit");
-        result.ErrorMessage.Should().Contain("50");
+        Assert.False(result.Success);
+        Assert.Contains("headcount limit", result.ErrorMessage);
+        Assert.Contains("50", result.ErrorMessage);
     }
 
     [Fact]
@@ -351,7 +350,7 @@ public class TransferDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("past");
+        Assert.False(result.Success);
+        Assert.Contains("past", result.ErrorMessage);
     }
 }

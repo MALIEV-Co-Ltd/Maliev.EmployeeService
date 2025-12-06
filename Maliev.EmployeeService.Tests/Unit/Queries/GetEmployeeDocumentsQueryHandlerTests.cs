@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
@@ -84,10 +83,10 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        result.Should().Contain(d => d.DocumentType == DocumentType.IDDocument);
-        result.Should().Contain(d => d.DocumentType == DocumentType.EmploymentContract);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, d => d.DocumentType == DocumentType.IDDocument);
+        Assert.Contains(result, d => d.DocumentType == DocumentType.EmploymentContract);
 
         _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAsync(
             employeeId,
@@ -158,9 +157,9 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        result.Should().OnlyContain(d => d.DocumentType == DocumentType.Certificate);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        Assert.All(result, d  => Assert.True(d.DocumentType == DocumentType.Certificate));
 
         _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAndTypeAsync(
             employeeId,
@@ -213,9 +212,9 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result.First().IsArchived.Should().BeTrue();
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.True(result.First().IsArchived);
 
         _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAsync(
             employeeId,
@@ -263,11 +262,11 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
+        Assert.NotNull(result);
+        Assert.Single(result);
         var doc = result.First();
-        doc.IsExpired.Should().BeTrue();
-        doc.DaysUntilExpiration.Should().BeNull(); // Expired documents have null days until expiration
+        Assert.True(doc.IsExpired);
+        Assert.Null(doc.DaysUntilExpiration); // Expired documents have null days until expiration
     }
 
     [Fact]
@@ -312,13 +311,13 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
+        Assert.NotNull(result);
+        Assert.Single(result);
         var doc = result.First();
-        doc.IsExpired.Should().BeFalse();
-        doc.DaysUntilExpiration.Should().BeGreaterThan(0);
-        doc.DaysUntilExpiration.Should().BeLessThanOrEqualTo(45);
-        doc.DaysUntilExpiration.Should().BeGreaterThanOrEqualTo(44); // Account for time passage during test
+        Assert.False(doc.IsExpired);
+        Assert.True(doc.DaysUntilExpiration > 0);
+        Assert.True(doc.DaysUntilExpiration <= 45);
+        Assert.True(doc.DaysUntilExpiration >= 44); // Account for time passage during test
     }
 
     [Fact]
@@ -361,12 +360,12 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
+        Assert.NotNull(result);
+        Assert.Single(result);
         var doc = result.First();
-        doc.ExpirationDate.Should().BeNull();
-        doc.IsExpired.Should().BeFalse(); // No expiration date means not expired
-        doc.DaysUntilExpiration.Should().BeNull();
+        Assert.Null(doc.ExpirationDate);
+        Assert.False(doc.IsExpired); // No expiration date means not expired
+        Assert.Null(doc.DaysUntilExpiration);
     }
 
     [Fact]
@@ -425,9 +424,9 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result.First().UploadedByName.Should().Be("John Doe");
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("John Doe", result.First().UploadedByName);
     }
 
     [Fact]
@@ -470,9 +469,9 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result.First().UploadedByName.Should().Be("Unknown");
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("Unknown", result.First().UploadedByName);
     }
 
     [Fact]
@@ -496,7 +495,7 @@ public class GetEmployeeDocumentsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 }

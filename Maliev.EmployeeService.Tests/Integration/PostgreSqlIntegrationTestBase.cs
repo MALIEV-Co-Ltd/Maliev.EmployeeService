@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Testcontainers.PostgreSql;
 using Xunit;
 using System.Threading;
+using Npgsql;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
@@ -73,8 +74,22 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 
         Context = new EmployeeServiceDbContext(options, EncryptionService);
 
-        // Apply migrations to create database schema
-        await Context.Database.MigrateAsync();
+        var retries = 5;
+        while (retries > 0)
+        {
+            try
+            {
+                await Context.Database.MigrateAsync();
+                break;
+            }
+            catch (NpgsqlException)
+            {
+                if (--retries == 0) throw;
+                await Task.Delay(5000);
+            }
+        }
+
+
 
         // Clear any existing data to ensure clean state for first test
         // This is important because some tests may not call InitializeTestAsync() manually

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Infrastructure.Messaging;
 using MassTransit;
@@ -55,12 +54,12 @@ public class IntegrationEventPublisherTests
 
             // Assert
             var published = await harness.Published.Any<EmployeeCreatedIntegrationEvent>();
-            published.Should().BeTrue("event should be published to the bus");
+            Assert.True(published, "event should be published to the bus");
 
             var message = harness.Published.Select<EmployeeCreatedIntegrationEvent>().FirstOrDefault();
-            message.Should().NotBeNull();
-            message!.Context.Message.EmployeeId.Should().Be(integrationEvent.EmployeeId);
-            message.Context.Message.Email.Should().Be("john.doe@maliev.co.th");
+            Assert.NotNull(message);
+            Assert.Equal(integrationEvent.EmployeeId, message!.Context.Message.EmployeeId);
+            Assert.Equal("john.doe@maliev.co.th", message.Context.Message.Email);
         }
         finally
         {
@@ -105,11 +104,11 @@ public class IntegrationEventPublisherTests
 
             // Assert
             var published = await harness.Published.Any<EmployeeOnboardingStartedIntegrationEvent>();
-            published.Should().BeTrue();
+            Assert.True(published);
 
             var message = harness.Published.Select<EmployeeOnboardingStartedIntegrationEvent>().FirstOrDefault();
-            message.Should().NotBeNull();
-            message!.Context.Message.FullName.Should().Be("Jane Smith");
+            Assert.NotNull(message);
+            Assert.Equal("Jane Smith", message!.Context.Message.FullName);
         }
         finally
         {
@@ -160,11 +159,11 @@ public class IntegrationEventPublisherTests
 
             // Assert
             var published = await harness.Published.Any<EmployeeTerminatedIntegrationEvent>();
-            published.Should().BeTrue("resilient publisher should publish events");
+            Assert.True(published, "resilient publisher should publish events");
 
             var message = harness.Published.Select<EmployeeTerminatedIntegrationEvent>().FirstOrDefault();
-            message.Should().NotBeNull();
-            message!.Context.Message.TerminationReason.Should().Be("Resignation");
+            Assert.NotNull(message);
+            Assert.Equal("Resignation", message!.Context.Message.TerminationReason);
         }
         finally
         {
@@ -227,13 +226,13 @@ public class IntegrationEventPublisherTests
 
             // Assert
             var publishedCount = harness.Published.Count();
-            publishedCount.Should().Be(2, "both events should be published");
+            Assert.Equal(2, publishedCount);
 
             var createdEventPublished = await harness.Published.Any<EmployeeCreatedIntegrationEvent>();
-            createdEventPublished.Should().BeTrue();
+            Assert.True(createdEventPublished);
 
             var transferEventPublished = await harness.Published.Any<DepartmentTransferredIntegrationEvent>();
-            transferEventPublished.Should().BeTrue();
+            Assert.True(transferEventPublished);
         }
         finally
         {
@@ -279,17 +278,17 @@ public class IntegrationEventPublisherTests
 
             // Assert
             var published = await harness.Published.Any<AccessRevocationRequiredIntegrationEvent>();
-            published.Should().BeTrue();
+            Assert.True(published);
 
             var message = harness.Published.Select<AccessRevocationRequiredIntegrationEvent>().FirstOrDefault();
-            message.Should().NotBeNull();
+            Assert.NotNull(message);
 
             // Verify headers are set
-            message!.Context.Headers.TryGetHeader("Exchange", out var exchange).Should().BeTrue();
-            exchange.Should().Be("employee.events");
+            Assert.True(message!.Context.Headers.TryGetHeader("Exchange", out var exchange));
+            Assert.Equal("employee.events", exchange);
 
-            message.Context.Headers.TryGetHeader("RoutingKey", out var routingKey).Should().BeTrue();
-            routingKey.Should().Be("access.revocation.required");
+            Assert.True(message.Context.Headers.TryGetHeader("RoutingKey", out var routingKey));
+            Assert.Equal("access.revocation.required", routingKey);
         }
         finally
         {
@@ -342,14 +341,14 @@ public class IntegrationEventPublisherTests
 
             // Assert
             var published = await harness.Published.Any<OnboardingReminderNeededIntegrationEvent>();
-            published.Should().BeTrue();
+            Assert.True(published);
 
             var message = harness.Published.Select<OnboardingReminderNeededIntegrationEvent>().FirstOrDefault();
-            message.Should().NotBeNull();
+            Assert.NotNull(message);
 
             // Verify event timestamp is within expected range
-            message!.Context.Message.EventTimestamp.Should().BeOnOrAfter(beforePublish);
-            message.Context.Message.EventTimestamp.Should().BeOnOrBefore(afterPublish);
+            Assert.True(message!.Context.Message.EventTimestamp >= beforePublish);
+            Assert.True(message.Context.Message.EventTimestamp <= afterPublish);
         }
         finally
         {

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Domain.Entities;
@@ -99,14 +98,14 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var assignedCourses = await assignTrainingHandler.HandleAsync(assignCommand);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Success.Should().BeTrue();
+        Assert.NotNull(result);
+        Assert.True(result.Success);
 
-        assignedCourses.Should().NotBeNull();
-        assignedCourses.Should().HaveCount(3);
-        assignedCourses.Should().Contain("Safety Training");
-        assignedCourses.Should().Contain("Code of Conduct");
-        assignedCourses.Should().Contain("Data Privacy");
+        Assert.NotNull(assignedCourses);
+        Assert.Equal(3, assignedCourses.Count());
+        Assert.Contains("Safety Training", assignedCourses);
+        Assert.Contains("Code of Conduct", assignedCourses);
+        Assert.Contains("Data Privacy", assignedCourses);
     }
 
     [Fact]
@@ -187,11 +186,11 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var assignedCourses = await assignTrainingHandler.HandleAsync(assignCommand);
 
         // Assert
-        assignedCourses.Should().HaveCount(2);
-        assignedCourses.Should().Contain("Contractor Safety");
-        assignedCourses.Should().Contain("NDA Training");
-        assignedCourses.Should().NotContain("Safety Training");
-        assignedCourses.Should().NotContain("Code of Conduct");
+        Assert.Equal(2, assignedCourses.Count());
+        Assert.Contains("Contractor Safety", assignedCourses);
+        Assert.Contains("NDA Training", assignedCourses);
+        Assert.DoesNotContain("Safety Training", assignedCourses);
+        Assert.DoesNotContain("Code of Conduct", assignedCourses);
     }
 
     [Fact]
@@ -286,11 +285,11 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var assignedCourses = await assignTrainingHandler.HandleAsync(assignCommand);
 
         // Assert
-        assignedCourses.Should().HaveCount(4);
-        assignedCourses.Should().Contain("Safety Training");
-        assignedCourses.Should().Contain("Code of Conduct");
-        assignedCourses.Should().Contain("Leadership Training");
-        assignedCourses.Should().Contain("Performance Management");
+        Assert.Equal(4, assignedCourses.Count());
+        Assert.Contains("Safety Training", assignedCourses);
+        Assert.Contains("Code of Conduct", assignedCourses);
+        Assert.Contains("Leadership Training", assignedCourses);
+        Assert.Contains("Performance Management", assignedCourses);
     }
 
     [Fact]
@@ -357,8 +356,8 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var assignedCourses = await assignTrainingHandler.HandleAsync(assignCommand);
 
         // Assert
-        assignedCourses.Should().NotBeNull();
-        assignedCourses.Should().BeEmpty();
+        Assert.NotNull(assignedCourses);
+        Assert.Empty(assignedCourses);
     }
 
     [Fact]
@@ -453,9 +452,9 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var assignedCourses = await assignTrainingHandler.HandleAsync(assignCommand);
 
         // Assert
-        assignedCourses.Should().HaveCount(1);
-        assignedCourses.Should().Contain("Active Training");
-        assignedCourses.Should().NotContain("Inactive Training");
+        Assert.Single(assignedCourses);
+        Assert.Contains("Active Training", assignedCourses);
+        Assert.DoesNotContain("Inactive Training", assignedCourses);
     }
 
     [Fact]
@@ -550,10 +549,10 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var assignedCourses = await assignTrainingHandler.HandleAsync(assignCommand);
 
         // Assert
-        assignedCourses.Should().HaveCount(3);
-        assignedCourses.Should().Contain("Basic Security");
-        assignedCourses.Should().Contain("Advanced Security");
-        assignedCourses.Should().Contain("Emergency Response");
+        Assert.Equal(3, assignedCourses.Count());
+        Assert.Contains("Basic Security", assignedCourses);
+        Assert.Contains("Advanced Security", assignedCourses);
+        Assert.Contains("Emergency Response", assignedCourses);
     }
 
 }

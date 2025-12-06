@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Common;
 using Xunit;
 
@@ -23,7 +22,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.Sanitize(input);
 
         // Assert
-        result.Should().Be(expected);
+        Assert.Equal(expected, result);
     }
 
     [Theory]
@@ -38,7 +37,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.Sanitize(input);
 
         // Assert
-        result.Should().Be(expected);
+        Assert.Equal(expected, result);
     }
 
     [Theory]
@@ -53,7 +52,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.Sanitize(input);
 
         // Assert
-        result.Should().Be(expected);
+        Assert.Equal(expected, result);
     }
 
     [Theory]
@@ -66,7 +65,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.Sanitize(input);
 
         // Assert
-        result.Should().Be(expected);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
@@ -79,7 +78,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.Sanitize(input);
 
         // Assert
-        result.Should().Be("Hello World");
+        Assert.Equal("Hello World", result);
     }
 
     [Theory]
@@ -96,7 +95,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.ContainsXssPatterns(input);
 
         // Assert
-        result.Should().Be(expected);
+        Assert.Equal(expected, result);
     }
 
     [Theory]
@@ -113,7 +112,7 @@ public class InputSanitizerTests
         var result = InputSanitizer.IsSafeSqlInput(input);
 
         // Assert
-        result.Should().Be(expected);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
@@ -131,9 +130,9 @@ public class InputSanitizerTests
         InputSanitizer.SanitizeObject(obj);
 
         // Assert
-        obj.Name.Should().Be("John");
-        obj.Email.Should().Be("john@example.com");
-        obj.Description.Should().Be("Normal text with tags");
+        Assert.Equal("John", obj.Name);
+        Assert.Equal("john@example.com", obj.Email);
+        Assert.Equal("Normal text with tags", obj.Description);
     }
 
     [Fact]
@@ -155,10 +154,10 @@ public class InputSanitizerTests
         InputSanitizer.SanitizeObject(obj);
 
         // Assert
-        obj.Title.Should().Be("Parent");
-        obj.Child.Name.Should().Be("Child");
-        obj.Child.Email.Should().Be("child@example.com");
-        obj.Child.Description.Should().Be("Nested object");
+        Assert.Equal("Parent", obj.Title);
+        Assert.Equal("Child", obj.Child.Name);
+        Assert.Equal("child@example.com", obj.Child.Email);
+        Assert.Equal("Nested object", obj.Child.Description);
     }
 
     [Fact]
@@ -178,8 +177,8 @@ public class InputSanitizerTests
         InputSanitizer.SanitizeObject(obj);
 
         // Assert
-        obj.Items[0].Name.Should().Be("Item1Bold");
-        obj.Items[1].Name.Should().Be("Item2");
+        Assert.Equal("Item1Bold", obj.Items[0].Name);
+        Assert.Equal("Item2", obj.Items[1].Name);
     }
 
     [Fact]
@@ -187,7 +186,7 @@ public class InputSanitizerTests
     {
         // Act & Assert - Should not throw
         var act = () => InputSanitizer.SanitizeObject(null);
-        act.Should().NotThrow();
+        // NotThrow - execute without exception
     }
 
     [Fact]
@@ -203,8 +202,8 @@ public class InputSanitizerTests
 
         // Act & Assert - Should not throw
         var act = () => InputSanitizer.SanitizeObject(obj);
-        act.Should().NotThrow();
-        obj.Email.Should().Be("test@example.com");
+        // NotThrow - execute without exception
+        Assert.Equal("test@example.com", obj.Email);
     }
 
     // Test DTOs

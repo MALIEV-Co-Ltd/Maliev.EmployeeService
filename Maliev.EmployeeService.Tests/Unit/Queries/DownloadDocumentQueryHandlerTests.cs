@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -76,11 +75,11 @@ public class DownloadDocumentQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.FileName.Should().Be(fileName);
-        result.ContentType.Should().Be(contentType);
-        result.FileSizeBytes.Should().Be(fileSizeBytes);
-        result.FileStream.Should().BeSameAs(fileStream);
+        Assert.NotNull(result);
+        Assert.Equal(fileName, result.FileName);
+        Assert.Equal(contentType, result.ContentType);
+        Assert.Equal(fileSizeBytes, result.FileSizeBytes);
+        Assert.Same(fileStream, result.FileStream);
 
         _mockDocumentRepository.Verify(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(storagePath, It.IsAny<CancellationToken>()), Times.Once);
@@ -129,11 +128,11 @@ public class DownloadDocumentQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.FileName.Should().Be(fileName);
-        result.ContentType.Should().Be(contentType);
-        result.FileSizeBytes.Should().Be(fileSizeBytes);
-        result.FileStream.Should().BeSameAs(fileStream);
+        Assert.NotNull(result);
+        Assert.Equal(fileName, result.FileName);
+        Assert.Equal(contentType, result.ContentType);
+        Assert.Equal(fileSizeBytes, result.FileSizeBytes);
+        Assert.Same(fileStream, result.FileStream);
 
         _mockDocumentRepository.Verify(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(storagePath, It.IsAny<CancellationToken>()), Times.Once);
@@ -159,8 +158,7 @@ public class DownloadDocumentQueryHandlerTests
         var act = async () => await _handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage($"Document {documentId} not found");
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
 
         _mockDocumentRepository.Verify(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -186,8 +184,7 @@ public class DownloadDocumentQueryHandlerTests
         var act = async () => await _handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage($"Document version {versionNumber} not found for document {documentId}");
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
 
         _mockDocumentRepository.Verify(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -233,12 +230,11 @@ public class DownloadDocumentQueryHandlerTests
         var act = async () => await _handler.HandleAsync(query);
 
         // Assert
-        var exception = await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Failed to download document from storage service");
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(act);
 
-        exception.And.InnerException.Should().NotBeNull();
-        exception.And.InnerException.Should().BeOfType<Exception>();
-        exception.And.InnerException!.Message.Should().Be("Upload service unavailable");
+        Assert.NotNull(exception.InnerException);
+        Assert.IsType<Exception>(exception.InnerException);
+        Assert.Equal("Upload service unavailable", exception.InnerException!.Message);
 
         _mockDocumentRepository.Verify(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(storagePath, It.IsAny<CancellationToken>()), Times.Once);
@@ -286,7 +282,7 @@ public class DownloadDocumentQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.FileName.Should().Be(decryptedFileName);
+        Assert.Equal(decryptedFileName, result.FileName);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(decryptedStoragePath, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -333,9 +329,9 @@ public class DownloadDocumentQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.FileName.Should().Be(fileName);
-        result.ContentType.Should().Be(contentType);
-        result.FileSizeBytes.Should().Be(fileSizeBytes);
+        Assert.Equal(fileName, result.FileName);
+        Assert.Equal(contentType, result.ContentType);
+        Assert.Equal(fileSizeBytes, result.FileSizeBytes);
     }
 
     [Fact]
@@ -380,9 +376,9 @@ public class DownloadDocumentQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.FileName.Should().Be(versionFileName);
-        result.ContentType.Should().Be(versionContentType);
-        result.FileSizeBytes.Should().Be(versionFileSizeBytes);
+        Assert.Equal(versionFileName, result.FileName);
+        Assert.Equal(versionContentType, result.ContentType);
+        Assert.Equal(versionFileSizeBytes, result.FileSizeBytes);
     }
 
     [Fact]

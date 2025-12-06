@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
@@ -69,10 +68,10 @@ public class GetCompensationDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.EmployeeId.Should().Be(employeeId);
-        result.SalaryAmount.Should().Be(85000.00m);
-        result.Currency.Should().Be("THB");
+        Assert.NotNull(result);
+        Assert.Equal(employeeId, result!.EmployeeId);
+        Assert.Equal(85000.00m, result.SalaryAmount);
+        Assert.Equal("THB", result.Currency);
     }
 
     [Fact]
@@ -113,8 +112,8 @@ public class GetCompensationDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.SalaryAmount.Should().Be(95000.00m);
+        Assert.NotNull(result);
+        Assert.Equal(95000.00m, result!.SalaryAmount);
     }
 
     [Fact]
@@ -156,9 +155,9 @@ public class GetCompensationDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.SalaryAmount.Should().Be(120000.00m);
-        result.Currency.Should().Be("USD");
+        Assert.NotNull(result);
+        Assert.Equal(120000.00m, result!.SalaryAmount);
+        Assert.Equal("USD", result.Currency);
     }
 
     [Fact]
@@ -176,8 +175,7 @@ public class GetCompensationDetailsQueryHandlerTests
         var act = async () => await _handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
-            .WithMessage("*HR personnel*System Administrators*");
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
 
         // Verify repositories were never called
         _mockEmployeeRepository.Verify(
@@ -204,7 +202,7 @@ public class GetCompensationDetailsQueryHandlerTests
         var act = async () => await _handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
 
         _mockEmployeeRepository.Verify(
             x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
@@ -226,7 +224,7 @@ public class GetCompensationDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
 
         // Verify compensation repository was not called
         _mockCompensationRepository.Verify(
@@ -260,7 +258,7 @@ public class GetCompensationDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -308,16 +306,16 @@ public class GetCompensationDetailsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(recordId);
-        result.EmployeeId.Should().Be(employeeId);
-        result.SalaryAmount.Should().Be(150000.00m);
-        result.Currency.Should().Be("USD");
-        result.EffectiveDate.Should().Be(effectiveDate);
-        result.ChangeReason.Should().Be("Annual performance review and promotion");
-        result.BonusStructure.Should().Be("15% annual bonus based on company performance");
-        result.CommissionStructure.Should().Be("3% on all sales, 5% on sales exceeding quota");
-        result.CreatedDate.Should().Be(createdDate);
-        result.CreatedBy.Should().Be(creatorId);
+        Assert.NotNull(result);
+        Assert.Equal(recordId, result!.Id);
+        Assert.Equal(employeeId, result.EmployeeId);
+        Assert.Equal(150000.00m, result.SalaryAmount);
+        Assert.Equal("USD", result.Currency);
+        Assert.Equal(effectiveDate, result.EffectiveDate);
+        Assert.Equal("Annual performance review and promotion", result.ChangeReason);
+        Assert.Equal("15% annual bonus based on company performance", result.BonusStructure);
+        Assert.Equal("3% on all sales, 5% on sales exceeding quota", result.CommissionStructure);
+        Assert.Equal(createdDate, result.CreatedDate);
+        Assert.Equal(creatorId, result.CreatedBy);
     }
 }

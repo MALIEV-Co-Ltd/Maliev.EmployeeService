@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -77,7 +76,7 @@ public class RecordWorkAuthorizationCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
 
         _mockWorkAuthorizationRepository.Verify(x => x.AddAsync(
             It.Is<WorkAuthorization>(wa =>
@@ -131,7 +130,7 @@ public class RecordWorkAuthorizationCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
 
         _mockWorkAuthorizationRepository.Verify(x => x.AddAsync(
             It.Is<WorkAuthorization>(wa =>
@@ -199,7 +198,7 @@ public class RecordWorkAuthorizationCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
 
         _mockDocumentRepository.Verify(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()), Times.Once);
 
@@ -327,7 +326,7 @@ public class RecordWorkAuthorizationCommandHandlerTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _handler.HandleAsync(command));
-        exception.Message.Should().Contain("does not belong to the specified employee");
+        Assert.Contains("does not belong to the specified employee", exception.Message);
 
         _mockWorkAuthorizationRepository.Verify(x => x.AddAsync(It.IsAny<WorkAuthorization>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);

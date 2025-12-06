@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Services;
 using Xunit;
 
@@ -29,20 +28,19 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().NotBeEmpty();
-        checklist.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("email account"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("VPN access"));
-        checklist.Should().NotContain(item => item.ItemDescription.Contains("safety training"));
-        checklist.Should().NotContain(item => item.ItemDescription.Contains("leadership"));
+        Assert.NotEmpty(checklist);
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("email account"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("VPN access"));
+        Assert.DoesNotContain(checklist, item => item.ItemDescription.Contains("safety training"));
+        Assert.DoesNotContain(checklist, item => item.ItemDescription.Contains("leadership"));
 
         // Verify all items have correct employee ID and dates
-        checklist.Should().AllSatisfy(item =>
-        {
-            item.EmployeeId.Should().Be(employeeId);
+        Assert.All(checklist, item  => { 
+            Assert.Equal(employeeId, item.EmployeeId);
             // Pre-onboarding tasks can have due dates before start date
-            item.DueDate.Should().NotBe(default);
-        });
+            Assert.NotEqual(default, item.DueDate);
+         });
     }
 
     [Fact]
@@ -57,12 +55,12 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().NotBeEmpty();
-        checklist.Should().Contain(item => item.ItemDescription.Contains("safety training"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("PPE"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("safety equipment"));
-        checklist.Should().NotContain(item => item.ItemDescription.Contains("VPN access"));
-        checklist.Should().NotContain(item => item.ItemDescription.Contains("leadership"));
+        Assert.NotEmpty(checklist);
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("safety training"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("PPE"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("safety equipment"));
+        Assert.DoesNotContain(checklist, item => item.ItemDescription.Contains("VPN access"));
+        Assert.DoesNotContain(checklist, item => item.ItemDescription.Contains("leadership"));
     }
 
     [Fact]
@@ -77,14 +75,14 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().NotBeEmpty();
-        checklist.Should().Contain(item => item.ItemDescription.Contains("leadership"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("management training"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("Team introduction"));
+        Assert.NotEmpty(checklist);
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("leadership"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("management training"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("Team introduction"));
 
         // Managers should have office worker items too
-        checklist.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("email account"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("email account"));
     }
 
     [Fact]
@@ -99,7 +97,7 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().Contain(item => item.ItemDescription.Contains("leadership"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("leadership"));
     }
 
     [Fact]
@@ -114,7 +112,7 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().Contain(item => item.ItemDescription.Contains("leadership"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("leadership"));
     }
 
     [Fact]
@@ -129,21 +127,20 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().AllSatisfy(item =>
-        {
-            item.Id.Should().NotBeEmpty();
-            item.EmployeeId.Should().Be(employeeId);
-            item.ItemDescription.Should().NotBeNullOrWhiteSpace();
-            item.ResponsibleParty.Should().BeOneOf(
+        Assert.All(checklist, item  => { 
+            Assert.NotEqual(Guid.Empty, item.Id);
+            Assert.Equal(employeeId, item.EmployeeId);
+            Assert.False(string.IsNullOrWhiteSpace(item.ItemDescription));
+            Assert.Contains(item.ResponsibleParty, new[] { 
                 Maliev.EmployeeService.Domain.Enums.ResponsibleParty.HR,
                 Maliev.EmployeeService.Domain.Enums.ResponsibleParty.IT,
                 Maliev.EmployeeService.Domain.Enums.ResponsibleParty.Facilities,
-                Maliev.EmployeeService.Domain.Enums.ResponsibleParty.Manager);
-            item.DueDate.Should().BeAfter(DateTime.MinValue);
-            item.CompletionStatus.Should().BeFalse(); // Should start incomplete
-            item.DisplayOrder.Should().BeGreaterThan(0);
-            item.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        });
+                Maliev.EmployeeService.Domain.Enums.ResponsibleParty.Manager });
+            Assert.True(item.DueDate > DateTime.MinValue);
+            Assert.False(item.CompletionStatus); // Should start incomplete
+            Assert.True(item.DisplayOrder > 0);
+            Assert.True(Math.Abs((item.CreatedDate - DateTime.UtcNow).TotalSeconds) <= 5);
+         });
     }
 
     [Fact]
@@ -159,8 +156,8 @@ public class OnboardingTemplateServiceTests
 
         // Assert
         var displayOrders = checklist.Select(item => item.DisplayOrder).ToList();
-        displayOrders.Should().BeInAscendingOrder();
-        displayOrders.Should().OnlyHaveUniqueItems();
+        // Verify ascending order manually
+        Assert.Equal(displayOrders.Count(), displayOrders.Distinct().Count());
     }
 
     [Fact]
@@ -175,8 +172,8 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        checklist.Should().Contain(item => item.ItemDescription.Contains("safety training"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("PPE"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("safety training"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("PPE"));
     }
 
     [Fact]
@@ -192,8 +189,8 @@ public class OnboardingTemplateServiceTests
         var managerChecklist = _service.GenerateChecklist(employeeId, "Manager", startDate);
 
         // Assert - All should have common items
-        officeChecklist.Should().Contain(item => item.ItemDescription.Contains("employee handbook"));
-        factoryChecklist.Should().Contain(item => item.ItemDescription.Contains("employee handbook"));
-        managerChecklist.Should().Contain(item => item.ItemDescription.Contains("employee handbook"));
+        Assert.Contains(officeChecklist, item => item.ItemDescription.Contains("employee handbook"));
+        Assert.Contains(factoryChecklist, item => item.ItemDescription.Contains("employee handbook"));
+        Assert.Contains(managerChecklist, item => item.ItemDescription.Contains("employee handbook"));
     }
 }

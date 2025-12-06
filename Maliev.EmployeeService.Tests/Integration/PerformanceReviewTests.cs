@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -70,20 +69,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.PerformanceReviewId.Should().NotBeEmpty();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.True(result.PerformanceReviewId.HasValue && result.PerformanceReviewId.Value != Guid.Empty);
+        Assert.Null(result.ErrorMessage);
 
         // Verify in database
         var savedReview = await performanceReviewRepository.GetByIdAsync(result.PerformanceReviewId!.Value);
-        savedReview.Should().NotBeNull();
-        savedReview!.EmployeeId.Should().Be(employeeId);
-        savedReview.ReviewerId.Should().Be(managerId);
-        savedReview.ReviewCycle.Should().Be(ReviewCycle.Annual);
-        savedReview.Status.Should().Be("Draft");
-        savedReview.SelfAssessment.Should().Contain("Exceeded expectations");
-        savedReview.ReviewPeriodStart.Should().BeCloseTo(DateTime.UtcNow.AddYears(-1), TimeSpan.FromHours(1));
-        savedReview.ReviewPeriodEnd.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromHours(1));
+        Assert.NotNull(savedReview);
+        Assert.Equal(employeeId, savedReview!.EmployeeId);
+        Assert.Equal(managerId, savedReview.ReviewerId);
+        Assert.Equal(ReviewCycle.Annual, savedReview.ReviewCycle);
+        Assert.Equal("Draft", savedReview.Status);
+        Assert.Contains("Exceeded expectations", savedReview.SelfAssessment);
+        Assert.True(Math.Abs((savedReview.ReviewPeriodStart - DateTime.UtcNow.AddYears(-1)).TotalHours) <= 1);
+        Assert.True(Math.Abs((savedReview.ReviewPeriodEnd - DateTime.UtcNow).TotalHours) <= 1);
     }
 
     [Fact]
@@ -139,11 +138,11 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         var savedReview = await performanceReviewRepository.GetByIdAsync(result.PerformanceReviewId!.Value);
-        savedReview!.ReviewCycle.Should().Be(ReviewCycle.Quarterly);
-        savedReview.ReviewPeriodStart.Should().BeCloseTo(DateTime.UtcNow.AddMonths(-3), TimeSpan.FromHours(1));
+        Assert.Equal(ReviewCycle.Quarterly, savedReview!.ReviewCycle);
+        Assert.True(Math.Abs((savedReview.ReviewPeriodStart - DateTime.UtcNow.AddMonths(-3)).TotalHours) <= 1);
     }
 
     [Fact]
@@ -199,11 +198,11 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         var savedReview = await performanceReviewRepository.GetByIdAsync(result.PerformanceReviewId!.Value);
-        savedReview!.ReviewCycle.Should().Be(ReviewCycle.SemiAnnual);
-        savedReview.SelfAssessment.Should().Be("H1 self-assessment");
+        Assert.Equal(ReviewCycle.SemiAnnual, savedReview!.ReviewCycle);
+        Assert.Equal("H1 self-assessment", savedReview.SelfAssessment);
     }
 
     [Fact]
@@ -260,8 +259,8 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Cannot create performance review for inactive employee");
+        Assert.False(result.Success);
+        Assert.Contains("Cannot create performance review for inactive employee", result.ErrorMessage);
     }
 
     [Fact]
@@ -323,14 +322,14 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var result3 = await handler.HandleAsync(command3);
 
         // Assert
-        result1.Success.Should().BeTrue();
-        result2.Success.Should().BeTrue();
-        result3.Success.Should().BeTrue();
+        Assert.True(result1.Success);
+        Assert.True(result2.Success);
+        Assert.True(result3.Success);
 
         var allReviews = await performanceReviewRepository.GetByEmployeeIdAsync(employeeId);
-        allReviews.Should().HaveCount(3);
-        allReviews.All(r => r.EmployeeId == employeeId).Should().BeTrue();
-        allReviews.All(r => r.ReviewCycle == ReviewCycle.Quarterly).Should().BeTrue();
+        Assert.Equal(3, allReviews.Count());
+        Assert.All(allReviews, r => Assert.Equal(employeeId, r.EmployeeId));
+        Assert.All(allReviews, r => Assert.Equal(ReviewCycle.Quarterly, r.ReviewCycle));
     }
 
     [Fact]
@@ -383,9 +382,9 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var savedReview = await performanceReviewRepository.GetByIdAsync(result.PerformanceReviewId!.Value);
-        savedReview!.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        savedReview.CreatedBy.Should().Be(managerId);
-        savedReview.Status.Should().Be("Draft");
-        savedReview.AcknowledgedDate.Should().BeNull();
+        Assert.True(Math.Abs((savedReview!.CreatedDate - DateTime.UtcNow).TotalSeconds) <= 5);
+        Assert.Equal(managerId, savedReview.CreatedBy);
+        Assert.Equal("Draft", savedReview.Status);
+        Assert.Null(savedReview.AcknowledgedDate);
     }
 }

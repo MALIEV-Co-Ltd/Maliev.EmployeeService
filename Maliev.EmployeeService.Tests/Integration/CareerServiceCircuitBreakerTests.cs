@@ -1,15 +1,9 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
-using WireMock;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
-using WireMock.Server;
-using WireMock.Types;
-using WireMock.Util;
-using Xunit;
+using System.Net;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
@@ -19,14 +13,13 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// </summary>
 public class CareerServiceCircuitBreakerTests : IDisposable
 {
-    private readonly WireMockServer _wireMockServer;
+    private readonly MockHttpMessageHandler _mockHandler;
     private readonly ServiceProvider _serviceProvider;
     private readonly ICareerServiceClient _client;
 
     public CareerServiceCircuitBreakerTests()
     {
-        // Start WireMock server on dynamic port
-        _wireMockServer = WireMockServer.Start();
+        _mockHandler = new MockHttpMessageHandler();
 
         // Build service collection with circuit breaker configuration
         var services = new ServiceCollection();
@@ -37,9 +30,10 @@ public class CareerServiceCircuitBreakerTests : IDisposable
         // Configure HttpClient with circuit breaker (same as production)
         services.AddHttpClient<ICareerServiceClient, Infrastructure.ExternalServices.CareerServiceClient>(client =>
         {
-            client.BaseAddress = new Uri(_wireMockServer.Urls[0]);
+            client.BaseAddress = new Uri("http://localhost");
             client.Timeout = TimeSpan.FromSeconds(5);
         })
+        .ConfigurePrimaryHttpMessageHandler(() => _mockHandler)
         .AddStandardResilienceHandler(options =>
         {
             // Attempt timeout: 5 seconds (must be less than half of sampling duration)
@@ -66,14 +60,8 @@ public class CareerServiceCircuitBreakerTests : IDisposable
     [Fact]
     public async Task CircuitBreaker_AfterFiveConsecutiveFailures_ShouldOpenCircuit()
     {
-        // Arrange - Configure WireMock to always return 500
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath("/careers/api/skills/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(500)
-                .WithBody("Internal Server Error"));
+        // Arrange - Configure mock to always return 500
+        _mockHandler.SetupResponse("/careers/api/skills/*", HttpStatusCode.InternalServerError, "Internal Server Error");
 
         // Act - Make 5 consecutive failing requests
         var results = new List<object?>();
@@ -84,25 +72,18 @@ public class CareerServiceCircuitBreakerTests : IDisposable
         }
 
         // Assert - All requests should fail and return null
-        results.Should().AllSatisfy(r => r.Should().BeNull());
+        Assert.All(results, r => Assert.Null(r));
 
         // Verify requests were made to the server
-        // With retries and circuit breaker, we should see at least the minimum threshold requests
-        // The exact count depends on when the circuit opens (may open before all retries complete)
-        _wireMockServer.LogEntries.Count().Should().BeGreaterThanOrEqualTo(5);
+        Assert.True(_mockHandler.RequestCount >= 5,
+            $"Expected at least 5 requests, but got {_mockHandler.RequestCount}");
     }
 
     [Fact]
     public async Task CircuitBreaker_WhileOpen_ShouldRejectRequestsImmediately()
     {
-        // Arrange - Configure WireMock to always return 500
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath("/careers/api/skills/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(500)
-                .WithBody("Internal Server Error"));
+        // Arrange - Configure mock to always return 500
+        _mockHandler.SetupResponse("/careers/api/skills/*", HttpStatusCode.InternalServerError, "Internal Server Error");
 
         // Act - Trigger circuit breaker by making 5 consecutive failures
         for (int i = 0; i < 5; i++)
@@ -110,32 +91,26 @@ public class CareerServiceCircuitBreakerTests : IDisposable
             await _client.GetSkillByIdAsync(i + 1);
         }
 
-        var requestCountAfterBreaking = _wireMockServer.LogEntries.Count();
+        var requestCountAfterBreaking = _mockHandler.RequestCount;
 
         // Make additional request while circuit is open
         var resultWhileOpen = await _client.GetSkillByIdAsync(999);
 
-        var requestCountWhileOpen = _wireMockServer.LogEntries.Count();
+        var requestCountWhileOpen = _mockHandler.RequestCount;
 
         // Assert - Circuit is open, request should fail immediately without hitting the server
-        resultWhileOpen.Should().BeNull();
+        Assert.Null(resultWhileOpen);
 
-        // Request count should not have increased (circuit breaker blocks the call)
-        // Note: Due to retry policy, there might be a few additional calls, but significantly fewer
-        requestCountWhileOpen.Should().BeLessThan(requestCountAfterBreaking + 5);
+        // Request count should not have increased significantly (circuit breaker blocks the call)
+        Assert.True(requestCountWhileOpen < requestCountAfterBreaking + 5,
+            $"Expected fewer requests when circuit is open. Before: {requestCountAfterBreaking}, After: {requestCountWhileOpen}");
     }
 
     [Fact]
     public async Task CircuitBreaker_AfterBreakDuration_ShouldAttemptRecovery()
     {
-        // Arrange - Configure WireMock to fail first, then succeed
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath("/careers/api/skills/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(500)
-                .WithBody("Temporary error"));
+        // Arrange - Configure mock to fail first
+        _mockHandler.SetupResponse("/careers/api/skills/*", HttpStatusCode.InternalServerError, "Temporary error");
 
         // Act - Trigger circuit breaker by making 5 consecutive failures
         for (int i = 0; i < 5; i++)
@@ -144,15 +119,9 @@ public class CareerServiceCircuitBreakerTests : IDisposable
         }
 
         // Reconfigure to succeed
-        _wireMockServer.Reset();
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath("/careers/api/skills/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody("{\"skillId\": 1, \"skillName\": \"C#\", \"category\": \"Programming\", \"description\": \"Programming language\"}"));
+        _mockHandler.Reset();
+        _mockHandler.SetupResponse("/careers/api/skills/*", HttpStatusCode.OK,
+            "{\"skillId\": 1, \"skillName\": \"C#\", \"category\": \"Programming\", \"description\": \"Programming language\"}");
 
         // Wait for break duration (2 seconds in test configuration)
         await Task.Delay(TimeSpan.FromSeconds(3));
@@ -161,22 +130,16 @@ public class CareerServiceCircuitBreakerTests : IDisposable
         var resultAfterBreak = await _client.GetSkillByIdAsync(100);
 
         // Assert - Request should succeed after circuit recovers
-        resultAfterBreak.Should().NotBeNull();
-        resultAfterBreak!.SkillName.Should().Be("C#");
+        Assert.NotNull(resultAfterBreak);
+        Assert.Equal("C#", resultAfterBreak.SkillName);
     }
 
     [Fact]
     public async Task CircuitBreaker_WithSuccessfulRequests_ShouldRemainClosed()
     {
-        // Arrange - Configure WireMock to always succeed
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath("/careers/api/skills/*")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithHeader("Content-Type", "application/json")
-                .WithBody("{\"skillId\": 1, \"skillName\": \"Python\", \"category\": \"Programming\", \"description\": \"Programming language\"}"));
+        // Arrange - Configure mock to always succeed
+        _mockHandler.SetupResponse("/careers/api/skills/*", HttpStatusCode.OK,
+            "{\"skillId\": 1, \"skillName\": \"Python\", \"category\": \"Programming\", \"description\": \"Programming language\"}");
 
         // Act - Make 10 successful requests
         var results = new List<object?>();
@@ -187,21 +150,20 @@ public class CareerServiceCircuitBreakerTests : IDisposable
         }
 
         // Assert - All requests should succeed
-        results.Should().AllSatisfy(r => r.Should().NotBeNull());
-        results.Cast<Application.DTOs.CareerService.SkillDto>().Should().AllSatisfy(s =>
+        Assert.All(results, r => Assert.NotNull(r));
+
+        foreach (var result in results.Cast<Application.DTOs.CareerService.SkillDto>())
         {
-            s.SkillName.Should().Be("Python");
-            s.Category.Should().Be("Programming");
-        });
+            Assert.Equal("Python", result.SkillName);
+            Assert.Equal("Programming", result.Category);
+        }
 
         // Verify all requests hit the API (circuit remained closed)
-        _wireMockServer.LogEntries.Count().Should().Be(10);
+        Assert.Equal(10, _mockHandler.RequestCount);
     }
 
     public void Dispose()
     {
-        _wireMockServer?.Stop();
-        _wireMockServer?.Dispose();
         _serviceProvider?.Dispose();
     }
 }

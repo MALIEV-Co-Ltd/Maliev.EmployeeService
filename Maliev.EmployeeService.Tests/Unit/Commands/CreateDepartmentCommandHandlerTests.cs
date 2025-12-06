@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -57,9 +56,9 @@ public class CreateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.DepartmentId.Should().NotBeEmpty();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.NotEqual(Guid.Empty, result.DepartmentId);
+        Assert.Null(result.ErrorMessage);
 
         _mockDepartmentRepository.Verify(x => x.AddAsync(
             It.Is<Department>(d =>
@@ -93,10 +92,10 @@ public class CreateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.DepartmentId.Should().BeNull();
-        result.ErrorMessage.Should().Contain("Parent department");
-        result.ErrorMessage.Should().Contain("not found");
+        Assert.False(result.Success);
+        Assert.Null(result.DepartmentId);
+        Assert.Contains("Parent department", result.ErrorMessage);
+        Assert.Contains("not found", result.ErrorMessage);
 
         _mockDepartmentRepository.Verify(x => x.AddAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -129,8 +128,8 @@ public class CreateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("inactive parent department");
+        Assert.False(result.Success);
+        Assert.Contains("inactive parent department", result.ErrorMessage);
     }
 
     [Fact]
@@ -153,9 +152,9 @@ public class CreateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Department head employee");
-        result.ErrorMessage.Should().Contain("not found");
+        Assert.False(result.Success);
+        Assert.Contains("Department head employee", result.ErrorMessage);
+        Assert.Contains("not found", result.ErrorMessage);
     }
 
     [Fact]
@@ -185,8 +184,8 @@ public class CreateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("inactive employee");
+        Assert.False(result.Success);
+        Assert.Contains("inactive employee", result.ErrorMessage);
     }
 
     [Fact]
@@ -231,8 +230,8 @@ public class CreateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("circular hierarchy");
+        Assert.False(result.Success);
+        Assert.Contains("circular hierarchy", result.ErrorMessage);
 
         _mockDepartmentRepository.Verify(x => x.AddAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Never);
     }

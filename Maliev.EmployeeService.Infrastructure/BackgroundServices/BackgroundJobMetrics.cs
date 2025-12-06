@@ -1,4 +1,6 @@
-using Prometheus;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace Maliev.EmployeeService.Infrastructure.BackgroundServices;
 
@@ -8,47 +10,34 @@ namespace Maliev.EmployeeService.Infrastructure.BackgroundServices;
 /// </summary>
 public static class BackgroundJobMetrics
 {
-    private static readonly Histogram ExecutionDuration = Metrics.CreateHistogram(
+    private static readonly Meter Meter = new("employees");
+
+    private static readonly Histogram<double> ExecutionDuration = Meter.CreateHistogram<double>(
         "background_job_execution_duration_seconds",
-        "Background job execution duration in seconds",
-        new HistogramConfiguration
-        {
-            LabelNames = new[] { "job_name", "status" },
-            Buckets = new[] { 0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0 }
-        });
+        "seconds",
+        "Background job execution duration");
 
-    private static readonly Counter SuccessTotal = Metrics.CreateCounter(
+    private static readonly Counter<long> SuccessTotal = Meter.CreateCounter<long>(
         "background_job_success_total",
-        "Total number of successful background job executions",
-        new CounterConfiguration
-        {
-            LabelNames = new[] { "job_name" }
-        });
+        "1",
+        "Total number of successful background job executions");
 
-    private static readonly Counter FailureTotal = Metrics.CreateCounter(
+    private static readonly Counter<long> FailureTotal = Meter.CreateCounter<long>(
         "background_job_failure_total",
-        "Total number of failed background job executions",
-        new CounterConfiguration
-        {
-            LabelNames = new[] { "job_name" }
-        });
+        "1",
+        "Total number of failed background job executions");
 
-    private static readonly Gauge LastExecutionTimestamp = Metrics.CreateGauge(
-        "background_job_last_execution_timestamp_seconds",
-        "Unix timestamp of the last execution of a background job",
-        new GaugeConfiguration
-        {
-            LabelNames = new[] { "job_name" }
-        });
+    // Store for the observable gauge
+    private static readonly ConcurrentDictionary<string, long> _lastExecutionTimestamps = new();
 
-    // Static constructor to initialize metrics with default values
     static BackgroundJobMetrics()
     {
-        // Initialize with labeled variations to ensure metrics and labels appear in output
-        ExecutionDuration.WithLabels("init", "success").Observe(0);
-        SuccessTotal.WithLabels("init").Inc(0); // Inc(0) just creates the metric
-        FailureTotal.WithLabels("init").Inc(0);
-        LastExecutionTimestamp.WithLabels("init").Set(0);
+        Meter.CreateObservableGauge("background_job_last_execution_timestamp_seconds", () =>
+            _lastExecutionTimestamps.Select(kvp => new Measurement<long>(kvp.Value,
+                new KeyValuePair<string, object?>("job_name", kvp.Key))),
+            description: "Unix timestamp of the last execution of a background job");
+            
+        // Initialize with default values if needed, though OTEL doesn't strictly require "init" labels like prometheus-net sometimes did for visibility
     }
 
     /// <summary>
@@ -58,17 +47,13 @@ public static class BackgroundJobMetrics
     /// <param name="durationSeconds">Duration of execution in seconds</param>
     public static void RecordSuccess(string jobName, double durationSeconds)
     {
-        ExecutionDuration
-            .WithLabels(jobName, "success")
-            .Observe(durationSeconds);
+        ExecutionDuration.Record(durationSeconds, 
+            new KeyValuePair<string, object?>("job_name", jobName),
+            new KeyValuePair<string, object?>("status", "success"));
 
-        SuccessTotal
-            .WithLabels(jobName)
-            .Inc();
+        SuccessTotal.Add(1, new KeyValuePair<string, object?>("job_name", jobName));
 
-        LastExecutionTimestamp
-            .WithLabels(jobName)
-            .SetToCurrentTimeUtc();
+        _lastExecutionTimestamps[jobName] = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 
     /// <summary>
@@ -80,18 +65,14 @@ public static class BackgroundJobMetrics
     {
         if (durationSeconds.HasValue)
         {
-            ExecutionDuration
-                .WithLabels(jobName, "failure")
-                .Observe(durationSeconds.Value);
+            ExecutionDuration.Record(durationSeconds.Value,
+                new KeyValuePair<string, object?>("job_name", jobName),
+                new KeyValuePair<string, object?>("status", "failure"));
         }
 
-        FailureTotal
-            .WithLabels(jobName)
-            .Inc();
+        FailureTotal.Add(1, new KeyValuePair<string, object?>("job_name", jobName));
 
-        LastExecutionTimestamp
-            .WithLabels(jobName)
-            .SetToCurrentTimeUtc();
+        _lastExecutionTimestamps[jobName] = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 
     /// <summary>
@@ -108,20 +89,20 @@ public static class BackgroundJobMetrics
     private class TimingScope : IDisposable
     {
         private readonly string _jobName;
-        private readonly DateTime _startTime;
+        private readonly long _startTime;
         private bool _disposed;
 
         public TimingScope(string jobName)
         {
             _jobName = jobName;
-            _startTime = DateTime.UtcNow;
+            _startTime = Stopwatch.GetTimestamp();
         }
 
         public void Dispose()
         {
             if (_disposed) return;
 
-            var duration = (DateTime.UtcNow - _startTime).TotalSeconds;
+            var duration = Stopwatch.GetElapsedTime(_startTime).TotalSeconds;
 
             // Record success by default (call RecordFailure explicitly on exception)
             RecordSuccess(_jobName, duration);

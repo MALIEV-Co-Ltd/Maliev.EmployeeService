@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using FluentValidation;
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
@@ -15,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/leave")]
+[Route("employees/v{version:apiVersion}/leave")]
 [Authorize]
 public class LeaveController : ControllerBase
 {
@@ -26,11 +25,11 @@ public class LeaveController : ControllerBase
     private readonly ApproveRejectLeaveCommandHandler _approveRejectHandler;
     private readonly CancelLeaveRequestCommandHandler _cancelRequestHandler;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IValidator<SubmitLeaveRequestDto> _submitValidator;
-    private readonly IValidator<ApproveRejectLeaveDto> _approveRejectValidator;
-    private readonly IValidator<CancelLeaveRequestDto> _cancelValidator;
     private readonly ILogger<LeaveController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LeaveController"/> class
+    /// </summary>
     public LeaveController(
         GetLeaveBalancesQueryHandler getBalancesHandler,
         GetLeaveRequestsQueryHandler getRequestsHandler,
@@ -39,9 +38,6 @@ public class LeaveController : ControllerBase
         ApproveRejectLeaveCommandHandler approveRejectHandler,
         CancelLeaveRequestCommandHandler cancelRequestHandler,
         ICurrentUserService currentUserService,
-        IValidator<SubmitLeaveRequestDto> submitValidator,
-        IValidator<ApproveRejectLeaveDto> approveRejectValidator,
-        IValidator<CancelLeaveRequestDto> cancelValidator,
         ILogger<LeaveController> logger)
     {
         _getBalancesHandler = getBalancesHandler;
@@ -51,9 +47,6 @@ public class LeaveController : ControllerBase
         _approveRejectHandler = approveRejectHandler;
         _cancelRequestHandler = cancelRequestHandler;
         _currentUserService = currentUserService;
-        _submitValidator = submitValidator;
-        _approveRejectValidator = approveRejectValidator;
-        _cancelValidator = cancelValidator;
         _logger = logger;
     }
 
@@ -194,13 +187,6 @@ public class LeaveController : ControllerBase
             return Forbid();
         }
 
-        // Validate
-        var validationResult = await _submitValidator.ValidateAsync(submitDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new SubmitLeaveRequestCommand(employeeId, submitDto);
         var result = await _submitRequestHandler.HandleAsync(command, cancellationToken);
 
@@ -260,13 +246,6 @@ public class LeaveController : ControllerBase
             return BadRequest(new { message = "Employee ID not found in token" });
         }
 
-        // Validate
-        var validationResult = await _approveRejectValidator.ValidateAsync(decisionDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new ApproveRejectLeaveCommand(
             leaveRequestId,
             _currentUserService.EmployeeId.Value,
@@ -301,13 +280,6 @@ public class LeaveController : ControllerBase
         if (!_currentUserService.EmployeeId.HasValue)
         {
             return BadRequest(new { message = "Employee ID not found in token" });
-        }
-
-        // Validate
-        var validationResult = await _cancelValidator.ValidateAsync(cancelDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
         }
 
         var command = new CancelLeaveRequestCommand(

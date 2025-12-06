@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -191,8 +190,8 @@ public class UploadDocumentCommandHandlerWithEncryptionTests
         var result = await _handler.HandleAsync(command);
 
         // Assert - Result DTO should contain the ORIGINAL unencrypted filename
-        result.FileName.Should().Be(originalFileName);
-        result.FileName.Should().NotContain("ENCRYPTED"); // Should not be encrypted in response
+        Assert.Equal(originalFileName, result.FileName);
+        Assert.DoesNotContain("ENCRYPTED", result.FileName); // Should not be encrypted in response
     }
 
     [Fact]
@@ -243,7 +242,7 @@ public class UploadDocumentCommandHandlerWithEncryptionTests
                 d.FileName == fileNameWithSpecialChars), // Exact match with special characters
             It.IsAny<CancellationToken>()), Times.Once);
 
-        result.FileName.Should().Be(fileNameWithSpecialChars);
+        Assert.Equal(fileNameWithSpecialChars, result.FileName);
     }
 
     [Fact]
@@ -294,7 +293,7 @@ public class UploadDocumentCommandHandlerWithEncryptionTests
                 d.FileName == unicodeFileName), // Unicode should be preserved exactly
             It.IsAny<CancellationToken>()), Times.Once);
 
-        result.FileName.Should().Be(unicodeFileName);
+        Assert.Equal(unicodeFileName, result.FileName);
     }
 
     [Fact]
@@ -347,6 +346,6 @@ public class UploadDocumentCommandHandlerWithEncryptionTests
                 d.EmployeeId == employeeId), // Should be stored as Guid
             It.IsAny<CancellationToken>()), Times.Once);
 
-        result.DocumentType.Should().Be(documentType);
+        Assert.Equal(documentType, result.DocumentType);
     }
 }

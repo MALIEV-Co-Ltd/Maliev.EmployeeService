@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -65,11 +64,11 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
 
-        goal.ProgressUpdates.Should().Contain("Made good progress this week");
-        goal.ProgressUpdates.Should().Contain("60% of milestones");
+        Assert.Contains("Made good progress this week", goal.ProgressUpdates);
+        Assert.Contains("60% of milestones", goal.ProgressUpdates);
 
         _mockGoalRepository.Verify(x => x.Update(It.Is<Goal>(g =>
             g.Id == goalId &&
@@ -111,11 +110,11 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        goal.CompletionStatus.Should().Be(GoalStatus.Completed);
-        goal.CompletedDate.Should().NotBeNull();
-        goal.CompletedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        goal.ProgressUpdates.Should().Contain("Certification exam passed");
+        Assert.True(result.Success);
+        Assert.Equal(GoalStatus.Completed, goal.CompletionStatus);
+        Assert.NotNull(goal.CompletedDate);
+        Assert.True(Math.Abs((goal.CompletedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
+        Assert.Contains("Certification exam passed", goal.ProgressUpdates);
     }
 
     [Fact]
@@ -150,9 +149,9 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        goal.CompletionStatus.Should().Be(GoalStatus.InProgress);
-        goal.CompletedDate.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.Equal(GoalStatus.InProgress, goal.CompletionStatus);
+        Assert.Null(goal.CompletedDate);
     }
 
     [Fact]
@@ -175,9 +174,9 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Goal with ID");
-        result.ErrorMessage.Should().Contain("not found");
+        Assert.False(result.Success);
+        Assert.Contains("Goal with ID", result.ErrorMessage);
+        Assert.Contains("not found", result.ErrorMessage);
 
         _mockGoalRepository.Verify(x => x.Update(It.IsAny<Goal>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -213,8 +212,8 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("You can only update your own goals");
+        Assert.False(result.Success);
+        Assert.Contains("You can only update your own goals", result.ErrorMessage);
 
         _mockGoalRepository.Verify(x => x.Update(It.IsAny<Goal>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -249,8 +248,8 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Cannot update a cancelled goal");
+        Assert.False(result.Success);
+        Assert.Contains("Cannot update a cancelled goal", result.ErrorMessage);
 
         _mockGoalRepository.Verify(x => x.Update(It.IsAny<Goal>()), Times.Never);
     }
@@ -285,9 +284,9 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Cannot reopen a completed goal");
-        result.ErrorMessage.Should().Contain("Create a new goal instead");
+        Assert.False(result.Success);
+        Assert.Contains("Cannot reopen a completed goal", result.ErrorMessage);
+        Assert.Contains("Create a new goal instead", result.ErrorMessage);
 
         _mockGoalRepository.Verify(x => x.Update(It.IsAny<Goal>()), Times.Never);
     }
@@ -325,10 +324,10 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        goal.ProgressUpdates.Should().Contain("First update: Started project planning");
-        goal.ProgressUpdates.Should().Contain("Second update: Completed design phase");
-        goal.ProgressUpdates.Should().Contain("\n"); // Should have newline separator
+        Assert.True(result.Success);
+        Assert.Contains("First update: Started project planning", goal.ProgressUpdates);
+        Assert.Contains("Second update: Completed design phase", goal.ProgressUpdates);
+        Assert.Contains("\n", goal.ProgressUpdates); // Should have newline separator
     }
 
     [Fact]
@@ -363,9 +362,9 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        goal.CompletionStatus.Should().Be(GoalStatus.InProgress);
-        goal.ProgressUpdates.Should().BeNullOrEmpty();
+        Assert.True(result.Success);
+        Assert.Equal(GoalStatus.InProgress, goal.CompletionStatus);
+        Assert.True(string.IsNullOrEmpty(goal.ProgressUpdates));
     }
 
     [Fact]
@@ -403,9 +402,9 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        goal.ModifiedBy.Should().Be(currentUserId);
-        goal.ModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Assert.True(result.Success);
+        Assert.Equal(currentUserId, goal.ModifiedBy);
+        Assert.True(Math.Abs((goal.ModifiedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
     }
 
     [Fact]
@@ -442,8 +441,8 @@ public class UpdateGoalProgressCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        goal.CompletedDate.Should().Be(originalCompletedDate); // Should NOT change
-        goal.ProgressUpdates.Should().Contain("Adding additional notes");
+        Assert.True(result.Success);
+        Assert.Equal(originalCompletedDate, goal.CompletedDate); // Should NOT change
+        Assert.Contains("Adding additional notes", goal.ProgressUpdates);
     }
 }

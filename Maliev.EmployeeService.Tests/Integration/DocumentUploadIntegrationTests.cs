@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -89,19 +88,19 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await handler.HandleAsync(command);
 
         // Assert - Verify data round-trips correctly through save and load
-        result.Should().NotBeNull();
-        result.DocumentId.Should().NotBeEmpty();
-        result.FileName.Should().Be(fileName);
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.DocumentId);
+        Assert.Equal(fileName, result.FileName);
 
         // Verify document can be retrieved with correct values
         Context.ChangeTracker.Clear();
         var documentFromDb = await documentRepository.GetByIdAsync(result.DocumentId);
 
-        documentFromDb.Should().NotBeNull();
-        documentFromDb!.FileName.Should().Be(fileName);
-        documentFromDb.StoragePath.Should().Be(storagePath);
-        documentFromDb.DocumentType.Should().Be(DocumentType.EmploymentContract);
-        documentFromDb.AccessLevel.Should().Be(AccessLevel.HROnly);
+        Assert.NotNull(documentFromDb);
+        Assert.Equal(fileName, documentFromDb!.FileName);
+        Assert.Equal(storagePath, documentFromDb.StoragePath);
+        Assert.Equal(DocumentType.EmploymentContract, documentFromDb.DocumentType);
+        Assert.Equal(AccessLevel.HROnly, documentFromDb.AccessLevel);
     }
 
     [Fact]
@@ -177,18 +176,18 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
         var documentFromDb = await documentRepository.GetByIdAsync(result.DocumentId);
 
-        documentFromDb.Should().NotBeNull();
-        documentFromDb!.EmployeeId.Should().Be(employee.Id);
-        documentFromDb.DocumentType.Should().Be(DocumentType.IDDocument);
-        documentFromDb.AccessLevel.Should().Be(AccessLevel.HRSpecialistOnly);
-        documentFromDb.FileName.Should().Be("passport.pdf"); // Decrypted by interceptor
-        documentFromDb.FileSizeBytes.Should().Be(2048);
-        documentFromDb.ContentType.Should().Be("application/pdf");
-        documentFromDb.Description.Should().Be("Employee passport");
-        documentFromDb.ExpirationDate.Should().BeCloseTo(expirationDate, TimeSpan.FromSeconds(1));
-        documentFromDb.UploadedBy.Should().Be(uploader.Id);
-        documentFromDb.VersionNumber.Should().Be(1);
-        documentFromDb.IsArchived.Should().BeFalse();
+        Assert.NotNull(documentFromDb);
+        Assert.Equal(employee.Id, documentFromDb!.EmployeeId);
+        Assert.Equal(DocumentType.IDDocument, documentFromDb.DocumentType);
+        Assert.Equal(AccessLevel.HRSpecialistOnly, documentFromDb.AccessLevel);
+        Assert.Equal("passport.pdf", documentFromDb.FileName); // Decrypted by interceptor
+        Assert.Equal(2048, documentFromDb.FileSizeBytes);
+        Assert.Equal("application/pdf", documentFromDb.ContentType);
+        Assert.Equal("Employee passport", documentFromDb.Description);
+        Assert.True(Math.Abs((documentFromDb.ExpirationDate!.Value - expirationDate).TotalSeconds) <= 1);
+        Assert.Equal(uploader.Id, documentFromDb.UploadedBy);
+        Assert.Equal(1, documentFromDb.VersionNumber);
+        Assert.False(documentFromDb.IsArchived);
     }
 
     [Fact]
@@ -357,17 +356,17 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var doc1FromDb = await documentRepository.GetByIdAsync(result1.DocumentId);
         var doc2FromDb = await documentRepository.GetByIdAsync(result2.DocumentId);
 
-        doc1FromDb.Should().NotBeNull();
-        doc1FromDb!.FileName.Should().Be(fileName);
-        doc1FromDb.StoragePath.Should().Be("documents/2025/01/contract_v1.pdf");
-        doc1FromDb.DocumentType.Should().Be(DocumentType.EmploymentContract);
-        doc1FromDb.FileSizeBytes.Should().Be(1024);
+        Assert.NotNull(doc1FromDb);
+        Assert.Equal(fileName, doc1FromDb!.FileName);
+        Assert.Equal("documents/2025/01/contract_v1.pdf", doc1FromDb.StoragePath);
+        Assert.Equal(DocumentType.EmploymentContract, doc1FromDb.DocumentType);
+        Assert.Equal(1024, doc1FromDb.FileSizeBytes);
 
-        doc2FromDb.Should().NotBeNull();
-        doc2FromDb!.FileName.Should().Be(fileName);
-        doc2FromDb.StoragePath.Should().Be("documents/2025/01/contract_v2.pdf");
-        doc2FromDb.DocumentType.Should().Be(DocumentType.OfferLetter);
-        doc2FromDb.FileSizeBytes.Should().Be(2048);
+        Assert.NotNull(doc2FromDb);
+        Assert.Equal(fileName, doc2FromDb!.FileName);
+        Assert.Equal("documents/2025/01/contract_v2.pdf", doc2FromDb.StoragePath);
+        Assert.Equal(DocumentType.OfferLetter, doc2FromDb.DocumentType);
+        Assert.Equal(2048, doc2FromDb.FileSizeBytes);
     }
 
     [Fact]
@@ -442,9 +441,9 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
         var documentFromDb = await documentRepository.GetByIdAsync(result.DocumentId);
 
-        documentFromDb.Should().NotBeNull();
-        documentFromDb!.UploadDate.Should().BeOnOrAfter(beforeUpload);
-        documentFromDb.UploadDate.Should().BeOnOrBefore(afterUpload);
+        Assert.NotNull(documentFromDb);
+        Assert.True(documentFromDb!.UploadDate >= beforeUpload);
+        Assert.True(documentFromDb.UploadDate <= afterUpload);
     }
 
     [Fact]
@@ -496,7 +495,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
 
         // Verify no document was created
         var documentsCount = await Context.Documents.CountAsync();
-        documentsCount.Should().Be(0);
+        Assert.Equal(0, documentsCount);
 
         // Verify Upload Service was not called
         mockUploadServiceClient.Verify(x => x.UploadAsync(

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -72,13 +71,13 @@ public class RecordTrainingCompletionCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.CourseName.Should().Be("Safety Training");
-        result.EmployeeId.Should().Be(employeeId);
-        result.TrainingType.Should().Be(TrainingType.Mandatory);
-        result.CertificateDocumentId.Should().Be("CERT123");
-        result.Provider.Should().Be("Safety Corp");
-        result.Status.Should().Be(CertificationStatus.Valid);
+        Assert.NotNull(result);
+        Assert.Equal("Safety Training", result.CourseName);
+        Assert.Equal(employeeId, result.EmployeeId);
+        Assert.Equal(TrainingType.Mandatory, result.TrainingType);
+        Assert.Equal("CERT123", result.CertificateDocumentId);
+        Assert.Equal("Safety Corp", result.Provider);
+        Assert.Equal(CertificationStatus.Valid, result.Status);
 
         _trainingRepositoryMock.Verify(
             x => x.CreateAsync(It.IsAny<TrainingRecord>(), It.IsAny<CancellationToken>()),
@@ -124,12 +123,12 @@ public class RecordTrainingCompletionCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.CourseName.Should().Be("Leadership Development");
-        result.TrainingType.Should().Be(TrainingType.Voluntary);
-        result.ExpirationDate.Should().BeNull();
-        result.CertificateDocumentId.Should().BeNull();
-        result.Status.Should().Be(CertificationStatus.Valid);
+        Assert.NotNull(result);
+        Assert.Equal("Leadership Development", result.CourseName);
+        Assert.Equal(TrainingType.Voluntary, result.TrainingType);
+        Assert.Null(result.ExpirationDate);
+        Assert.Null(result.CertificateDocumentId);
+        Assert.Equal(CertificationStatus.Valid, result.Status);
     }
 
     [Fact]
@@ -171,10 +170,10 @@ public class RecordTrainingCompletionCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.CertificateDocumentId.Should().Be(certificateId);
-        capturedRecord.Should().NotBeNull();
-        capturedRecord!.CertificateDocumentId.Should().Be(certificateId);
+        Assert.NotNull(result);
+        Assert.Equal(certificateId, result.CertificateDocumentId);
+        Assert.NotNull(capturedRecord);
+        Assert.Equal(certificateId, capturedRecord!.CertificateDocumentId);
     }
 
     [Fact]
@@ -215,8 +214,8 @@ public class RecordTrainingCompletionCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.NotNull(result);
+        Assert.Equal(CertificationStatus.Expiring, result.Status);
     }
 
     [Fact]
@@ -280,10 +279,10 @@ public class RecordTrainingCompletionCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        capturedRecord.Should().NotBeNull();
-        capturedRecord!.CompletionDate.Should().Be(completionDate);
-        capturedRecord.ExpirationDate.Should().Be(expirationDate);
+        Assert.NotNull(result);
+        Assert.NotNull(capturedRecord);
+        Assert.Equal(completionDate, capturedRecord!.CompletionDate);
+        Assert.Equal(expirationDate, capturedRecord.ExpirationDate);
     }
 
     [Fact]
@@ -323,7 +322,7 @@ public class RecordTrainingCompletionCommandHandlerTests
             var result = await _handler.HandleAsync(command);
 
             // Assert
-            result.Provider.Should().Be(provider);
+            Assert.Equal(provider, result.Provider);
         }
     }
 }

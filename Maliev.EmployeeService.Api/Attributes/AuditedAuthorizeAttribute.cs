@@ -29,6 +29,11 @@ public class AuditedAuthorizeAttribute : Attribute, IAsyncAuthorizationFilter
         _auditPurpose = auditPurpose;
     }
 
+    /// <summary>
+    /// Performs authorization and audit logging for the request
+    /// </summary>
+    /// <param name="context">The authorization filter context</param>
+    /// <returns>A task representing the asynchronous operation</returns>
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         // Get required services

@@ -12,12 +12,23 @@ public class RabbitMQHealthCheck : IHealthCheck
     private readonly IBusControl _busControl;
     private readonly ILogger<RabbitMQHealthCheck> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RabbitMQHealthCheck"/> class
+    /// </summary>
+    /// <param name="busControl">The MassTransit bus control instance</param>
+    /// <param name="_logger">The logger instance</param>
     public RabbitMQHealthCheck(IBusControl busControl, ILogger<RabbitMQHealthCheck> _logger)
     {
         _busControl = busControl;
         this._logger = _logger;
     }
 
+    /// <summary>
+    /// Checks the health of the RabbitMQ connection
+    /// </summary>
+    /// <param name="context">The health check context</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the health check result</returns>
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)

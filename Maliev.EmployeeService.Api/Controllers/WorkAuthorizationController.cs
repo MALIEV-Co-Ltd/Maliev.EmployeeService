@@ -14,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/work-authorization")]
+[Route("employees/v{version:apiVersion}/work-authorization")]
 [Authorize]
 public class WorkAuthorizationController : ControllerBase
 {
@@ -25,6 +25,9 @@ public class WorkAuthorizationController : ControllerBase
     private readonly IWorkAuthorizationRepository _workAuthorizationRepository;
     private readonly ILogger<WorkAuthorizationController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WorkAuthorizationController"/> class
+    /// </summary>
     public WorkAuthorizationController(
         RecordWorkAuthorizationCommandHandler recordAuthorizationHandler,
         UpdateWorkAuthorizationCommandHandler updateAuthorizationHandler,

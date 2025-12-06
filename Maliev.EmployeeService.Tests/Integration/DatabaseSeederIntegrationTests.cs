@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -58,19 +57,19 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
         var teams = await Context.Teams.ToListAsync();
         var assignments = await Context.EmployeeTeamAssignments.ToListAsync();
 
-        teams.Should().HaveCount(5, "Seeder should create 5 teams");
-        teams.Should().Contain(t => t.Name == "Engineering Team");
-        teams.Should().Contain(t => t.Name == "Product Team");
-        teams.Should().Contain(t => t.Name == "DevOps Team");
-        teams.Should().Contain(t => t.Name == "QA Team");
-        teams.Should().Contain(t => t.Name == "Design Team");
+        Assert.Equal(5, teams.Count()); // Seeder should create 5 teams
+        Assert.Contains(teams, t => t.Name == "Engineering Team");
+        Assert.Contains(teams, t => t.Name == "Product Team");
+        Assert.Contains(teams, t => t.Name == "DevOps Team");
+        Assert.Contains(teams, t => t.Name == "QA Team");
+        Assert.Contains(teams, t => t.Name == "Design Team");
 
-        assignments.Should().NotBeEmpty("Teams should have member assignments");
+        Assert.NotEmpty(assignments); // Teams should have member assignments
 
         // Verify team leads are assigned
         var engineeringTeam = teams.First(t => t.Name == "Engineering Team");
-        engineeringTeam.TeamLeadId.Should().NotBeNull();
-        engineeringTeam.TeamLeadId.Should().Be(employees[0].Id);
+        Assert.NotNull(engineeringTeam.TeamLeadId);
+        Assert.Equal(employees[0].Id, engineeringTeam.TeamLeadId);
 
         // Verify multiple team memberships (matrix organization)
         var employeeTeamCounts = assignments
@@ -78,11 +77,11 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
             .Select(g => new { EmployeeId = g.Key, TeamCount = g.Count() })
             .ToList();
 
-        employeeTeamCounts.Should().Contain(e => e.TeamCount > 1,
+        Assert.True(employeeTeamCounts.Any(e => e.TeamCount > 1),
             "At least one employee should belong to multiple teams (matrix organization)");
 
         // Verify primary assignments exist
-        assignments.Should().Contain(a => a.IsPrimary == true,
+        Assert.True(assignments.Any(a => a.IsPrimary == true),
             "Some team members should be marked as primary");
     }
 
@@ -108,8 +107,8 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var teams = await Context.Teams.ToListAsync();
-        teams.Should().HaveCount(1, "Should not seed when teams already exist");
-        teams[0].Name.Should().Be("Existing Team");
+        Assert.Single(teams); // Should not seed when teams already exist
+        Assert.Equal("Existing Team", teams[0].Name);
     }
 
     [Fact]
@@ -122,7 +121,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var teams = await Context.Teams.ToListAsync();
-        teams.Should().BeEmpty("No teams should be created when no active employees exist");
+        Assert.Empty(teams); // No teams should be created when no active employees exist
     }
 
     [Fact]
@@ -141,14 +140,14 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
         // Assert
         var teams = await Context.Teams.ToListAsync();
 
-        teams.Should().Contain(t => t.TeamType == "Engineering" && t.Name == "Engineering Team");
-        teams.Should().Contain(t => t.TeamType == "Product");
-        teams.Should().Contain(t => t.TeamType == "Engineering" && t.Name == "DevOps Team");
-        teams.Should().Contain(t => t.TeamType == "QA");
-        teams.Should().Contain(t => t.TeamType == "Design");
+        Assert.Contains(teams, t => t.TeamType == "Engineering" && t.Name == "Engineering Team");
+        Assert.Contains(teams, t => t.TeamType == "Product");
+        Assert.Contains(teams, t => t.TeamType == "Engineering" && t.Name == "DevOps Team");
+        Assert.Contains(teams, t => t.TeamType == "QA");
+        Assert.Contains(teams, t => t.TeamType == "Design");
 
-        teams.Should().OnlyContain(t => t.IsActive == true,
-            "All seeded teams should be active");
+        Assert.All(teams, t  => Assert.True(t.IsActive == true,
+            "All seeded teams should be active"));
     }
 
     [Fact]
@@ -166,7 +165,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var teams = await Context.Teams.ToListAsync();
-        teams.Should().NotBeEmpty("SeedAllAsync should create teams");
+        Assert.NotEmpty(teams); // SeedAllAsync should create teams
     }
 
     /// <summary>

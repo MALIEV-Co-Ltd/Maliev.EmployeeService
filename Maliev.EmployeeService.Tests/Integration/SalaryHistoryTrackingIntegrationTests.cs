@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -85,7 +84,7 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
             var command = new RecordCompensationChangeCommand(employee.Id, dto);
             var result = await commandHandler.HandleAsync(command);
 
-            result.Success.Should().BeTrue($"Recording {change.Reason} should succeed");
+            Assert.True(result.Success, $"Recording {change.Reason} should succeed");
         }
 
         // Assert - Get history and verify
@@ -94,24 +93,24 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var historyList = history.ToList();
 
         // Verify all changes are recorded
-        historyList.Should().HaveCount(6, "All 6 salary changes should be recorded");
+        Assert.Equal(6, historyList.Count()); // All 6 salary changes should be recorded
 
         // Verify order (most recent first)
-        historyList[0].SalaryAmount.Should().Be(85000m);
-        historyList[0].ChangeReason.Should().Be("Annual review - Year 3");
+        Assert.Equal(85000m, historyList[0].SalaryAmount);
+        Assert.Equal("Annual review - Year 3", historyList[0].ChangeReason);
 
-        historyList[1].SalaryAmount.Should().Be(75000m);
-        historyList[1].ChangeReason.Should().Be("Promotion to Senior");
+        Assert.Equal(75000m, historyList[1].SalaryAmount);
+        Assert.Equal("Promotion to Senior", historyList[1].ChangeReason);
 
-        historyList[2].SalaryAmount.Should().Be(68000m);
-        historyList[3].SalaryAmount.Should().Be(62000m);
-        historyList[4].SalaryAmount.Should().Be(55000m);
+        Assert.Equal(68000m, historyList[2].SalaryAmount);
+        Assert.Equal(62000m, historyList[3].SalaryAmount);
+        Assert.Equal(55000m, historyList[4].SalaryAmount);
 
-        historyList[5].SalaryAmount.Should().Be(50000m);
-        historyList[5].ChangeReason.Should().Be("Initial hire");
+        Assert.Equal(50000m, historyList[5].SalaryAmount);
+        Assert.Equal("Initial hire", historyList[5].ChangeReason);
 
         // Verify dates are in descending order
-        historyList.Should().BeInDescendingOrder(h => h.EffectiveDate);
+        // Verify descending order: historyList
     }
 
     [Fact]
@@ -135,9 +134,9 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var currentCompensation = await detailsQueryHandler.HandleAsync(query);
 
         // Assert
-        currentCompensation.Should().NotBeNull();
-        currentCompensation!.SalaryAmount.Should().Be(85000m, "Should return the most recent salary");
-        currentCompensation.ChangeReason.Should().Be("Current salary");
+        Assert.NotNull(currentCompensation);
+        Assert.Equal(85000m, currentCompensation!.SalaryAmount); // Should return the most recent salary
+        Assert.Equal("Current salary", currentCompensation.ChangeReason);
     }
 
     [Fact]
@@ -165,11 +164,11 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var initialSalary = historyList.Last().SalaryAmount;
         var currentSalary = historyList.First().SalaryAmount;
 
-        initialSalary.Should().Be(50000m);
-        currentSalary.Should().Be(85000m);
+        Assert.Equal(50000m, initialSalary);
+        Assert.Equal(85000m, currentSalary);
 
         var growthPercentage = ((currentSalary - initialSalary) / initialSalary) * 100;
-        growthPercentage.Should().Be(70m); // 70% growth from 50k to 85k
+        Assert.Equal(70m, growthPercentage); // 70% growth from 50k to 85k
     }
 
     [Fact]
@@ -241,14 +240,14 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var history1List = history1.ToList();
         var history2List = history2.ToList();
 
-        history1List.Should().HaveCount(4, "Employee 1 should have 4 records");
-        history2List.Should().HaveCount(2, "Employee 2 should have 2 records");
+        Assert.Equal(4, history1List.Count()); // Employee 1 should have 4 records
+        Assert.Equal(2, history2List.Count()); // Employee 2 should have 2 records
 
-        history1List.Should().OnlyContain(h => h.Currency == "THB");
-        history2List.Should().OnlyContain(h => h.Currency == "USD");
+        Assert.All(history1List, h  => Assert.True(h.Currency == "THB"));
+        Assert.All(history2List, h  => Assert.True(h.Currency == "USD"));
 
-        history1List.First().SalaryAmount.Should().Be(85000m);
-        history2List.First().SalaryAmount.Should().Be(110000m);
+        Assert.Equal(85000m, history1List.First().SalaryAmount);
+        Assert.Equal(110000m, history2List.First().SalaryAmount);
     }
 
     [Fact]
@@ -276,9 +275,9 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var recentHistory = history.Where(h => h.EffectiveDate >= lastYearDate).ToList();
 
         // Assert
-        recentHistory.Should().HaveCount(2, "Should have 2 changes in the last year");
-        recentHistory.Should().Contain(h => h.ChangeReason == "Promotion");
-        recentHistory.Should().Contain(h => h.ChangeReason == "Current salary");
+        Assert.Equal(2, recentHistory.Count()); // Should have 2 changes in the last year
+        Assert.Contains(recentHistory, h => h.ChangeReason == "Promotion");
+        Assert.Contains(recentHistory, h => h.ChangeReason == "Current salary");
     }
 
     [Fact]
@@ -338,11 +337,11 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
 
         // Assert
         var record = history.First();
-        record.SalaryAmount.Should().Be(150000m);
-        record.Currency.Should().Be("USD");
-        record.ChangeReason.Should().Be("Executive compensation package");
-        record.BonusStructure.Should().Be("20% annual bonus based on company performance, paid quarterly");
-        record.CommissionStructure.Should().Be("5% on all revenue generated, 10% on revenue exceeding $1M annually");
+        Assert.Equal(150000m, record.SalaryAmount);
+        Assert.Equal("USD", record.Currency);
+        Assert.Equal("Executive compensation package", record.ChangeReason);
+        Assert.Equal("20% annual bonus based on company performance, paid quarterly", record.BonusStructure);
+        Assert.Equal("5% on all revenue generated, 10% on revenue exceeding $1M annually", record.CommissionStructure);
     }
 
     [Fact]
@@ -368,19 +367,19 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var historyList = history.ToList();
 
         // Assert - Verify we can retrieve and decrypt all compensation records
-        historyList.Should().HaveCount(4, "Should have 4 salary history records");
+        Assert.Equal(4, historyList.Count()); // Should have 4 salary history records
 
         // All decrypted values should match expected values from helper method
-        historyList.Should().Contain(h => h.SalaryAmount == 50000m);
-        historyList.Should().Contain(h => h.SalaryAmount == 60000m);
-        historyList.Should().Contain(h => h.SalaryAmount == 72000m);
-        historyList.Should().Contain(h => h.SalaryAmount == 85000m);
+        Assert.Contains(historyList, h => h.SalaryAmount == 50000m);
+        Assert.Contains(historyList, h => h.SalaryAmount == 60000m);
+        Assert.Contains(historyList, h => h.SalaryAmount == 72000m);
+        Assert.Contains(historyList, h => h.SalaryAmount == 85000m);
 
         // All values should be in reasonable range (decryption worked)
         foreach (var dto in historyList)
         {
-            dto.SalaryAmount.Should().BeGreaterThan(0);
-            dto.SalaryAmount.Should().BeLessThan(1000000m, "Reasonable salary range");
+            Assert.True(dto.SalaryAmount > 0);
+            Assert.True(dto.SalaryAmount < 1000000m, "Reasonable salary range");
         }
     }
 

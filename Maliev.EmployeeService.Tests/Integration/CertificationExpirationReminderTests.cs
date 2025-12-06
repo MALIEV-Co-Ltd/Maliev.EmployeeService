@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -43,13 +42,13 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().NotBeEmpty();
+        Assert.NotEmpty(certList);
         // Should include certifications expiring within 60 days (60, 59, 30 days)
-        certList.Should().Contain(c => c.CourseName == "60 Day Cert");
-        certList.Should().Contain(c => c.CourseName == "59 Day Cert");
-        certList.Should().Contain(c => c.CourseName == "30 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "60 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "59 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "30 Day Cert");
         // Should NOT include certifications expiring beyond 60 days
-        certList.Should().NotContain(c => c.CourseName == "61 Day Cert");
+        Assert.DoesNotContain(certList, c => c.CourseName == "61 Day Cert");
     }
 
     [Fact]
@@ -74,10 +73,10 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().Contain(c => c.CourseName == "30 Day Cert");
-        certList.Should().Contain(c => c.CourseName == "29 Day Cert");
-        certList.Should().Contain(c => c.CourseName == "14 Day Cert");
-        certList.Should().NotContain(c => c.CourseName == "31 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "30 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "29 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "14 Day Cert");
+        Assert.DoesNotContain(certList, c => c.CourseName == "31 Day Cert");
     }
 
     [Fact]
@@ -102,10 +101,10 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().Contain(c => c.CourseName == "14 Day Cert");
-        certList.Should().Contain(c => c.CourseName == "7 Day Cert");
-        certList.Should().Contain(c => c.CourseName == "1 Day Cert");
-        certList.Should().NotContain(c => c.CourseName == "15 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "14 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "7 Day Cert");
+        Assert.Contains(certList, c => c.CourseName == "1 Day Cert");
+        Assert.DoesNotContain(certList, c => c.CourseName == "15 Day Cert");
     }
 
     [Fact]
@@ -129,8 +128,8 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().Contain(c => c.CourseName == "Expiring");
-        certList.Should().NotContain(c => c.CourseName == "Already Expired");
+        Assert.Contains(certList, c => c.CourseName == "Expiring");
+        Assert.DoesNotContain(certList, c => c.CourseName == "Already Expired");
     }
 
     [Fact]
@@ -153,8 +152,8 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().Contain(c => c.CourseName == "Soon Expiring");
-        certList.Should().NotContain(c => c.CourseName == "Long Valid");
+        Assert.Contains(certList, c => c.CourseName == "Soon Expiring");
+        Assert.DoesNotContain(certList, c => c.CourseName == "Long Valid");
     }
 
     [Fact]
@@ -178,9 +177,9 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().HaveCount(2);
-        certList.Should().Contain(c => c.CourseName == "Employee 1 Cert");
-        certList.Should().Contain(c => c.CourseName == "Employee 2 Cert");
+        Assert.Equal(2, certList.Count());
+        Assert.Contains(certList, c => c.CourseName == "Employee 1 Cert");
+        Assert.Contains(certList, c => c.CourseName == "Employee 2 Cert");
     }
 
     [Fact]
@@ -202,10 +201,10 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().HaveCount(1);
+        Assert.Single(certList);
         var foundCert = certList.First();
-        foundCert.Employee.Should().NotBeNull();
-        foundCert.Employee.EmployeeNumber.Should().Be("EMP006");
+        Assert.NotNull(foundCert.Employee);
+        Assert.Equal("EMP006", foundCert.Employee.EmployeeNumber);
     }
 
     [Fact]
@@ -229,11 +228,11 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().HaveCount(3);
+        Assert.Equal(3, certList.Count());
         // Should be ordered by expiration date (earliest first)
-        certList[0].CourseName.Should().Be("Expires in 7 days");
-        certList[1].CourseName.Should().Be("Expires in 14 days");
-        certList[2].CourseName.Should().Be("Expires in 30 days");
+        Assert.Equal("Expires in 7 days", certList[0].CourseName);
+        Assert.Equal("Expires in 14 days", certList[1].CourseName);
+        Assert.Equal("Expires in 30 days", certList[2].CourseName);
     }
 
     [Fact]
@@ -267,8 +266,8 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().Contain(c => c.CourseName == "Has Expiration");
-        certList.Should().NotContain(c => c.CourseName == "Permanent Cert");
+        Assert.Contains(certList, c => c.CourseName == "Has Expiration");
+        Assert.DoesNotContain(certList, c => c.CourseName == "Permanent Cert");
     }
 
     [Fact]
@@ -291,8 +290,8 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
 
         // Assert
         var certList = expiringCerts.ToList();
-        certList.Should().Contain(c => c.CourseName == "Exactly 30");
-        certList.Should().NotContain(c => c.CourseName == "31 Days");
+        Assert.Contains(certList, c => c.CourseName == "Exactly 30");
+        Assert.DoesNotContain(certList, c => c.CourseName == "31 Days");
     }
 
     // Helper methods

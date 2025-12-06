@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/teams")]
+[Route("employees/v{version:apiVersion}/teams")]
 [Authorize]
 public class TeamsController : ControllerBase
 {
@@ -30,6 +30,9 @@ public class TeamsController : ControllerBase
     private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<TeamsController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TeamsController"/> class
+    /// </summary>
     public TeamsController(
         GetTeamDetailsQueryHandler getTeamDetailsHandler,
         GetEmployeeTeamsQueryHandler getEmployeeTeamsHandler,

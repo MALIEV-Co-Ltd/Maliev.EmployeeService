@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using FluentValidation;
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
@@ -14,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/hr")]
+[Route("employees/v{version:apiVersion}/hr")]
 [Authorize(Policy = Policies.RequireHROrAdmin)]
 public class HRController : ControllerBase
 {
@@ -22,22 +21,22 @@ public class HRController : ControllerBase
     private readonly TransferDepartmentCommandHandler _transferDepartmentHandler;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IValidator<CreateEmployeeDto> _createEmployeeValidator;
     private readonly ILogger<HRController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HRController"/> class
+    /// </summary>
     public HRController(
         CreateEmployeeCommandHandler createEmployeeHandler,
         TransferDepartmentCommandHandler transferDepartmentHandler,
         IEmployeeRepository employeeRepository,
         IUnitOfWork unitOfWork,
-        IValidator<CreateEmployeeDto> createEmployeeValidator,
         ILogger<HRController> logger)
     {
         _createEmployeeHandler = createEmployeeHandler;
         _transferDepartmentHandler = transferDepartmentHandler;
         _employeeRepository = employeeRepository;
         _unitOfWork = unitOfWork;
-        _createEmployeeValidator = createEmployeeValidator;
         _logger = logger;
     }
 
@@ -55,13 +54,6 @@ public class HRController : ControllerBase
         [FromBody] CreateEmployeeDto createDto,
         CancellationToken cancellationToken)
     {
-        // Validate
-        var validationResult = await _createEmployeeValidator.ValidateAsync(createDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new CreateEmployeeCommand(createDto);
         var result = await _createEmployeeHandler.HandleAsync(command, cancellationToken);
 

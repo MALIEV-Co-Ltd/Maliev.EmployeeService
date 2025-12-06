@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using FluentValidation;
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
@@ -15,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/profile")]
+[Route("employees/v{version:apiVersion}/profile")]
 [Authorize]
 public class EmployeeProfileController : ControllerBase
 {
@@ -25,11 +24,11 @@ public class EmployeeProfileController : ControllerBase
     private readonly UpdateEmergencyContactCommandHandler _updateContactHandler;
     private readonly DeleteEmergencyContactCommandHandler _deleteContactHandler;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IValidator<UpdateEmployeeProfileDto> _updateProfileValidator;
-    private readonly IValidator<CreateEmergencyContactDto> _createContactValidator;
-    private readonly IValidator<UpdateEmergencyContactDto> _updateContactValidator;
     private readonly ILogger<EmployeeProfileController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EmployeeProfileController"/> class
+    /// </summary>
     public EmployeeProfileController(
         GetEmployeeProfileQueryHandler getProfileHandler,
         UpdateEmployeeProfileCommandHandler updateProfileHandler,
@@ -37,9 +36,6 @@ public class EmployeeProfileController : ControllerBase
         UpdateEmergencyContactCommandHandler updateContactHandler,
         DeleteEmergencyContactCommandHandler deleteContactHandler,
         ICurrentUserService currentUserService,
-        IValidator<UpdateEmployeeProfileDto> updateProfileValidator,
-        IValidator<CreateEmergencyContactDto> createContactValidator,
-        IValidator<UpdateEmergencyContactDto> updateContactValidator,
         ILogger<EmployeeProfileController> logger)
     {
         _getProfileHandler = getProfileHandler;
@@ -48,9 +44,6 @@ public class EmployeeProfileController : ControllerBase
         _updateContactHandler = updateContactHandler;
         _deleteContactHandler = deleteContactHandler;
         _currentUserService = currentUserService;
-        _updateProfileValidator = updateProfileValidator;
-        _createContactValidator = createContactValidator;
-        _updateContactValidator = updateContactValidator;
         _logger = logger;
     }
 
@@ -147,13 +140,6 @@ public class EmployeeProfileController : ControllerBase
             return Forbid();
         }
 
-        // Validate
-        var validationResult = await _updateProfileValidator.ValidateAsync(updateDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new UpdateEmployeeProfileCommand(employeeId, updateDto);
         var result = await _updateProfileHandler.HandleAsync(command, cancellationToken);
 
@@ -209,13 +195,6 @@ public class EmployeeProfileController : ControllerBase
             _logger.LogWarning("User {EmployeeId} attempted to create emergency contact for employee {TargetEmployeeId}",
                 _currentUserService.EmployeeId, employeeId);
             return Forbid();
-        }
-
-        // Validate
-        var validationResult = await _createContactValidator.ValidateAsync(createDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
         }
 
         var command = new CreateEmergencyContactCommand(employeeId, createDto);
@@ -282,13 +261,6 @@ public class EmployeeProfileController : ControllerBase
             _logger.LogWarning("User {EmployeeId} attempted to update emergency contact for employee {TargetEmployeeId}",
                 _currentUserService.EmployeeId, employeeId);
             return Forbid();
-        }
-
-        // Validate
-        var validationResult = await _updateContactValidator.ValidateAsync(updateDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
         }
 
         var command = new UpdateEmergencyContactCommand(contactId, updateDto);

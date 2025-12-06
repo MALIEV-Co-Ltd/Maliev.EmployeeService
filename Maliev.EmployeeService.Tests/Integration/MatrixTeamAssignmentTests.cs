@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -101,9 +100,9 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
             .ToListAsync();
 
         // Assert
-        employeeTeams.Should().HaveCount(2, "Employee should belong to multiple teams");
-        employeeTeams.Should().Contain(eta => eta.IsPrimary && eta.Team!.Name == "Engineering Team");
-        employeeTeams.Should().Contain(eta => !eta.IsPrimary && eta.Team!.Name == "Product Team");
+        Assert.Equal(2, employeeTeams.Count()); // Employee should belong to multiple teams
+        Assert.Contains(employeeTeams, eta => eta.IsPrimary && eta.Team!.Name == "Engineering Team");
+        Assert.Contains(employeeTeams, eta => !eta.IsPrimary && eta.Team!.Name == "Product Team");
     }
 
     [Fact]
@@ -141,7 +140,7 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
         var employeeTeams = await _teamRepository.GetTeamsByEmployeeAsync(employee.Id);
 
         // Assert
-        employeeTeams.Should().HaveCount(3);
+        Assert.Equal(3, employeeTeams.Count());
     }
 
     [Fact]
@@ -197,10 +196,10 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
         var teamWithMembers = await _teamRepository.GetWithMembersAsync(team.Id);
 
         // Assert
-        teamWithMembers.Should().NotBeNull();
-        teamWithMembers!.TeamMembers.Should().HaveCount(3);
-        teamWithMembers.TeamMembers.Should().ContainSingle(tm => tm.IsPrimary);
-        teamWithMembers.TeamMembers.Count(tm => !tm.IsPrimary).Should().Be(2);
+        Assert.NotNull(teamWithMembers);
+        Assert.Equal(3, teamWithMembers!.TeamMembers.Count);
+        Assert.Single(teamWithMembers.TeamMembers, tm => tm.IsPrimary);
+        Assert.Equal(2, teamWithMembers.TeamMembers.Count(tm => !tm.IsPrimary));
     }
 
     [Fact]
@@ -274,11 +273,11 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
             .ToListAsync();
 
         // Assert - Verify matrix organization structure
-        employeeWithDetails.Should().NotBeNull();
-        employeeWithDetails!.DepartmentId.Should().Be(department.Id);
-        employeeWithDetails.ManagerId.Should().Be(manager.Id);
-        employeeTeams.Should().HaveCount(2, "Employee should participate in 2 cross-functional teams");
-        employeeTeams.All(eta => !eta.IsPrimary).Should().BeTrue("Cross-functional teams are secondary assignments");
+        Assert.NotNull(employeeWithDetails);
+        Assert.Equal(department.Id, employeeWithDetails!.DepartmentId);
+        Assert.Equal(manager.Id, employeeWithDetails.ManagerId);
+        Assert.Equal(2, employeeTeams.Count()); // Employee should participate in 2 cross-functional teams
+        Assert.All(employeeTeams, eta => Assert.False(eta.IsPrimary)); // Cross-functional teams are secondary assignments
     }
 
     /// <summary>

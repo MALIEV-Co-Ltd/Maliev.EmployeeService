@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -65,10 +64,10 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.Warnings.Should().HaveCount(1);
-        result.Warnings[0].Should().Contain("80.0% capacity");
-        result.Warnings[0].Should().Contain("8/10");
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("80.0% capacity", result.Warnings[0]);
+        Assert.Contains("8/10", result.Warnings[0]);
     }
 
     [Fact]
@@ -106,10 +105,10 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.Warnings.Should().HaveCount(1);
-        result.Warnings[0].Should().Contain("95.0% capacity");
-        result.Warnings[0].Should().Contain("19/20");
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("95.0% capacity", result.Warnings[0]);
+        Assert.Contains("19/20", result.Warnings[0]);
     }
 
     [Fact]
@@ -147,10 +146,10 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.Warnings.Should().HaveCount(1);
-        result.Warnings[0].Should().Contain("100.0% capacity");
-        result.Warnings[0].Should().Contain("15/15");
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("100.0% capacity", result.Warnings[0]);
+        Assert.Contains("15/15", result.Warnings[0]);
     }
 
     [Fact]
@@ -188,8 +187,8 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Cannot set headcount limit (10) below current headcount (15)");
+        Assert.False(result.Success);
+        Assert.Contains("Cannot set headcount limit (10) below current headcount (15)", result.ErrorMessage);
     }
 
     [Fact]
@@ -227,8 +226,8 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.Warnings.Should().BeEmpty();
+        Assert.True(result.Success);
+        Assert.Empty(result.Warnings);
     }
 
     /// <summary>

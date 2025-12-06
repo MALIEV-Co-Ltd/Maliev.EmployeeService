@@ -12,6 +12,11 @@ public class ResourceAuthorizationHandler : AuthorizationHandler<ResourceAccessR
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<ResourceAuthorizationHandler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceAuthorizationHandler"/> class
+    /// </summary>
+    /// <param name="_currentUserService">The current user service</param>
+    /// <param name="logger">The logger instance</param>
     public ResourceAuthorizationHandler(
         ICurrentUserService _currentUserService,
         ILogger<ResourceAuthorizationHandler> logger)
@@ -20,6 +25,13 @@ public class ResourceAuthorizationHandler : AuthorizationHandler<ResourceAccessR
         _logger = logger;
     }
 
+    /// <summary>
+    /// Handles the authorization requirement for resource access
+    /// </summary>
+    /// <param name="context">The authorization context</param>
+    /// <param name="requirement">The resource access requirement</param>
+    /// <param name="resource">The resource access context</param>
+    /// <returns>A task representing the asynchronous operation</returns>
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         ResourceAccessRequirement requirement,
@@ -82,8 +94,15 @@ public class ResourceAuthorizationHandler : AuthorizationHandler<ResourceAccessR
 /// </summary>
 public class ResourceAccessRequirement : IAuthorizationRequirement
 {
+    /// <summary>
+    /// Gets the required permission for resource access
+    /// </summary>
     public string RequiredPermission { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceAccessRequirement"/> class
+    /// </summary>
+    /// <param name="requiredPermission">The required permission</param>
     public ResourceAccessRequirement(string requiredPermission)
     {
         RequiredPermission = requiredPermission;
@@ -95,6 +114,13 @@ public class ResourceAccessRequirement : IAuthorizationRequirement
 /// </summary>
 public class ResourceAccessContext
 {
+    /// <summary>
+    /// Gets or sets the ID of the employee owning the resource
+    /// </summary>
     public Guid EmployeeId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ID of the manager of the employee
+    /// </summary>
     public Guid? ManagerId { get; set; }
 }

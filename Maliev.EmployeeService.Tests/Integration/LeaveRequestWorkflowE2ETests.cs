@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -90,8 +89,8 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
 
         // Verify initial setup
         var initialBalance = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        initialBalance.Should().NotBeNull();
-        initialBalance!.AvailableDays.Should().Be(15m);
+        Assert.NotNull(initialBalance);
+        Assert.Equal(15m, initialBalance!.AvailableDays);
 
         // === PHASE 2: Employee submits leave request ===
         var leaveRequest = new LeaveRequest
@@ -114,13 +113,13 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
 
         // Verify leave request created and balance shows pending
         var pendingRequest = await Context.LeaveRequests.FirstOrDefaultAsync(lr => lr.Id == leaveRequest.Id);
-        pendingRequest.Should().NotBeNull();
-        pendingRequest!.Status.Should().Be(LeaveRequestStatus.Pending);
-        pendingRequest.IsActive.Should().BeTrue();
+        Assert.NotNull(pendingRequest);
+        Assert.Equal(LeaveRequestStatus.Pending, pendingRequest!.Status);
+        Assert.True(pendingRequest.IsActive);
 
         var balanceWithPending = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        balanceWithPending!.PendingDays.Should().Be(5m);
-        balanceWithPending.AvailableDays.Should().Be(10m); // 15 - 0 - 5 = 10
+        Assert.Equal(5m, balanceWithPending!.PendingDays);
+        Assert.Equal(10m, balanceWithPending.AvailableDays); // 15 - 0 - 5 = 10
 
         // === PHASE 3: Manager approves leave request ===
         var leaveApproval = new LeaveApproval
@@ -149,34 +148,34 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
 
         // Verify approval and balance update
         var approvedRequest = await Context.LeaveRequests.FirstOrDefaultAsync(lr => lr.Id == leaveRequest.Id);
-        approvedRequest.Should().NotBeNull();
-        approvedRequest!.Status.Should().Be(LeaveRequestStatus.Approved);
-        approvedRequest.IsActive.Should().BeFalse();
-        approvedRequest.ApproverId.Should().Be(manager.Id);
+        Assert.NotNull(approvedRequest);
+        Assert.Equal(LeaveRequestStatus.Approved, approvedRequest!.Status);
+        Assert.False(approvedRequest.IsActive);
+        Assert.Equal(manager.Id, approvedRequest.ApproverId);
 
         var approvalRecord = await Context.LeaveApprovals.FirstOrDefaultAsync(la => la.LeaveRequestId == leaveRequest.Id);
-        approvalRecord.Should().NotBeNull();
-        approvalRecord!.IsApproved.Should().BeTrue();
-        approvalRecord.IsPending.Should().BeFalse();
+        Assert.NotNull(approvalRecord);
+        Assert.True(approvalRecord!.IsApproved);
+        Assert.False(approvalRecord.IsPending);
 
         var finalBalance = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        finalBalance!.UsedDays.Should().Be(5m);
-        finalBalance.PendingDays.Should().Be(0m);
-        finalBalance.AvailableDays.Should().Be(10m); // 15 - 5 - 0 = 10
-        finalBalance.RemainingDays.Should().Be(10m);
+        Assert.Equal(5m, finalBalance!.UsedDays);
+        Assert.Equal(0m, finalBalance.PendingDays);
+        Assert.Equal(10m, finalBalance.AvailableDays); // 15 - 5 - 0 = 10
+        Assert.Equal(10m, finalBalance.RemainingDays);
 
         // === PHASE 4: Verify complete workflow ===
         var allLeaveRequests = await Context.LeaveRequests
             .Where(lr => lr.EmployeeId == employee.Id)
             .ToListAsync();
-        allLeaveRequests.Should().HaveCount(1);
-        allLeaveRequests.First().Status.Should().Be(LeaveRequestStatus.Approved);
+        Assert.Single(allLeaveRequests);
+        Assert.Equal(LeaveRequestStatus.Approved, allLeaveRequests.First().Status);
 
         var allApprovals = await Context.LeaveApprovals
             .Where(la => la.ApproverId == manager.Id)
             .ToListAsync();
-        allApprovals.Should().HaveCount(1);
-        allApprovals.First().Decision.Should().Be(ApprovalDecision.Approved);
+        Assert.Single(allApprovals);
+        Assert.Equal(ApprovalDecision.Approved, allApprovals.First().Decision);
     }
 
     [Fact]
@@ -272,8 +271,8 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
 
         // Verify pending state
         var balanceAfterSubmit = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        balanceAfterSubmit!.PendingDays.Should().Be(3m);
-        balanceAfterSubmit.AvailableDays.Should().Be(5m); // 10 - 2 - 3 = 5
+        Assert.Equal(3m, balanceAfterSubmit!.PendingDays);
+        Assert.Equal(5m, balanceAfterSubmit.AvailableDays); // 10 - 2 - 3 = 5
 
         // === PHASE 3: Manager rejects leave request ===
         var leaveApproval = new LeaveApproval
@@ -301,19 +300,19 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
 
         // === PHASE 4: Verify denial and balance restoration ===
         var deniedRequest = await Context.LeaveRequests.FirstOrDefaultAsync(lr => lr.Id == leaveRequest.Id);
-        deniedRequest.Should().NotBeNull();
-        deniedRequest!.Status.Should().Be(LeaveRequestStatus.Denied);
-        deniedRequest.IsActive.Should().BeFalse();
+        Assert.NotNull(deniedRequest);
+        Assert.Equal(LeaveRequestStatus.Denied, deniedRequest!.Status);
+        Assert.False(deniedRequest.IsActive);
 
         var denialRecord = await Context.LeaveApprovals.FirstOrDefaultAsync(la => la.LeaveRequestId == leaveRequest.Id);
-        denialRecord.Should().NotBeNull();
-        denialRecord!.IsRejected.Should().BeTrue();
-        denialRecord.Decision.Should().Be(ApprovalDecision.Rejected);
+        Assert.NotNull(denialRecord);
+        Assert.True(denialRecord!.IsRejected);
+        Assert.Equal(ApprovalDecision.Rejected, denialRecord.Decision);
 
         var restoredBalance = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        restoredBalance!.PendingDays.Should().Be(0m);
-        restoredBalance.UsedDays.Should().Be(2m); // Unchanged
-        restoredBalance.AvailableDays.Should().Be(8m); // 10 - 2 - 0 = 8
+        Assert.Equal(0m, restoredBalance!.PendingDays);
+        Assert.Equal(2m, restoredBalance.UsedDays); // Unchanged
+        Assert.Equal(8m, restoredBalance.AvailableDays); // 10 - 2 - 0 = 8
     }
 
     [Fact]
@@ -408,9 +407,9 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         // Verify pending state
-        leaveRequest.CanBeCancelled.Should().BeTrue();
+        Assert.True(leaveRequest.CanBeCancelled);
         var balanceBeforeCancel = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        balanceBeforeCancel!.PendingDays.Should().Be(3m);
+        Assert.Equal(3m, balanceBeforeCancel!.PendingDays);
 
         // === PHASE 3: Employee cancels the leave request ===
         leaveRequest.Status = LeaveRequestStatus.Cancelled;
@@ -419,14 +418,14 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
 
         // === PHASE 4: Verify cancellation and balance restoration ===
         var cancelledRequest = await Context.LeaveRequests.FirstOrDefaultAsync(lr => lr.Id == leaveRequest.Id);
-        cancelledRequest.Should().NotBeNull();
-        cancelledRequest!.Status.Should().Be(LeaveRequestStatus.Cancelled);
-        cancelledRequest.IsActive.Should().BeFalse();
-        cancelledRequest.CanBeCancelled.Should().BeFalse();
+        Assert.NotNull(cancelledRequest);
+        Assert.Equal(LeaveRequestStatus.Cancelled, cancelledRequest!.Status);
+        Assert.False(cancelledRequest.IsActive);
+        Assert.False(cancelledRequest.CanBeCancelled);
 
         var restoredBalance = await Context.LeaveBalances.FirstOrDefaultAsync(lb => lb.Id == leaveBalance.Id);
-        restoredBalance!.PendingDays.Should().Be(0m);
-        restoredBalance.UsedDays.Should().Be(5m);
-        restoredBalance.AvailableDays.Should().Be(15m); // 20 - 5 - 0 = 15
+        Assert.Equal(0m, restoredBalance!.PendingDays);
+        Assert.Equal(5m, restoredBalance.UsedDays);
+        Assert.Equal(15m, restoredBalance.AvailableDays); // 20 - 5 - 0 = 15
     }
 }

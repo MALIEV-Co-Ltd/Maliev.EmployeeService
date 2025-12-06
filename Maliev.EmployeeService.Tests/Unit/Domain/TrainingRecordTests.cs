@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Xunit;
@@ -30,7 +29,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Valid);
+        Assert.Equal(CertificationStatus.Valid, trainingRecord.Status);
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Valid);
+        Assert.Equal(CertificationStatus.Valid, trainingRecord.Status);
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 
     [Fact]
@@ -96,7 +95,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 
     [Fact]
@@ -118,7 +117,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 
     [Fact]
@@ -140,7 +139,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 
     [Fact]
@@ -163,7 +162,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 
     [Fact]
@@ -185,7 +184,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expired);
+        Assert.Equal(CertificationStatus.Expired, trainingRecord.Status);
     }
 
     [Fact]
@@ -207,7 +206,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expired);
+        Assert.Equal(CertificationStatus.Expired, trainingRecord.Status);
     }
 
     [Fact]
@@ -229,7 +228,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expired);
+        Assert.Equal(CertificationStatus.Expired, trainingRecord.Status);
     }
 
     [Theory]
@@ -254,7 +253,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Valid);
+        Assert.Equal(CertificationStatus.Valid, trainingRecord.Status);
     }
 
     [Theory]
@@ -281,7 +280,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 
     [Theory]
@@ -307,7 +306,7 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expired);
+        Assert.Equal(CertificationStatus.Expired, trainingRecord.Status);
     }
 
     [Fact]
@@ -326,17 +325,17 @@ public class TrainingRecordTests
 
         // Act & Assert - Initially Valid
         trainingRecord.UpdateStatus();
-        trainingRecord.Status.Should().Be(CertificationStatus.Valid);
+        Assert.Equal(CertificationStatus.Valid, trainingRecord.Status);
 
         // Simulate time passing - becomes Expiring
         trainingRecord.ExpirationDate = DateTime.UtcNow.AddDays(30);
         trainingRecord.UpdateStatus();
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
 
         // Simulate more time passing - becomes Expired
         trainingRecord.ExpirationDate = DateTime.UtcNow.AddDays(-5);
         trainingRecord.UpdateStatus();
-        trainingRecord.Status.Should().Be(CertificationStatus.Expired);
+        Assert.Equal(CertificationStatus.Expired, trainingRecord.Status);
     }
 
     [Fact]
@@ -360,6 +359,6 @@ public class TrainingRecordTests
         trainingRecord.UpdateStatus();
 
         // Assert
-        trainingRecord.Status.Should().Be(CertificationStatus.Expiring);
+        Assert.Equal(CertificationStatus.Expiring, trainingRecord.Status);
     }
 }

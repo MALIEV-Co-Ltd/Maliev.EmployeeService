@@ -18,6 +18,9 @@ public class AdminController : ControllerBase
     private readonly IBackgroundJobStatusService _backgroundJobStatusService;
     private readonly ILogger<AdminController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AdminController"/> class
+    /// </summary>
     public AdminController(
         IBackgroundJobStatusService backgroundJobStatusService,
         ILogger<AdminController> logger)

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -58,10 +57,10 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         // Assert - Verify encryption/decryption works through repository
         var recordFromDb = await repository.GetByIdAsync(compensationRecord.Id);
 
-        recordFromDb.Should().NotBeNull();
-        recordFromDb!.SalaryAmount.Should().Be("85000.00", "Repository should decrypt salary on read");
-        recordFromDb.Currency.Should().Be("THB");
-        recordFromDb.ChangeReason.Should().Be("Annual review");
+        Assert.NotNull(recordFromDb);
+        Assert.Equal("85000.00", recordFromDb!.SalaryAmount); // Repository should decrypt salary on read
+        Assert.Equal("THB", recordFromDb.Currency);
+        Assert.Equal("Annual review", recordFromDb.ChangeReason);
     }
 
     [Fact]
@@ -104,9 +103,9 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var result = await repository.GetCurrentAsync(employee.Id);
 
         // Assert - Salary should be decrypted after retrieval
-        result.Should().NotBeNull();
-        result!.SalaryAmount.Should().Be("95000.50");
-        result.Currency.Should().Be("THB");
+        Assert.NotNull(result);
+        Assert.Equal("95000.50", result!.SalaryAmount);
+        Assert.Equal("THB", result.Currency);
     }
 
     [Fact]
@@ -160,10 +159,10 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var result = await repository.GetCurrentAsync(employee.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(currentRecord.Id);
-        result.SalaryAmount.Should().Be("75000.00");
-        result.ChangeReason.Should().Be("Annual raise");
+        Assert.NotNull(result);
+        Assert.Equal(currentRecord.Id, result!.Id);
+        Assert.Equal("75000.00", result.SalaryAmount);
+        Assert.Equal("Annual raise", result.ChangeReason);
     }
 
     [Fact]
@@ -232,17 +231,17 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
 
         // Assert
         var historyList = history.ToList();
-        historyList.Should().HaveCount(3);
+        Assert.Equal(3, historyList.Count());
 
         // Should be ordered by EffectiveDate descending
-        historyList[0].SalaryAmount.Should().Be("75000.00");
-        historyList[0].ChangeReason.Should().Be("Promotion");
+        Assert.Equal("75000.00", historyList[0].SalaryAmount);
+        Assert.Equal("Promotion", historyList[0].ChangeReason);
 
-        historyList[1].SalaryAmount.Should().Be("60000.00");
-        historyList[1].ChangeReason.Should().Be("Annual review");
+        Assert.Equal("60000.00", historyList[1].SalaryAmount);
+        Assert.Equal("Annual review", historyList[1].ChangeReason);
 
-        historyList[2].SalaryAmount.Should().Be("50000.00");
-        historyList[2].ChangeReason.Should().Be("Initial hire");
+        Assert.Equal("50000.00", historyList[2].SalaryAmount);
+        Assert.Equal("Initial hire", historyList[2].ChangeReason);
     }
 
     [Fact]
@@ -286,11 +285,11 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         // Assert
         var result = await repository.GetCurrentAsync(employee.Id);
 
-        result.Should().NotBeNull();
-        result!.SalaryAmount.Should().Be("120000.00");
-        result.Currency.Should().Be("USD");
-        result.BonusStructure.Should().Be("15% annual bonus based on company performance");
-        result.CommissionStructure.Should().Be("5% on sales exceeding quota");
+        Assert.NotNull(result);
+        Assert.Equal("120000.00", result!.SalaryAmount);
+        Assert.Equal("USD", result.Currency);
+        Assert.Equal("15% annual bonus based on company performance", result.BonusStructure);
+        Assert.Equal("5% on sales exceeding quota", result.CommissionStructure);
     }
 
     [Fact]
@@ -339,18 +338,18 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var history = await repository.GetHistoryAsync(employee.Id);
         var historyList = history.ToList();
 
-        historyList.Should().HaveCount(5);
+        Assert.Equal(5, historyList.Count());
 
         // Verify each salary was encrypted and can be decrypted
         foreach (var originalSalary in salaries)
         {
-            historyList.Should().Contain(h => h.SalaryAmount == originalSalary);
+            Assert.Contains(historyList, h => h.SalaryAmount == originalSalary);
         }
 
         // Verify most recent is returned by GetCurrentAsync
         var current = await repository.GetCurrentAsync(employee.Id);
-        current.Should().NotBeNull();
-        current!.SalaryAmount.Should().Be("85000.00");
+        Assert.NotNull(current);
+        Assert.Equal("85000.00", current!.SalaryAmount);
     }
 
     [Fact]
@@ -376,7 +375,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var result = await repository.GetCurrentAsync(employee.Id);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -402,7 +401,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var history = await repository.GetHistoryAsync(employee.Id);
 
         // Assert
-        history.Should().BeEmpty();
+        Assert.Empty(history);
     }
 
     [Fact]
@@ -469,14 +468,14 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var dbRecord1 = await repository.GetByIdAsync(record1.Id);
         var dbRecord2 = await repository.GetByIdAsync(record2.Id);
 
-        dbRecord1.Should().NotBeNull();
-        dbRecord2.Should().NotBeNull();
+        Assert.NotNull(dbRecord1);
+        Assert.NotNull(dbRecord2);
 
-        dbRecord1!.SalaryAmount.Should().Be("80000.00", "Repository should decrypt salary correctly");
-        dbRecord2!.SalaryAmount.Should().Be("80000.00", "Repository should decrypt salary correctly");
+        Assert.Equal("80000.00", dbRecord1!.SalaryAmount); // Repository should decrypt salary correctly
+        Assert.Equal("80000.00", dbRecord2!.SalaryAmount); // Repository should decrypt salary correctly
 
         // Verify both records have correct data
-        dbRecord1.EmployeeId.Should().Be(employee1.Id);
-        dbRecord2.EmployeeId.Should().Be(employee2.Id);
+        Assert.Equal(employee1.Id, dbRecord1.EmployeeId);
+        Assert.Equal(employee2.Id, dbRecord2.EmployeeId);
     }
 }

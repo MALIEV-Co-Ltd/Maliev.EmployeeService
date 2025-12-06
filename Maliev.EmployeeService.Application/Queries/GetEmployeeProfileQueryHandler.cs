@@ -1,5 +1,6 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Application.Mapping;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -65,61 +66,7 @@ public class GetEmployeeProfileQueryHandler
             query.EmployeeId,
             cancellationToken);
 
-        var profileDto = new EmployeeProfileDto
-        {
-            Id = employee.Id,
-            EmployeeNumber = employee.EmployeeNumber,
-
-            // Legal Name
-            FirstName = employee.LegalName.FirstName,
-            LastName = employee.LegalName.LastName,
-            MiddleName = employee.LegalName.MiddleName,
-            FullName = employee.FullName,
-
-            // Personal Information
-            PreferredName = employee.PreferredName,
-            DateOfBirth = employee.DateOfBirth,
-            Age = employee.Age,
-            Nationality = employee.Nationality,
-
-            // Contact Information
-            WorkEmail = employee.ContactInformation.WorkEmail,
-            PersonalEmail = employee.ContactInformation.PersonalEmail,
-            MobilePhone = employee.ContactInformation.MobilePhone,
-
-            // Employment Information
-            EmploymentType = employee.EmploymentType.ToString(),
-            EmploymentStatus = employee.EmploymentStatus.ToString(),
-            JobTitle = employee.JobTitle,
-            WorkLocation = employee.WorkLocation,
-
-            // Employment Dates
-            StartDate = employee.StartDate,
-            ProbationEndDate = employee.ProbationEndDate,
-            TerminationDate = employee.TerminationDate,
-            TenureInYears = employee.TenureInYears,
-
-            // Department and Manager
-            DepartmentId = employee.DepartmentId,
-            DepartmentName = employee.Department?.Name,
-            ManagerId = employee.ManagerId,
-            ManagerName = employee.Manager?.FullName,
-
-            // Emergency Contacts
-            EmergencyContacts = employeeWithContacts?.EmergencyContacts
-                .Select(ec => new EmergencyContactDto
-                {
-                    Id = ec.Id,
-                    EmployeeId = ec.EmployeeId,
-                    ContactName = ec.ContactName,
-                    Relationship = ec.Relationship,
-                    PhoneNumber = ec.PhoneNumber,
-                    Email = ec.Email,
-                    PriorityOrder = ec.PriorityOrder
-                })
-                .OrderBy(ec => ec.PriorityOrder)
-                .ToList() ?? new List<EmergencyContactDto>()
-        };
+        var profileDto = employee.ToEmployeeProfileDto(employeeWithContacts?.EmergencyContacts);
 
         // Cache the result
         if (_cacheService != null)

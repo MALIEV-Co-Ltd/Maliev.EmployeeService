@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -81,9 +80,9 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
 
         // Verify employee created
         var createdEmployee = await Context.Employees.FindAsync(employee.Id);
-        createdEmployee.Should().NotBeNull();
-        createdEmployee!.FullName.Should().Be("John Doe");
-        createdEmployee.IsActive.Should().BeTrue();
+        Assert.NotNull(createdEmployee);
+        Assert.Equal("John Doe", createdEmployee!.FullName);
+        Assert.True(createdEmployee.IsActive);
 
         // === PHASE 2: Onboarding Process ===
         var onboardingTasks = new List<OnboardingChecklist>
@@ -124,8 +123,8 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
         var pendingOnboarding = await Context.OnboardingChecklists
             .Where(t => t.EmployeeId == employee.Id)
             .ToListAsync();
-        pendingOnboarding.Should().HaveCount(3);
-        pendingOnboarding.Should().AllSatisfy(t => t.CompletionStatus.Should().BeFalse());
+        Assert.Equal(3, pendingOnboarding.Count());
+        Assert.All(pendingOnboarding, t => Assert.False(t.CompletionStatus));
 
         // Complete onboarding tasks
         foreach (var task in onboardingTasks)
@@ -138,7 +137,7 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
         var completedOnboarding = await Context.OnboardingChecklists
             .Where(t => t.EmployeeId == employee.Id && t.CompletionStatus)
             .CountAsync();
-        completedOnboarding.Should().Be(3);
+        Assert.Equal(3, completedOnboarding);
 
         // === PHASE 3: Active Employment Period ===
         // Add emergency contact
@@ -202,17 +201,17 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
 
         // Verify active employment data (query each separately as navigation properties don't all exist)
         var activeEmployee = await Context.Employees.FirstOrDefaultAsync(e => e.Id == employee.Id);
-        activeEmployee.Should().NotBeNull();
+        Assert.NotNull(activeEmployee);
 
         var emergencyContactsCount = await Context.EmergencyContacts.CountAsync(ec => ec.EmployeeId == employee.Id);
         var workAuthCount = await Context.WorkAuthorizations.CountAsync(wa => wa.EmployeeId == employee.Id);
         var performanceReviewCount = await Context.PerformanceReviews.CountAsync(pr => pr.EmployeeId == employee.Id);
         var trainingRecordCount = await Context.TrainingRecords.CountAsync(tr => tr.EmployeeId == employee.Id);
 
-        emergencyContactsCount.Should().Be(1);
-        workAuthCount.Should().Be(1);
-        performanceReviewCount.Should().Be(1);
-        trainingRecordCount.Should().Be(1);
+        Assert.Equal(1, emergencyContactsCount);
+        Assert.Equal(1, workAuthCount);
+        Assert.Equal(1, performanceReviewCount);
+        Assert.Equal(1, trainingRecordCount);
 
         // === PHASE 4: Offboarding Initiation ===
         employee.EmploymentStatus = EmploymentStatus.Terminated;
@@ -260,14 +259,14 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
         // Verify offboarding initiated
         var terminatedEmployee = await Context.Employees
             .FirstOrDefaultAsync(e => e.Id == employee.Id);
-        terminatedEmployee.Should().NotBeNull();
-        terminatedEmployee!.EmploymentStatus.Should().Be(EmploymentStatus.Terminated);
-        terminatedEmployee.TerminationDate.Should().NotBeNull();
+        Assert.NotNull(terminatedEmployee);
+        Assert.Equal(EmploymentStatus.Terminated, terminatedEmployee!.EmploymentStatus);
+        Assert.NotNull(terminatedEmployee.TerminationDate);
 
         var pendingOffboarding = await Context.OffboardingChecklists
             .Where(t => t.EmployeeId == employee.Id)
             .ToListAsync();
-        pendingOffboarding.Should().HaveCount(3);
+        Assert.Equal(3, pendingOffboarding.Count());
 
         // === PHASE 5: Complete Offboarding ===
         foreach (var task in offboardingTasks)
@@ -291,15 +290,15 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
 
         // === PHASE 6: Verification - Complete Lifecycle ===
         var finalEmployee = await Context.Employees.FirstOrDefaultAsync(e => e.Id == employee.Id);
-        finalEmployee.Should().NotBeNull();
+        Assert.NotNull(finalEmployee);
 
         // Onboarding completed
         var completedOnboardingTasks = await Context.OnboardingChecklists
             .Where(t => t.EmployeeId == employee.Id)
             .ToListAsync();
-        completedOnboardingTasks.Should().HaveCount(3);
-        completedOnboardingTasks.Should().AllSatisfy(t => t.CompletionStatus.Should().BeTrue());
-        completedOnboardingTasks.Should().AllSatisfy(t => t.CompletedDate.Should().NotBeNull());
+        Assert.Equal(3, completedOnboardingTasks.Count());
+        Assert.All(completedOnboardingTasks, t => Assert.True(t.CompletionStatus));
+        Assert.All(completedOnboardingTasks, t => Assert.NotNull(t.CompletedDate));
 
         // Active employment period documented
         var finalEmergencyContactsCount = await Context.EmergencyContacts.CountAsync(ec => ec.EmployeeId == employee.Id);
@@ -307,30 +306,30 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
         var finalPerformanceReviewCount = await Context.PerformanceReviews.CountAsync(pr => pr.EmployeeId == employee.Id);
         var finalTrainingRecordCount = await Context.TrainingRecords.CountAsync(tr => tr.EmployeeId == employee.Id);
 
-        finalEmergencyContactsCount.Should().Be(1);
-        finalWorkAuthCount.Should().Be(1);
-        finalPerformanceReviewCount.Should().Be(1);
-        finalTrainingRecordCount.Should().Be(1);
+        Assert.Equal(1, finalEmergencyContactsCount);
+        Assert.Equal(1, finalWorkAuthCount);
+        Assert.Equal(1, finalPerformanceReviewCount);
+        Assert.Equal(1, finalTrainingRecordCount);
 
         // Offboarding completed
-        finalEmployee!.EmploymentStatus.Should().Be(EmploymentStatus.Terminated);
-        finalEmployee.TerminationDate.Should().NotBeNull();
+        Assert.Equal(EmploymentStatus.Terminated, finalEmployee!.EmploymentStatus);
+        Assert.NotNull(finalEmployee.TerminationDate);
 
         var completedOffboardingTasks = await Context.OffboardingChecklists
             .Where(t => t.EmployeeId == employee.Id)
             .ToListAsync();
-        completedOffboardingTasks.Should().HaveCount(3);
-        completedOffboardingTasks.Should().AllSatisfy(t => t.CompletionStatus.Should().BeTrue());
-        completedOffboardingTasks.Should().AllSatisfy(t => t.CompletedDate.Should().NotBeNull());
+        Assert.Equal(3, completedOffboardingTasks.Count());
+        Assert.All(completedOffboardingTasks, t => Assert.True(t.CompletionStatus));
+        Assert.All(completedOffboardingTasks, t => Assert.NotNull(t.CompletedDate));
 
         var exitInterviewRecord = await Context.ExitInterviews.FirstOrDefaultAsync(ei => ei.EmployeeId == employee.Id);
-        exitInterviewRecord.Should().NotBeNull();
+        Assert.NotNull(exitInterviewRecord);
 
         // Verify data integrity throughout lifecycle
-        finalEmployee.Id.Should().Be(employee.Id);
-        finalEmployee.StartDate.Should().Be(employee.StartDate);
-        finalEmployee.TerminationDate.Should().Be(employee.TerminationDate);
-        finalEmployee.FullName.Should().Be("John Doe");
+        Assert.Equal(employee.Id, finalEmployee.Id);
+        Assert.Equal(employee.StartDate, finalEmployee.StartDate);
+        Assert.Equal(employee.TerminationDate, finalEmployee.TerminationDate);
+        Assert.Equal("John Doe", finalEmployee.FullName);
     }
 
     [Fact]
@@ -402,12 +401,12 @@ public class EmployeeLifecycleE2ETests : PostgreSqlIntegrationTestBase
             .ToListAsync();
 
         // Assert
-        pendingTasks.Should().HaveCount(1);
-        pendingTasks.First().ItemDescription.Should().Be("Complete benefits enrollment");
+        Assert.Single(pendingTasks);
+        Assert.Equal("Complete benefits enrollment", pendingTasks.First().ItemDescription);
 
         var completedTasks = await Context.OnboardingChecklists
             .Where(t => t.EmployeeId == employee.Id && t.CompletionStatus)
             .CountAsync();
-        completedTasks.Should().Be(1);
+        Assert.Equal(1, completedTasks);
     }
 }

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -118,27 +117,27 @@ public class BulkSalaryIncreaseCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.IsPreview.Should().BeTrue();
-        result.TotalEmployees.Should().Be(2);
-        result.Changes.Should().HaveCount(2);
-        result.JobId.Should().BeNull(); // No job created in preview mode
+        Assert.NotNull(result);
+        Assert.True(result.IsPreview);
+        Assert.Equal(2, result.TotalEmployees);
+        Assert.Equal(2, result.Changes.Count());
+        Assert.Null(result.JobId); // No job created in preview mode
 
         // Verify EMP001: 50000 + 10% = 55000
         var emp001Change = result.Changes.First(c => c.EmployeeNumber == "EMP001");
-        emp001Change.CurrentSalary.Should().Be(50000);
-        emp001Change.NewSalary.Should().Be(55000);
-        emp001Change.IncreaseAmount.Should().Be(5000);
-        emp001Change.PercentageIncrease.Should().Be(10);
+        Assert.Equal(50000, emp001Change.CurrentSalary);
+        Assert.Equal(55000, emp001Change.NewSalary);
+        Assert.Equal(5000, emp001Change.IncreaseAmount);
+        Assert.Equal(10, emp001Change.PercentageIncrease);
 
         // Verify EMP002: 60000 + 10% = 66000
         var emp002Change = result.Changes.First(c => c.EmployeeNumber == "EMP002");
-        emp002Change.CurrentSalary.Should().Be(60000);
-        emp002Change.NewSalary.Should().Be(66000);
-        emp002Change.IncreaseAmount.Should().Be(6000);
+        Assert.Equal(60000, emp002Change.CurrentSalary);
+        Assert.Equal(66000, emp002Change.NewSalary);
+        Assert.Equal(6000, emp002Change.IncreaseAmount);
 
         // Total increase cost = 5000 + 6000 = 11000
-        result.TotalIncreaseCost.Should().Be(11000);
+        Assert.Equal(11000, result.TotalIncreaseCost);
 
         // Verify no persistence
         _mockCompensationRepository.Verify(x => x.AddAsync(It.IsAny<CompensationRecord>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -210,11 +209,11 @@ public class BulkSalaryIncreaseCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.IsPreview.Should().BeFalse();
-        result.JobId.Should().NotBeNull();
-        result.TotalEmployees.Should().Be(1);
-        result.TotalIncreaseCost.Should().Be(5000); // 100000 * 0.05 = 5000
+        Assert.NotNull(result);
+        Assert.False(result.IsPreview);
+        Assert.NotNull(result.JobId);
+        Assert.Equal(1, result.TotalEmployees);
+        Assert.Equal(5000, result.TotalIncreaseCost); // 100000 * 0.05 = 5000
 
         // Verify bulk job was created
         _mockBulkJobRepository.Verify(x => x.AddAsync(
@@ -316,9 +315,9 @@ public class BulkSalaryIncreaseCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.TotalEmployees.Should().Be(1); // Only Engineering employee
-        result.Changes.Should().HaveCount(1);
-        result.Changes[0].EmployeeNumber.Should().Be("EMP001");
+        Assert.Equal(1, result.TotalEmployees); // Only Engineering employee
+        Assert.Single(result.Changes);
+        Assert.Equal("EMP001", result.Changes[0].EmployeeNumber);
 
         // Verify we didn't query compensation for Sales employee
         _mockCompensationRepository.Verify(x => x.GetCurrentAsync(employees[1].Id, It.IsAny<CancellationToken>()), Times.Never);
@@ -378,9 +377,9 @@ public class BulkSalaryIncreaseCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.TotalEmployees.Should().Be(0);
-        result.Changes.Should().BeEmpty();
-        result.TotalIncreaseCost.Should().Be(0);
+        Assert.Equal(0, result.TotalEmployees);
+        Assert.Empty(result.Changes);
+        Assert.Equal(0, result.TotalIncreaseCost);
     }
 
     [Fact]
@@ -456,8 +455,8 @@ public class BulkSalaryIncreaseCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.TotalEmployees.Should().Be(1); // Only active employee
-        result.Changes[0].EmployeeNumber.Should().Be("EMP001");
+        Assert.Equal(1, result.TotalEmployees); // Only active employee
+        Assert.Equal("EMP001", result.Changes[0].EmployeeNumber);
     }
 
     [Fact]
@@ -508,8 +507,8 @@ public class BulkSalaryIncreaseCommandHandlerTests
 
         // Assert
         // Employee without compensation should be skipped
-        result.TotalEmployees.Should().Be(0);
-        result.Changes.Should().BeEmpty();
+        Assert.Equal(0, result.TotalEmployees);
+        Assert.Empty(result.Changes);
     }
 
     [Fact]
@@ -567,13 +566,13 @@ public class BulkSalaryIncreaseCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Changes.Should().HaveCount(1);
+        Assert.Single(result.Changes);
 
         var change = result.Changes[0];
-        change.CurrentSalary.Should().Be(45678.90m);
+        Assert.Equal(45678.90m, change.CurrentSalary);
         // 45678.90 * 0.075 = 3425.9175, rounded = 3425.92; newSalary = 45678.90 + 3425.92 = 49104.82
-        change.NewSalary.Should().BeApproximately(49104.82m, 0.01m);
-        change.IncreaseAmount.Should().BeApproximately(3425.92m, 0.01m);
-        change.PercentageIncrease.Should().Be(7.5m);
+        Assert.True(Math.Abs(change.NewSalary - 49104.82m) <= 0.01m);
+        Assert.True(Math.Abs(change.IncreaseAmount - 3425.92m) <= 0.01m);
+        Assert.Equal(7.5m, change.PercentageIncrease);
     }
 }

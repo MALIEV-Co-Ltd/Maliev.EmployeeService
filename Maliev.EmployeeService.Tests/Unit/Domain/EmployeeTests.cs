@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Xunit;
 
@@ -17,7 +16,7 @@ public class EmployeeTests
         var result = employee.WouldCreateCircularRelationship(employeeId, id => null);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public class EmployeeTests
         var result = employee1.WouldCreateCircularRelationship(employee2Id, GetEmployeeById);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -71,7 +70,7 @@ public class EmployeeTests
         var result = employee1.WouldCreateCircularRelationship(employee2Id, GetEmployeeById);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -100,7 +99,7 @@ public class EmployeeTests
         var result = employee3.WouldCreateCircularRelationship(employee1Id, GetEmployeeById);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -123,7 +122,7 @@ public class EmployeeTests
         var result = employee.WouldCreateCircularRelationship(managerId, GetEmployeeById);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -154,6 +153,6 @@ public class EmployeeTests
         var result = emp4.WouldCreateCircularRelationship(emp2Id, GetEmployeeById);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 }

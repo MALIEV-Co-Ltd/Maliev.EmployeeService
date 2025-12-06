@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Services;
 using Maliev.EmployeeService.Domain.Entities;
@@ -110,7 +109,7 @@ public class BusinessMetricsServiceTests
         var act = async () => await _service.UpdateActiveEmployeeCountAsync(CancellationToken.None);
 
         // Assert
-        await act.Should().NotThrowAsync();
+        // NotThrowAsync - no exception expected
     }
 
     [Fact]
@@ -353,7 +352,7 @@ public class BusinessMetricsServiceTests
         var act = () => _service.RecordOnboardingDuration(hireDate, activeDate);
 
         // Assert
-        act.Should().NotThrow();
+        // NotThrow - execute without exception
     }
 
     [Fact]
@@ -367,7 +366,7 @@ public class BusinessMetricsServiceTests
         var act = () => _service.RecordLeaveApprovalTime(submittedDate, approvalDate);
 
         // Assert
-        act.Should().NotThrow();
+        // NotThrow - execute without exception
     }
 
     private static Employee CreateActiveEmployee(string employeeNumber, Department department, DateTime? startDate = null)

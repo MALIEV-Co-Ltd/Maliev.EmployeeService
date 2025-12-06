@@ -13,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}")]
+[Route("employees/v{version:apiVersion}")]
 public class OnboardingOffboardingController : ControllerBase
 {
     private readonly StartOnboardingCommandHandler _startOnboardingHandler;
@@ -24,6 +24,9 @@ public class OnboardingOffboardingController : ControllerBase
     private readonly CompleteOffboardingItemCommandHandler _completeOffboardingItemHandler;
     private readonly ILogger<OnboardingOffboardingController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OnboardingOffboardingController"/> class
+    /// </summary>
     public OnboardingOffboardingController(
         StartOnboardingCommandHandler startOnboardingHandler,
         StartOffboardingCommandHandler startOffboardingHandler,

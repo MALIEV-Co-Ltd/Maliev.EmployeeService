@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Infrastructure.Data;
@@ -45,9 +44,9 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.GetAllWithSubDepartmentsAsync();
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain(d => d.Name == "Engineering");
-        result.Should().Contain(d => d.Name == "Backend Team");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, d => d.Name == "Engineering");
+        Assert.Contains(result, d => d.Name == "Backend Team");
     }
 
     [Fact]
@@ -81,10 +80,10 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.GetByIdWithSubDepartmentsAsync(department.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("Engineering");
-        result.Employees.Should().HaveCount(1);
-        result.Employees.First().EmployeeNumber.Should().Be("EMP001");
+        Assert.NotNull(result);
+        Assert.Equal("Engineering", result!.Name);
+        Assert.Single(result.Employees);
+        Assert.Equal("EMP001", result.Employees.First().EmployeeNumber);
     }
 
     [Fact]
@@ -125,9 +124,9 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.GetHierarchyAsync();
 
         // Assert
-        result.Should().HaveCount(3);
+        Assert.Equal(3, result.Count());
         var rootDept = result.First(d => d.Name == "Company");
-        rootDept.IsRootDepartment.Should().BeTrue();
+        Assert.True(rootDept.IsRootDepartment);
     }
 
     [Fact]
@@ -161,7 +160,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var count = await repository.GetEmployeeCountAsync(department.Id, includeSubDepartments: false);
 
         // Assert
-        count.Should().Be(5);
+        Assert.Equal(5, count);
     }
 
     [Fact]
@@ -215,7 +214,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var count = await repository.GetEmployeeCountAsync(parent.Id, includeSubDepartments: true);
 
         // Assert
-        count.Should().Be(5); // 3 parent + 2 child
+        Assert.Equal(5, count); // 3 parent + 2 child
     }
 
     [Fact]
@@ -247,7 +246,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.HasSubDepartmentsAsync(parent.Id);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -270,7 +269,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.HasSubDepartmentsAsync(department.Id);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -304,7 +303,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.HasEmployeesAsync(department.Id);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -327,7 +326,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.HasEmployeesAsync(department.Id);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -405,9 +404,9 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var result = await repository.GetDepartmentsNearHeadcountLimitAsync();
 
         // Assert
-        result.Should().HaveCount(2); // Full and Near Full
-        result.Should().Contain(d => d.Name == "Full Department");
-        result.Should().Contain(d => d.Name == "Near Full Department");
-        result.Should().NotContain(d => d.Name == "Low Department");
+        Assert.Equal(2, result.Count()); // Full and Near Full
+        Assert.Contains(result, d => d.Name == "Full Department");
+        Assert.Contains(result, d => d.Name == "Near Full Department");
+        Assert.DoesNotContain(result, d => d.Name == "Low Department");
     }
 }

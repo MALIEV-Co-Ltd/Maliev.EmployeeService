@@ -1,5 +1,3 @@
-using Serilog.Context;
-
 namespace Maliev.EmployeeService.Api.Middleware;
 
 /// <summary>
@@ -12,12 +10,22 @@ public class CorrelationIdMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<CorrelationIdMiddleware> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CorrelationIdMiddleware"/> class
+    /// </summary>
+    /// <param name="next">The next middleware in the pipeline</param>
+    /// <param name="logger">The logger instance</param>
     public CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Processes the HTTP request and adds correlation ID to the context
+    /// </summary>
+    /// <param name="context">The HTTP context</param>
+    /// <returns>A task representing the asynchronous operation</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         // Get correlation ID from header or generate new one
@@ -26,28 +34,35 @@ public class CorrelationIdMiddleware
         // Add correlation ID to response headers
         context.Response.Headers.TryAdd(CorrelationIdHeaderName, correlationId);
 
-        // Push correlation ID to Serilog LogContext for structured logging
-        using (LogContext.PushProperty("CorrelationId", correlationId))
-        using (LogContext.PushProperty("RequestPath", context.Request.Path))
-        using (LogContext.PushProperty("RequestMethod", context.Request.Method))
-        using (LogContext.PushProperty("UserAgent", context.Request.Headers.UserAgent.ToString()))
-        using (LogContext.PushProperty("RemoteIpAddress", context.Connection.RemoteIpAddress?.ToString()))
+        // Add to HttpContext for downstream access
+        context.Items["CorrelationId"] = correlationId;
+
+        // Build scope properties for structured logging using standard .NET logging
+        context.Request.Headers.TryGetValue("User-Agent", out var userAgent);
+
+        var scopeProperties = new Dictionary<string, object?>
         {
-            // Add user information if authenticated
-            if (context.User.Identity?.IsAuthenticated == true)
-            {
-                using (LogContext.PushProperty("UserId", context.User.Identity.Name))
-                using (LogContext.PushProperty("UserRoles", string.Join(",", context.User.Claims
-                    .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
-                    .Select(c => c.Value))))
-                {
-                    await _next(context);
-                }
-            }
-            else
-            {
-                await _next(context);
-            }
+            ["CorrelationId"] = correlationId,
+            ["RequestPath"] = context.Request.Path.Value,
+            ["RequestMethod"] = context.Request.Method,
+            ["UserAgent"] = userAgent.ToString(),
+            ["RemoteIpAddress"] = context.Connection.RemoteIpAddress?.ToString()
+        };
+
+        // Add user information if authenticated
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            scopeProperties["UserId"] = context.User.Identity.Name;
+            var roles = context.User.Claims
+                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+                .Select(c => c.Value);
+            scopeProperties["UserRoles"] = string.Join(",", roles);
+        }
+
+        using (_logger.BeginScope(scopeProperties))
+        {
+            _logger.LogDebug("CorrelationId set for request {RequestMethod} {RequestPath}: {CorrelationId}", context.Request.Method, context.Request.Path, correlationId);
+            await _next(context);
         }
     }
 
@@ -61,15 +76,20 @@ public class CorrelationIdMiddleware
         }
 
         // Generate new correlation ID
-        return Guid.NewGuid().ToString();
+        return Guid.NewGuid().ToString("D");
     }
 }
 
 /// <summary>
-/// Extension method to register CorrelationIdMiddleware
+/// Extension methods for registering CorrelationIdMiddleware
 /// </summary>
 public static class CorrelationIdMiddlewareExtensions
 {
+    /// <summary>
+    /// Adds the CorrelationIdMiddleware to the application pipeline
+    /// </summary>
+    /// <param name="builder">The application builder</param>
+    /// <returns>The application builder for method chaining</returns>
     public static IApplicationBuilder UseCorrelationId(this IApplicationBuilder builder)
     {
         return builder.UseMiddleware<CorrelationIdMiddleware>();

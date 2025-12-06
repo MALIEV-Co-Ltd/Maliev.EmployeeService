@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -86,12 +85,12 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
             .Where(c => c.EmployeeId == employee.Id)
             .ToListAsync();
 
-        checklist.Should().NotBeEmpty();
+        Assert.NotEmpty(checklist);
 
         // Verify asset return items
-        checklist.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("access card"));
-        checklist.Should().Contain(item => item.ItemDescription.Contains("keys"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("access card"));
+        Assert.Contains(checklist, item => item.ItemDescription.Contains("keys"));
 
         // Verify integration event was published
         _eventPublisherMock.Verify(
@@ -106,8 +105,8 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
 
         // Verify employee status updated
         var updatedEmployee = await Context.Employees.FindAsync(employee.Id);
-        updatedEmployee!.EmploymentStatus.Should().Be(EmploymentStatus.Terminated);
-        updatedEmployee.TerminationDate.Should().Be(terminationDate);
+        Assert.Equal(EmploymentStatus.Terminated, updatedEmployee!.EmploymentStatus);
+        Assert.Equal(terminationDate, updatedEmployee.TerminationDate);
     }
 
     [Fact]
@@ -165,14 +164,12 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var updatedStatus = await _getStatusHandler.HandleAsync(updatedStatusQuery, CancellationToken.None);
 
         // Assert
-        updatedStatus.CompletedItems.Should().Be(2);
-        updatedStatus.ChecklistItems.Should().Contain(item =>
-            item.Id == laptopItem.Id &&
+        Assert.Equal(2, updatedStatus.CompletedItems);
+        Assert.Contains(updatedStatus.ChecklistItems, item => item.Id == laptopItem.Id &&
             item.CompletionStatus == true &&
             item.Notes == "Laptop returned in good condition");
 
-        updatedStatus.ChecklistItems.Should().Contain(item =>
-            item.Id == accessCardItem.Id &&
+        Assert.Contains(updatedStatus.ChecklistItems, item => item.Id == accessCardItem.Id &&
             item.CompletionStatus == true &&
             item.Notes == "Access card returned");
     }
@@ -204,15 +201,15 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var blockingItems = status.ChecklistItems.Where(item => item.BlocksFinalPaycheck).ToList();
-        blockingItems.Should().NotBeEmpty("There should be items that block final paycheck");
+        Assert.NotEmpty(blockingItems); // There should be items that block final paycheck
 
         // Verify specific blocking items exist
-        blockingItems.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        blockingItems.Should().Contain(item => item.ItemDescription.Contains("access card"));
-        blockingItems.Should().Contain(item => item.ItemDescription.Contains("expense reimbursements"));
+        Assert.Contains(blockingItems, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(blockingItems, item => item.ItemDescription.Contains("access card"));
+        Assert.Contains(blockingItems, item => item.ItemDescription.Contains("expense reimbursements"));
 
         // Verify cannot release paycheck initially
-        status.CanReleaseFinalPaycheck.Should().BeFalse(
+        Assert.False(status.CanReleaseFinalPaycheck,
             "Cannot release paycheck when blocking items are incomplete");
     }
 
@@ -242,7 +239,7 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var status = await _getStatusHandler.HandleAsync(statusQuery, CancellationToken.None);
 
         // Assert
-        status.ChecklistItems.Should().Contain(item => item.IsOverdue == true,
+        Assert.True(status.ChecklistItems.Any(item => item.IsOverdue == true),
             "Some items should be overdue since termination date is in the past");
     }
 
@@ -284,11 +281,11 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var completedItem = await Context.OffboardingChecklists.FindAsync(itemToComplete.Id);
-        completedItem.Should().NotBeNull();
-        completedItem!.CompletionStatus.Should().BeTrue();
-        completedItem.CompletedDate.Should().NotBeNull();
-        completedItem.CompletedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        completedItem.Notes.Should().Be("Completed as scheduled");
+        Assert.NotNull(completedItem);
+        Assert.True(completedItem!.CompletionStatus);
+        Assert.NotNull(completedItem.CompletedDate);
+        Assert.True(Math.Abs((completedItem.CompletedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
+        Assert.Equal("Completed as scheduled", completedItem.Notes);
     }
 
     [Fact]
@@ -317,10 +314,10 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var status = await _getStatusHandler.HandleAsync(statusQuery, CancellationToken.None);
 
         // Assert - Verify different responsible parties are assigned
-        status.ChecklistItems.Should().Contain(item => item.ResponsibleParty == "HR");
-        status.ChecklistItems.Should().Contain(item => item.ResponsibleParty == "IT");
-        status.ChecklistItems.Should().Contain(item => item.ResponsibleParty == "Facilities");
-        status.ChecklistItems.Should().Contain(item => item.ResponsibleParty == "Manager");
+        Assert.Contains(status.ChecklistItems, item => item.ResponsibleParty == "HR");
+        Assert.Contains(status.ChecklistItems, item => item.ResponsibleParty == "IT");
+        Assert.Contains(status.ChecklistItems, item => item.ResponsibleParty == "Facilities");
+        Assert.Contains(status.ChecklistItems, item => item.ResponsibleParty == "Manager");
     }
 
     /// <summary>

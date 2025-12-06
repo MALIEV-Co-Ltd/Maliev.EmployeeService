@@ -1,34 +1,29 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.DTOs.CareerService;
 using Maliev.EmployeeService.Infrastructure.ExternalServices;
+using Maliev.EmployeeService.Tests.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
-using WireMock.Server;
-using Xunit;
+using System.Net;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
 /// <summary>
-/// Integration tests for CareerServiceClient using WireMock to simulate Career Service API
+/// Integration tests for CareerServiceClient using MockHttpMessageHandler to simulate Career Service API
 /// Tests T026n: Verify HTTP client behavior with mock API responses
 /// </summary>
 public class CareerServiceClientTests : IDisposable
 {
-    private readonly WireMockServer _wireMockServer;
+    private readonly MockHttpMessageHandler _mockHandler;
     private readonly CareerServiceClient _client;
     private readonly IMemoryCache _memoryCache;
 
     public CareerServiceClientTests()
     {
-        // Start WireMock server on dynamic port
-        _wireMockServer = WireMockServer.Start();
+        _mockHandler = new MockHttpMessageHandler();
 
-        // Create HttpClient pointing to WireMock server
-        var httpClient = new HttpClient
+        var httpClient = new HttpClient(_mockHandler)
         {
-            BaseAddress = new Uri(_wireMockServer.Urls[0])
+            BaseAddress = new Uri("http://localhost")
         };
 
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -51,23 +46,16 @@ public class CareerServiceClientTests : IDisposable
             Description = "Object-oriented programming language"
         };
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/skills/{skillId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(expectedSkill));
+        _mockHandler.SetupResponse($"/careers/api/skills/{skillId}", HttpStatusCode.OK, expectedSkill);
 
         // Act
         var result = await _client.GetSkillByIdAsync(skillId);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.SkillId.Should().Be(skillId);
-        result.SkillName.Should().Be("C# Programming");
-        result.Category.Should().Be("Programming Languages");
+        Assert.NotNull(result);
+        Assert.Equal(skillId, result.SkillId);
+        Assert.Equal("C# Programming", result.SkillName);
+        Assert.Equal("Programming Languages", result.Category);
     }
 
     [Fact]
@@ -76,18 +64,13 @@ public class CareerServiceClientTests : IDisposable
         // Arrange
         var skillId = 999;
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/skills/{skillId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(404));
+        _mockHandler.SetupResponse($"/careers/api/skills/{skillId}", HttpStatusCode.NotFound);
 
         // Act
         var result = await _client.GetSkillByIdAsync(skillId);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -103,14 +86,7 @@ public class CareerServiceClientTests : IDisposable
             Description = "JavaScript superset with static typing"
         };
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/skills/{skillId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(expectedSkill));
+        _mockHandler.SetupResponse($"/careers/api/skills/{skillId}", HttpStatusCode.OK, expectedSkill);
 
         // Act - First call should hit the API
         var result1 = await _client.GetSkillByIdAsync(skillId);
@@ -119,13 +95,13 @@ public class CareerServiceClientTests : IDisposable
         var result2 = await _client.GetSkillByIdAsync(skillId);
 
         // Assert
-        result1.Should().NotBeNull();
-        result2.Should().NotBeNull();
-        result1!.SkillId.Should().Be(result2!.SkillId);
-        result1.SkillName.Should().Be(result2.SkillName);
+        Assert.NotNull(result1);
+        Assert.NotNull(result2);
+        Assert.Equal(result1.SkillId, result2.SkillId);
+        Assert.Equal(result1.SkillName, result2.SkillName);
 
         // Verify API was only called once (cache hit on second call)
-        _wireMockServer.LogEntries.Should().HaveCount(1);
+        Assert.Equal(1, _mockHandler.RequestCount);
     }
 
     [Fact]
@@ -142,25 +118,18 @@ public class CareerServiceClientTests : IDisposable
             IsActive = true
         };
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/locations/{locationId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(expectedLocation));
+        _mockHandler.SetupResponse($"/careers/api/locations/{locationId}", HttpStatusCode.OK, expectedLocation);
 
         // Act
         var result = await _client.GetWorkLocationByIdAsync(locationId);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.LocationId.Should().Be(locationId);
-        result.LocationName.Should().Be("Bangkok Office");
-        result.City.Should().Be("Bangkok");
-        result.Country.Should().Be("Thailand");
-        result.IsActive.Should().BeTrue();
+        Assert.NotNull(result);
+        Assert.Equal(locationId, result.LocationId);
+        Assert.Equal("Bangkok Office", result.LocationName);
+        Assert.Equal("Bangkok", result.City);
+        Assert.Equal("Thailand", result.Country);
+        Assert.True(result.IsActive);
     }
 
     [Fact]
@@ -169,18 +138,13 @@ public class CareerServiceClientTests : IDisposable
         // Arrange
         var locationId = 888;
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/locations/{locationId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(404));
+        _mockHandler.SetupResponse($"/careers/api/locations/{locationId}", HttpStatusCode.NotFound);
 
         // Act
         var result = await _client.GetWorkLocationByIdAsync(locationId);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -197,14 +161,7 @@ public class CareerServiceClientTests : IDisposable
             IsActive = true
         };
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/locations/{locationId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(expectedLocation));
+        _mockHandler.SetupResponse($"/careers/api/locations/{locationId}", HttpStatusCode.OK, expectedLocation);
 
         // Act - First call should hit the API
         var result1 = await _client.GetWorkLocationByIdAsync(locationId);
@@ -213,13 +170,13 @@ public class CareerServiceClientTests : IDisposable
         var result2 = await _client.GetWorkLocationByIdAsync(locationId);
 
         // Assert
-        result1.Should().NotBeNull();
-        result2.Should().NotBeNull();
-        result1!.LocationId.Should().Be(result2!.LocationId);
-        result1.LocationName.Should().Be(result2.LocationName);
+        Assert.NotNull(result1);
+        Assert.NotNull(result2);
+        Assert.Equal(result1.LocationId, result2.LocationId);
+        Assert.Equal(result1.LocationName, result2.LocationName);
 
         // Verify API was only called once (cache hit on second call)
-        _wireMockServer.LogEntries.Should().HaveCount(1);
+        Assert.Equal(1, _mockHandler.RequestCount);
     }
 
     [Fact]
@@ -228,19 +185,13 @@ public class CareerServiceClientTests : IDisposable
         // Arrange
         var skillId = 555;
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/skills/{skillId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(500)
-                .WithBody("Internal Server Error"));
+        _mockHandler.SetupResponse($"/careers/api/skills/{skillId}", HttpStatusCode.InternalServerError, "Internal Server Error");
 
         // Act
         var result = await _client.GetSkillByIdAsync(skillId);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     [Fact]
@@ -249,25 +200,17 @@ public class CareerServiceClientTests : IDisposable
         // Arrange
         var locationId = 777;
 
-        _wireMockServer
-            .Given(Request.Create()
-                .WithPath($"/careers/api/locations/{locationId}")
-                .UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(500)
-                .WithBody("Internal Server Error"));
+        _mockHandler.SetupResponse($"/careers/api/locations/{locationId}", HttpStatusCode.InternalServerError, "Internal Server Error");
 
         // Act
         var result = await _client.GetWorkLocationByIdAsync(locationId);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     public void Dispose()
     {
-        _wireMockServer?.Stop();
-        _wireMockServer?.Dispose();
         _memoryCache?.Dispose();
     }
 }

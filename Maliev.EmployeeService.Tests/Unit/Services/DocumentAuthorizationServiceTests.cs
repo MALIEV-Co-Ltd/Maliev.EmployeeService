@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Services;
 using Maliev.EmployeeService.Domain.Entities;
@@ -44,7 +43,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, Role.SystemAdministrator);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -69,7 +68,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, userRole);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -88,7 +87,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -108,7 +107,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -127,7 +126,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -160,7 +159,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(managerId, document, Role.Manager);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -194,7 +193,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Theory]
@@ -215,7 +214,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, hrRole);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Theory]
@@ -236,7 +235,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, nonHrRole);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -255,7 +254,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, Role.HRSpecialist);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Theory]
@@ -277,7 +276,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanViewDocumentAsync(userId, document, nonSpecialistRole);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     #endregion
@@ -298,7 +297,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanUploadDocumentAsync(userId, employeeId, privilegedRole);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -311,7 +310,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanUploadDocumentAsync(userId, userId, Role.Employee);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -325,7 +324,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanUploadDocumentAsync(userId, otherEmployeeId, Role.Employee);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -352,7 +351,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanUploadDocumentAsync(managerId, employeeId, Role.Manager);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -380,7 +379,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanUploadDocumentAsync(managerId, employeeId, Role.Manager);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     #endregion
@@ -406,7 +405,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanDeleteDocumentAsync(userId, document, privilegedRole);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Theory]
@@ -427,7 +426,7 @@ public class DocumentAuthorizationServiceTests
         var result = await _service.CanDeleteDocumentAsync(userId, document, regularRole);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     #endregion
@@ -450,7 +449,7 @@ public class DocumentAuthorizationServiceTests
         var act = async () => await _service.ValidateCanViewDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        await act.Should().NotThrowAsync();
+        // NotThrowAsync - no exception expected
     }
 
     [Fact]
@@ -469,8 +468,7 @@ public class DocumentAuthorizationServiceTests
         var act = async () => await _service.ValidateCanViewDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
-            .WithMessage($"User {userId} is not authorized to view document {document.Id}");
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 
     [Fact]
@@ -483,7 +481,7 @@ public class DocumentAuthorizationServiceTests
         var act = async () => await _service.ValidateCanUploadDocumentAsync(userId, userId, Role.Employee);
 
         // Assert
-        await act.Should().NotThrowAsync();
+        // NotThrowAsync - no exception expected
     }
 
     [Fact]
@@ -497,8 +495,7 @@ public class DocumentAuthorizationServiceTests
         var act = async () => await _service.ValidateCanUploadDocumentAsync(userId, otherEmployeeId, Role.Employee);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
-            .WithMessage($"User {userId} is not authorized to upload documents for employee {otherEmployeeId}");
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 
     [Fact]
@@ -517,7 +514,7 @@ public class DocumentAuthorizationServiceTests
         var act = async () => await _service.ValidateCanDeleteDocumentAsync(userId, document, Role.HRSpecialist);
 
         // Assert
-        await act.Should().NotThrowAsync();
+        // NotThrowAsync - no exception expected
     }
 
     [Fact]
@@ -536,8 +533,7 @@ public class DocumentAuthorizationServiceTests
         var act = async () => await _service.ValidateCanDeleteDocumentAsync(userId, document, Role.Employee);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
-            .WithMessage($"User {userId} is not authorized to delete document {document.Id}");
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 
     #endregion

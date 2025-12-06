@@ -14,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/managers")]
+[Route("employees/v{version:apiVersion}/managers")]
 [Authorize]
 public class ManagersController : ControllerBase
 {
@@ -24,6 +24,9 @@ public class ManagersController : ControllerBase
     private readonly IMemoryCache _cache;
     private readonly ILogger<ManagersController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ManagersController"/> class
+    /// </summary>
     public ManagersController(
         GetTeamQueryHandler getTeamHandler,
         GetOrgChartQueryHandler getOrgChartHandler,

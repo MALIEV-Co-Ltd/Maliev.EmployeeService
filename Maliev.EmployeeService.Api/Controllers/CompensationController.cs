@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using FluentValidation;
 using Maliev.EmployeeService.Api.Attributes;
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.Commands;
@@ -17,7 +16,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/employees/{employeeId:guid}")]
+[Route("employees/v{version:apiVersion}/employees/{employeeId:guid}")]
 [RequireCompensationAccess("HR Compensation and Benefits Administration")]
 public class CompensationController : ControllerBase
 {
@@ -26,18 +25,17 @@ public class CompensationController : ControllerBase
     private readonly RecordCompensationChangeCommandHandler _recordCompensationHandler;
     private readonly UpdateBenefitsEnrollmentCommandHandler _updateBenefitsHandler;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IValidator<RecordCompensationChangeDto> _compensationValidator;
-    private readonly IValidator<UpdateBenefitsEnrollmentDto> _benefitsValidator;
     private readonly ILogger<CompensationController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CompensationController"/> class
+    /// </summary>
     public CompensationController(
         GetCompensationDetailsQueryHandler getDetailsHandler,
         GetCompensationHistoryQueryHandler getHistoryHandler,
         RecordCompensationChangeCommandHandler recordCompensationHandler,
         UpdateBenefitsEnrollmentCommandHandler updateBenefitsHandler,
         ICurrentUserService currentUserService,
-        IValidator<RecordCompensationChangeDto> compensationValidator,
-        IValidator<UpdateBenefitsEnrollmentDto> benefitsValidator,
         ILogger<CompensationController> logger)
     {
         _getDetailsHandler = getDetailsHandler;
@@ -45,8 +43,6 @@ public class CompensationController : ControllerBase
         _recordCompensationHandler = recordCompensationHandler;
         _updateBenefitsHandler = updateBenefitsHandler;
         _currentUserService = currentUserService;
-        _compensationValidator = compensationValidator;
-        _benefitsValidator = benefitsValidator;
         _logger = logger;
     }
 
@@ -108,13 +104,6 @@ public class CompensationController : ControllerBase
         [FromBody] RecordCompensationChangeDto compensationDto,
         CancellationToken cancellationToken)
     {
-        // Validate
-        var validationResult = await _compensationValidator.ValidateAsync(compensationDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new RecordCompensationChangeCommand(employeeId, compensationDto);
         var result = await _recordCompensationHandler.HandleAsync(command, cancellationToken);
 
@@ -211,13 +200,6 @@ public class CompensationController : ControllerBase
         [FromBody] UpdateBenefitsEnrollmentDto benefitsDto,
         CancellationToken cancellationToken)
     {
-        // Validate
-        var validationResult = await _benefitsValidator.ValidateAsync(benefitsDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new UpdateBenefitsEnrollmentCommand(employeeId, benefitsDto);
         var result = await _updateBenefitsHandler.HandleAsync(command, cancellationToken);
 

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -63,20 +62,20 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         var authorizationId = await handler.HandleAsync(command);
 
         // Assert
-        authorizationId.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, authorizationId);
 
         // Clear context to ensure fresh read from database
         Context.ChangeTracker.Clear();
 
         var savedAuthorization = await workAuthRepository.GetByIdAsync(authorizationId);
-        savedAuthorization.Should().NotBeNull();
-        savedAuthorization!.EmployeeId.Should().Be(employee.Id);
-        savedAuthorization.AuthorizationType.Should().Be(AuthorizationType.WorkPermit);
-        savedAuthorization.DocumentNumber.Should().Be("WP-TH-2024-12345");
-        savedAuthorization.IssuingAuthority.Should().Be("Thai Ministry of Labour");
-        savedAuthorization.SponsorshipStatus.Should().Be(SponsorshipStatus.Approved);
-        savedAuthorization.IsActive.Should().BeTrue();
-        savedAuthorization.ExpirationDate.Should().BeCloseTo(DateTime.UtcNow.AddYears(2), TimeSpan.FromSeconds(5));
+        Assert.NotNull(savedAuthorization);
+        Assert.Equal(employee.Id, savedAuthorization!.EmployeeId);
+        Assert.Equal(AuthorizationType.WorkPermit, savedAuthorization.AuthorizationType);
+        Assert.Equal("WP-TH-2024-12345", savedAuthorization.DocumentNumber);
+        Assert.Equal("Thai Ministry of Labour", savedAuthorization.IssuingAuthority);
+        Assert.Equal(SponsorshipStatus.Approved, savedAuthorization.SponsorshipStatus);
+        Assert.True(savedAuthorization.IsActive);
+        Assert.True(Math.Abs((savedAuthorization.ExpirationDate!.Value - DateTime.UtcNow.AddYears(2)).TotalSeconds) <= 5);
     }
 
     [Fact]
@@ -148,8 +147,8 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var savedAuthorization = await workAuthRepository.GetByIdAsync(authorizationId);
-        savedAuthorization.Should().NotBeNull();
-        savedAuthorization!.RightToWorkDocumentId.Should().Be(document.Id);
+        Assert.NotNull(savedAuthorization);
+        Assert.Equal(document.Id, savedAuthorization!.RightToWorkDocumentId);
     }
 
     [Fact]
@@ -240,11 +239,11 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         var expiringWithin90Days = await workAuthRepository.GetExpiringAsync(90);
 
         // Assert
-        expiringWithin90Days.Should().HaveCount(2);
-        expiringWithin90Days.Should().Contain(a => a.DocumentNumber == "WP-EXP-30");
-        expiringWithin90Days.Should().Contain(a => a.DocumentNumber == "VISA-EXP-60");
-        expiringWithin90Days.Should().NotContain(a => a.DocumentNumber == "WP-SAFE-100");
-        expiringWithin90Days.Should().NotContain(a => a.DocumentNumber == "TH-CIT-123456");
+        Assert.Equal(2, expiringWithin90Days.Count());
+        Assert.Contains(expiringWithin90Days, a => a.DocumentNumber == "WP-EXP-30");
+        Assert.Contains(expiringWithin90Days, a => a.DocumentNumber == "VISA-EXP-60");
+        Assert.DoesNotContain(expiringWithin90Days, a => a.DocumentNumber == "WP-SAFE-100");
+        Assert.DoesNotContain(expiringWithin90Days, a => a.DocumentNumber == "TH-CIT-123456");
     }
 
     [Fact]
@@ -317,10 +316,10 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         var expired = await workAuthRepository.GetExpiredAsync();
 
         // Assert
-        expired.Should().HaveCount(2);
-        expired.Should().Contain(a => a.DocumentNumber == "WP-EXPIRED-10");
-        expired.Should().Contain(a => a.DocumentNumber == "VISA-EXPIRED-90");
-        expired.Should().NotContain(a => a.DocumentNumber == "WP-VALID");
+        Assert.Equal(2, expired.Count());
+        Assert.Contains(expired, a => a.DocumentNumber == "WP-EXPIRED-10");
+        Assert.Contains(expired, a => a.DocumentNumber == "VISA-EXPIRED-90");
+        Assert.DoesNotContain(expired, a => a.DocumentNumber == "WP-VALID");
     }
 
     [Fact]
@@ -430,29 +429,29 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.Should().NotBeNull();
-        report.TotalActive.Should().Be(4); // All 4 authorizations are active
-        report.ExpiringSoon.Should().Be(1); // Only WP-EXP-45 expires within 90 days
-        report.Expired.Should().Be(1); // Only VISA-EXPIRED is expired
+        Assert.NotNull(report);
+        Assert.Equal(4, report.TotalActive); // All 4 authorizations are active
+        Assert.Equal(1, report.ExpiringSoon); // Only WP-EXP-45 expires within 90 days
+        Assert.Equal(1, report.Expired); // Only VISA-EXPIRED is expired
 
-        report.ExpiringAuthorizations.Should().HaveCount(1);
+        Assert.Single(report.ExpiringAuthorizations);
         var expiringAuth = report.ExpiringAuthorizations.First();
-        expiringAuth.EmployeeNumber.Should().Be("EMP301");
-        expiringAuth.EmployeeName.Should().Be("Expiring Soon");
-        expiringAuth.DocumentNumber.Should().Be("WP-EXP-45");
-        expiringAuth.Department.Should().Be("Engineering");
-        expiringAuth.DaysUntilExpiration.Should().BeGreaterThan(0).And.BeLessThanOrEqualTo(45);
+        Assert.Equal("EMP301", expiringAuth.EmployeeNumber);
+        Assert.Equal("Expiring Soon", expiringAuth.EmployeeName);
+        Assert.Equal("WP-EXP-45", expiringAuth.DocumentNumber);
+        Assert.Equal("Engineering", expiringAuth.Department);
+        Assert.True(expiringAuth.DaysUntilExpiration > 0 && expiringAuth.DaysUntilExpiration <= 45);
 
-        report.ExpiredAuthorizations.Should().HaveCount(1);
+        Assert.Single(report.ExpiredAuthorizations);
         var expiredAuth = report.ExpiredAuthorizations.First();
-        expiredAuth.EmployeeNumber.Should().Be("EMP302");
-        expiredAuth.DocumentNumber.Should().Be("VISA-EXPIRED");
-        expiredAuth.DaysUntilExpiration.Should().BeLessThan(0);
+        Assert.Equal("EMP302", expiredAuth.EmployeeNumber);
+        Assert.Equal("VISA-EXPIRED", expiredAuth.DocumentNumber);
+        Assert.True(expiredAuth.DaysUntilExpiration < 0);
 
-        report.SponsorshipStatusSummary.Should().NotBeEmpty();
-        report.SponsorshipStatusSummary["Approved"].Should().Be(2);
-        report.SponsorshipStatusSummary["NotRequired"].Should().Be(1);
-        report.SponsorshipStatusSummary["Pending"].Should().Be(1);
+        Assert.NotEmpty(report.SponsorshipStatusSummary);
+        Assert.Equal(2, report.SponsorshipStatusSummary["Approved"]);
+        Assert.Equal(1, report.SponsorshipStatusSummary["NotRequired"]);
+        Assert.Equal(1, report.SponsorshipStatusSummary["Pending"]);
     }
 
     private Employee CreateEmployee(string employeeNumber, string firstName, string lastName, Guid? departmentId = null)

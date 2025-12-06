@@ -1,6 +1,7 @@
+using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
-using Prometheus;
 
 namespace Maliev.EmployeeService.Application.Services;
 
@@ -16,75 +17,60 @@ public class BusinessMetricsService
     private readonly ILeaveRequestRepository _leaveRequestRepository;
     private readonly ILeaveBalanceRepository _leaveBalanceRepository;
 
-    // Gauge metrics (current state)
-    private static readonly Gauge ActiveEmployeeCount = Metrics.CreateGauge(
-        "employee_active_count",
-        "Total number of active employees",
-        new GaugeConfiguration
-        {
-            LabelNames = new[] { "department", "employment_type" }
-        });
+    private static readonly Meter Meter = new("employees");
 
-    private static readonly Gauge EmployeeTurnoverRateMonthly = Metrics.CreateGauge(
-        "employee_turnover_rate_monthly",
-        "Monthly employee turnover rate (percentage)",
-        new GaugeConfiguration
-        {
-            LabelNames = new[] { "turnover_type" } // voluntary, involuntary
-        });
+    // Data stores for Observable Gauges
+    private static readonly ConcurrentDictionary<(string Department, string EmploymentType), int> _activeEmployeeCounts = new();
+    private static readonly ConcurrentDictionary<string, double> _turnoverRates = new();
+    private static readonly ConcurrentDictionary<string, int> _deptHeadcounts = new();
+    private static double _probationCompletionRate = 0;
+    private static readonly ConcurrentDictionary<string, double> _leaveUtilizationRates = new();
 
-    private static readonly Gauge DepartmentHeadcountByName = Metrics.CreateGauge(
-        "department_headcount_by_name",
-        "Current headcount by department",
-        new GaugeConfiguration
-        {
-            LabelNames = new[] { "department_name" }
-        });
-
-    private static readonly Gauge ProbationCompletionRate = Metrics.CreateGauge(
-        "employee_probation_completion_rate",
-        "Percentage of employees who successfully complete probation");
-
-    private static readonly Gauge LeaveBalanceUtilizationRate = Metrics.CreateGauge(
-        "leave_balance_utilization_rate",
-        "Leave utilization rate (used / accrued)",
-        new GaugeConfiguration
-        {
-            LabelNames = new[] { "leave_type" }
-        });
-
-    // Histogram metrics (distributions)
-    private static readonly Histogram AverageOnboardingDurationDays = Metrics.CreateHistogram(
+    // Histograms
+    private static readonly Histogram<double> _onboardingDuration = Meter.CreateHistogram<double>(
         "employee_onboarding_duration_days",
-        "Time from hire date to active status (days)",
-        new HistogramConfiguration
-        {
-            Buckets = new[] { 1.0, 3.0, 7.0, 14.0, 30.0, 60.0, 90.0 }
-        });
+        "days",
+        "Time from hire date to active status");
 
-    private static readonly Histogram LeaveRequestApprovalTimeHours = Metrics.CreateHistogram(
+    private static readonly Histogram<double> _leaveApprovalTime = Meter.CreateHistogram<double>(
         "leave_request_approval_time_hours",
-        "Time from leave request submission to approval/rejection (hours)",
-        new HistogramConfiguration
-        {
-            Buckets = new[] { 1.0, 4.0, 8.0, 24.0, 48.0, 72.0, 168.0 } // 1h to 1 week
-        });
+        "hours",
+        "Time from leave request submission to approval/rejection");
 
-    // Static constructor to initialize metrics with default values
+    // Static constructor to initialize metrics
     static BusinessMetricsService()
     {
-        // Initialize gauge metrics with labeled variations so labels appear in output
-        ActiveEmployeeCount.WithLabels("Unknown", "FullTime").Set(0);
-        EmployeeTurnoverRateMonthly.WithLabels("total").Set(0);
-        EmployeeTurnoverRateMonthly.WithLabels("voluntary").Set(0);
-        EmployeeTurnoverRateMonthly.WithLabels("involuntary").Set(0);
-        ProbationCompletionRate.Set(0);
-        DepartmentHeadcountByName.WithLabels("Unknown").Set(0);
-        LeaveBalanceUtilizationRate.WithLabels("Annual").Set(0);
+        Meter.CreateObservableGauge("employee_active_count", () =>
+            _activeEmployeeCounts.Select(kvp => new Measurement<int>(kvp.Value,
+                new KeyValuePair<string, object?>("department", kvp.Key.Department),
+                new KeyValuePair<string, object?>("employment_type", kvp.Key.EmploymentType))),
+            description: "Total number of active employees");
 
-        // Initialize at least one histogram observation to make the metric appear
-        AverageOnboardingDurationDays.Observe(0);
-        LeaveRequestApprovalTimeHours.Observe(0);
+        Meter.CreateObservableGauge("employee_turnover_rate_monthly", () =>
+            _turnoverRates.Select(kvp => new Measurement<double>(kvp.Value,
+                new KeyValuePair<string, object?>("turnover_type", kvp.Key))),
+            description: "Monthly employee turnover rate (percentage)");
+
+        Meter.CreateObservableGauge("department_headcount_by_name", () =>
+            _deptHeadcounts.Select(kvp => new Measurement<int>(kvp.Value,
+                new KeyValuePair<string, object?>("department_name", kvp.Key))),
+            description: "Current headcount by department");
+
+        Meter.CreateObservableGauge("employee_probation_completion_rate", () => _probationCompletionRate,
+            description: "Percentage of employees who successfully complete probation");
+
+        Meter.CreateObservableGauge("leave_balance_utilization_rate", () =>
+            _leaveUtilizationRates.Select(kvp => new Measurement<double>(kvp.Value,
+                new KeyValuePair<string, object?>("leave_type", kvp.Key))),
+            description: "Leave utilization rate (used / accrued)");
+            
+        // Initialize default values
+        _activeEmployeeCounts.TryAdd(("Unknown", "FullTime"), 0);
+        _turnoverRates.TryAdd("total", 0);
+        _turnoverRates.TryAdd("voluntary", 0);
+        _turnoverRates.TryAdd("involuntary", 0);
+        _deptHeadcounts.TryAdd("Unknown", 0);
+        _leaveUtilizationRates.TryAdd("Annual", 0);
     }
 
     public BusinessMetricsService(
@@ -122,8 +108,14 @@ public class BusinessMetricsService
         var employees = await _employeeRepository.GetAllAsync(cancellationToken);
         var activeEmployees = employees.Where(e => e.EmploymentStatus == EmploymentStatus.Active).ToList();
 
-        // Reset all gauges
-        ActiveEmployeeCount.Set(activeEmployees.Count);
+        // Clear existing counts but keep keys if possible? No, clear is safer to remove stale groups
+        _activeEmployeeCounts.Clear();
+        // Add total count
+        // ActiveEmployeeCount.Set(activeEmployees.Count); // Original code had this but ObservableGauge works differently. 
+        // We can add a "total" entry if needed, but usually sum by labels is enough.
+        // The original code did: ActiveEmployeeCount.Set(activeEmployees.Count); AND then loops.
+        // This implies the gauge had a value without labels? Prometheus allows this but OpenTelemetry ObservableGauge usually expects consistent labels.
+        // We will stick to labeled metrics.
 
         // Group by department and employment type
         var groups = activeEmployees
@@ -135,9 +127,7 @@ public class BusinessMetricsService
 
         foreach (var group in groups)
         {
-            ActiveEmployeeCount
-                .WithLabels(group.Key.Department, group.Key.EmploymentType)
-                .Set(group.Count());
+            _activeEmployeeCounts.TryAdd((group.Key.Department, group.Key.EmploymentType), group.Count());
         }
     }
 
@@ -168,14 +158,9 @@ public class BusinessMetricsService
         {
             var totalTurnoverRate = (terminatedLastMonth.Count / (double)averageHeadcount) * 100;
 
-            // For now, we'll track total turnover
-            // In a real implementation, you'd track voluntary vs involuntary in the Employee entity
-            EmployeeTurnoverRateMonthly.WithLabels("total").Set(totalTurnoverRate);
-
-            // Placeholder for voluntary/involuntary breakdown
-            // This would require additional fields in the Employee entity
-            EmployeeTurnoverRateMonthly.WithLabels("voluntary").Set(0);
-            EmployeeTurnoverRateMonthly.WithLabels("involuntary").Set(0);
+            _turnoverRates["total"] = totalTurnoverRate;
+            _turnoverRates["voluntary"] = 0; // Placeholder
+            _turnoverRates["involuntary"] = 0; // Placeholder
         }
     }
 
@@ -190,11 +175,10 @@ public class BusinessMetricsService
         var departmentGroups = activeEmployees
             .GroupBy(e => e.Department?.Name ?? "Unknown");
 
+        _deptHeadcounts.Clear();
         foreach (var group in departmentGroups)
         {
-            DepartmentHeadcountByName
-                .WithLabels(group.Key)
-                .Set(group.Count());
+            _deptHeadcounts[group.Key] = group.Count();
         }
     }
 
@@ -223,8 +207,7 @@ public class BusinessMetricsService
 
             if (eligibleForCompletion > 0)
             {
-                var completionRate = (completedProbation / (double)eligibleForCompletion) * 100;
-                ProbationCompletionRate.Set(completionRate);
+                _probationCompletionRate = (completedProbation / (double)eligibleForCompletion) * 100;
             }
         }
     }
@@ -238,6 +221,7 @@ public class BusinessMetricsService
 
         var balanceGroups = balances.GroupBy(b => b.LeaveType);
 
+        _leaveUtilizationRates.Clear();
         foreach (var group in balanceGroups)
         {
             var totalEntitlement = group.Sum(b => b.TotalEntitlement + b.CarryForwardDays);
@@ -246,9 +230,7 @@ public class BusinessMetricsService
             if (totalEntitlement > 0)
             {
                 var utilizationRate = (double)(totalUsed / totalEntitlement) * 100;
-                LeaveBalanceUtilizationRate
-                    .WithLabels(group.Key.ToString())
-                    .Set(utilizationRate);
+                _leaveUtilizationRates[group.Key.ToString()] = utilizationRate;
             }
         }
     }
@@ -262,7 +244,7 @@ public class BusinessMetricsService
         var durationDays = (activeDate - hireDate).TotalDays;
         if (durationDays >= 0)
         {
-            AverageOnboardingDurationDays.Observe(durationDays);
+            _onboardingDuration.Record(durationDays);
         }
     }
 
@@ -275,7 +257,7 @@ public class BusinessMetricsService
         var durationHours = (approvalDate - submittedDate).TotalHours;
         if (durationHours >= 0)
         {
-            LeaveRequestApprovalTimeHours.Observe(durationHours);
+            _leaveApprovalTime.Record(durationHours);
         }
     }
 

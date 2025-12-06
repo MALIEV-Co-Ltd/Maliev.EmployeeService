@@ -16,7 +16,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/performance")]
+[Route("employees/v{version:apiVersion}/performance")]
 [Authorize]
 public class PerformanceController : ControllerBase
 {
@@ -29,6 +29,9 @@ public class PerformanceController : ControllerBase
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<PerformanceController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PerformanceController"/> class
+    /// </summary>
     public PerformanceController(
         GetPerformanceReviewsQueryHandler getReviewsHandler,
         CreatePerformanceReviewCommandHandler createReviewHandler,

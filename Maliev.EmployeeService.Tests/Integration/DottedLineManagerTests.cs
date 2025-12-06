@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -35,12 +34,12 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == employee.Id);
 
         // Assert
-        loadedEmployee.ManagerId.Should().Be(primaryManager.Id);
-        loadedEmployee.DottedLineManagerId.Should().Be(dottedLineManager.Id);
-        loadedEmployee.Manager.Should().NotBeNull();
-        loadedEmployee.DottedLineManager.Should().NotBeNull();
-        loadedEmployee.Manager!.Id.Should().Be(primaryManager.Id);
-        loadedEmployee.DottedLineManager!.Id.Should().Be(dottedLineManager.Id);
+        Assert.Equal(primaryManager.Id, loadedEmployee.ManagerId);
+        Assert.Equal(dottedLineManager.Id, loadedEmployee.DottedLineManagerId);
+        Assert.NotNull(loadedEmployee.Manager);
+        Assert.NotNull(loadedEmployee.DottedLineManager);
+        Assert.Equal(primaryManager.Id, loadedEmployee.Manager!.Id);
+        Assert.Equal(dottedLineManager.Id, loadedEmployee.DottedLineManager!.Id);
     }
 
     [Fact]
@@ -69,12 +68,12 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == manager.Id);
 
         // Assert
-        loadedManager.DirectReports.Should().HaveCount(2);
-        loadedManager.DottedLineReports.Should().HaveCount(2);
-        loadedManager.DirectReports.Should().Contain(e => e.Id == directReport1.Id);
-        loadedManager.DirectReports.Should().Contain(e => e.Id == directReport2.Id);
-        loadedManager.DottedLineReports.Should().Contain(e => e.Id == dottedLineReport1.Id);
-        loadedManager.DottedLineReports.Should().Contain(e => e.Id == dottedLineReport2.Id);
+        Assert.Equal(2, loadedManager.DirectReports.Count());
+        Assert.Equal(2, loadedManager.DottedLineReports.Count());
+        Assert.Contains(loadedManager.DirectReports, e => e.Id == directReport1.Id);
+        Assert.Contains(loadedManager.DirectReports, e => e.Id == directReport2.Id);
+        Assert.Contains(loadedManager.DottedLineReports, e => e.Id == dottedLineReport1.Id);
+        Assert.Contains(loadedManager.DottedLineReports, e => e.Id == dottedLineReport2.Id);
     }
 
     [Fact]
@@ -92,10 +91,10 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == employee.Id);
 
         // Assert
-        loadedEmployee.ManagerId.Should().BeNull();
-        loadedEmployee.DottedLineManagerId.Should().BeNull();
-        loadedEmployee.Manager.Should().BeNull();
-        loadedEmployee.DottedLineManager.Should().BeNull();
+        Assert.Null(loadedEmployee.ManagerId);
+        Assert.Null(loadedEmployee.DottedLineManagerId);
+        Assert.Null(loadedEmployee.Manager);
+        Assert.Null(loadedEmployee.DottedLineManager);
     }
 
     [Fact]
@@ -134,16 +133,16 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == projectManager.Id);
 
         // Assert - Verify matrix reporting structure
-        employeeWithManagers.Manager.Should().NotBeNull();
-        employeeWithManagers.Manager!.JobTitle.Should().Be("Engineering Department Head");
-        employeeWithManagers.DottedLineManager.Should().NotBeNull();
-        employeeWithManagers.DottedLineManager!.JobTitle.Should().Be("Product Manager");
+        Assert.NotNull(employeeWithManagers.Manager);
+        Assert.Equal("Engineering Department Head", employeeWithManagers.Manager!.JobTitle);
+        Assert.NotNull(employeeWithManagers.DottedLineManager);
+        Assert.Equal("Product Manager", employeeWithManagers.DottedLineManager!.JobTitle);
 
-        functionalManagerWithReports.DirectReports.Should().ContainSingle();
-        functionalManagerWithReports.DirectReports.First().Id.Should().Be(employee.Id);
+        Assert.Single(functionalManagerWithReports.DirectReports);
+        Assert.Equal(employee.Id, functionalManagerWithReports.DirectReports.First().Id);
 
-        projectManagerWithDottedLineReports.DottedLineReports.Should().ContainSingle();
-        projectManagerWithDottedLineReports.DottedLineReports.First().Id.Should().Be(employee.Id);
+        Assert.Single(projectManagerWithDottedLineReports.DottedLineReports);
+        Assert.Equal(employee.Id, projectManagerWithDottedLineReports.DottedLineReports.First().Id);
     }
 
     [Fact]
@@ -173,10 +172,10 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == employee.Id);
 
         // Assert
-        updatedEmployee.ManagerId.Should().Be(primaryManager.Id, "Primary manager should remain unchanged");
-        updatedEmployee.DottedLineManagerId.Should().Be(newDottedLineManager.Id, "Dotted line manager should be updated");
-        updatedEmployee.Manager!.Id.Should().Be(primaryManager.Id);
-        updatedEmployee.DottedLineManager!.Id.Should().Be(newDottedLineManager.Id);
+        Assert.Equal(primaryManager.Id, updatedEmployee.ManagerId); // Primary manager should remain unchanged
+        Assert.Equal(newDottedLineManager.Id, updatedEmployee.DottedLineManagerId); // Dotted line manager should be updated
+        Assert.Equal(primaryManager.Id, updatedEmployee.Manager!.Id);
+        Assert.Equal(newDottedLineManager.Id, updatedEmployee.DottedLineManager!.Id);
     }
 
     [Fact]
@@ -205,10 +204,10 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == employee.Id);
 
         // Assert
-        updatedEmployee.ManagerId.Should().Be(primaryManager.Id, "Primary manager should remain unchanged");
-        updatedEmployee.DottedLineManagerId.Should().BeNull("Dotted line manager should be removed");
-        updatedEmployee.Manager!.Id.Should().Be(primaryManager.Id);
-        updatedEmployee.DottedLineManager.Should().BeNull();
+        Assert.Equal(primaryManager.Id, updatedEmployee.ManagerId); // Primary manager should remain unchanged
+        Assert.Null(updatedEmployee.DottedLineManagerId); // Dotted line manager should be removed
+        Assert.Equal(primaryManager.Id, updatedEmployee.Manager!.Id);
+        Assert.Null(updatedEmployee.DottedLineManager);
     }
 
     [Fact]
@@ -245,10 +244,10 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
             .FirstAsync(e => e.Id == engineer.Id);
 
         // Assert
-        engineerWithManagers.Manager.Should().NotBeNull();
-        engineerWithManagers.Manager!.Id.Should().Be(engineeringManager.Id);
-        engineerWithManagers.DottedLineManager.Should().NotBeNull();
-        engineerWithManagers.DottedLineManager!.Id.Should().Be(productManager.Id);
+        Assert.NotNull(engineerWithManagers.Manager);
+        Assert.Equal(engineeringManager.Id, engineerWithManagers.Manager!.Id);
+        Assert.NotNull(engineerWithManagers.DottedLineManager);
+        Assert.Equal(productManager.Id, engineerWithManagers.DottedLineManager!.Id);
     }
 
     /// <summary>

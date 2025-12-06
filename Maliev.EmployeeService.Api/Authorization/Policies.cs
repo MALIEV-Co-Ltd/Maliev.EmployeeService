@@ -7,14 +7,34 @@ namespace Maliev.EmployeeService.Api.Authorization;
 /// </summary>
 public static class Policies
 {
-    // Role-based policies
+    /// <summary>
+    /// Policy requiring System Administrator role
+    /// </summary>
     public const string RequireAdminRole = "RequireAdminRole";
+
+    /// <summary>
+    /// Policy requiring HR Generalist role
+    /// </summary>
     public const string RequireHRRole = "RequireHRRole";
+
+    /// <summary>
+    /// Policy requiring Manager role
+    /// </summary>
     public const string RequireManagerRole = "RequireManagerRole";
+
+    /// <summary>
+    /// Policy requiring Employee role
+    /// </summary>
     public const string RequireEmployeeRole = "RequireEmployeeRole";
 
-    // Combined policies
+    /// <summary>
+    /// Policy requiring either HR Generalist or Manager role
+    /// </summary>
     public const string RequireHROrManager = "RequireHROrManager";
+
+    /// <summary>
+    /// Policy requiring either HR Generalist or System Administrator role
+    /// </summary>
     public const string RequireHROrAdmin = "RequireHROrAdmin";
 }
 
@@ -23,10 +43,29 @@ public static class Policies
 /// </summary>
 public static class Roles
 {
+    /// <summary>
+    /// System Administrator role
+    /// </summary>
     public const string Admin = "SystemAdministrator";
+
+    /// <summary>
+    /// HR Generalist role
+    /// </summary>
     public const string HR = "HRGeneralist";
+
+    /// <summary>
+    /// HR Specialist role
+    /// </summary>
     public const string HRSpecialist = "HRSpecialist";
+
+    /// <summary>
+    /// Manager role
+    /// </summary>
     public const string Manager = "Manager";
+
+    /// <summary>
+    /// Employee role
+    /// </summary>
     public const string Employee = "Employee";
 
     /// <summary>

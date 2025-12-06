@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -144,14 +143,14 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.TotalActive.Should().Be(63); // 10 + 3 + 50
-        result.ExpiringSoon.Should().Be(2);
-        result.Expired.Should().Be(1);
-        result.ExpiringAuthorizations.Should().HaveCount(2);
-        result.ExpiredAuthorizations.Should().HaveCount(1);
-        result.SponsorshipStatusSummary.Should().HaveCount(3);
-        result.SponsorshipStatusSummary["Approved"].Should().Be(10);
+        Assert.NotNull(result);
+        Assert.Equal(63, result.TotalActive); // 10 + 3 + 50
+        Assert.Equal(2, result.ExpiringSoon);
+        Assert.Equal(1, result.Expired);
+        Assert.Equal(2, result.ExpiringAuthorizations.Count());
+        Assert.Single(result.ExpiredAuthorizations);
+        Assert.Equal(3, result.SponsorshipStatusSummary.Count());
+        Assert.Equal(10, result.SponsorshipStatusSummary["Approved"]);
     }
 
     [Fact]
@@ -213,17 +212,17 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.ExpiringAuthorizations.Should().HaveCount(1);
+        Assert.Single(result.ExpiringAuthorizations);
         var expiringAuth = result.ExpiringAuthorizations.First();
-        expiringAuth.AuthorizationId.Should().Be(authorizationId);
-        expiringAuth.EmployeeId.Should().Be(employeeId);
-        expiringAuth.EmployeeNumber.Should().Be("EMP100");
-        expiringAuth.EmployeeName.Should().Be("Alice Wong");
-        expiringAuth.AuthorizationType.Should().Be("Visa");
-        expiringAuth.DocumentNumber.Should().Be("VISA123456");
-        expiringAuth.ExpirationDate.Should().Be(expirationDate);
-        expiringAuth.DaysUntilExpiration.Should().BeGreaterThan(0).And.BeLessThanOrEqualTo(15);
-        expiringAuth.Department.Should().Be("IT");
+        Assert.Equal(authorizationId, expiringAuth.AuthorizationId);
+        Assert.Equal(employeeId, expiringAuth.EmployeeId);
+        Assert.Equal("EMP100", expiringAuth.EmployeeNumber);
+        Assert.Equal("Alice Wong", expiringAuth.EmployeeName);
+        Assert.Equal("Visa", expiringAuth.AuthorizationType);
+        Assert.Equal("VISA123456", expiringAuth.DocumentNumber);
+        Assert.Equal(expirationDate, expiringAuth.ExpirationDate);
+        Assert.True(expiringAuth.DaysUntilExpiration > 0 && expiringAuth.DaysUntilExpiration <= 15);
+        Assert.Equal("IT", expiringAuth.Department);
     }
 
     [Fact]
@@ -285,17 +284,17 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.ExpiredAuthorizations.Should().HaveCount(1);
+        Assert.Single(result.ExpiredAuthorizations);
         var expiredAuth = result.ExpiredAuthorizations.First();
-        expiredAuth.AuthorizationId.Should().Be(authorizationId);
-        expiredAuth.EmployeeId.Should().Be(employeeId);
-        expiredAuth.EmployeeNumber.Should().Be("EMP200");
-        expiredAuth.EmployeeName.Should().Be("Carlos Rodriguez");
-        expiredAuth.AuthorizationType.Should().Be("WorkPermit");
-        expiredAuth.DocumentNumber.Should().Be("WP999888");
-        expiredAuth.ExpirationDate.Should().Be(expirationDate);
-        expiredAuth.DaysUntilExpiration.Should().BeLessThan(0);
-        expiredAuth.Department.Should().Be("Operations");
+        Assert.Equal(authorizationId, expiredAuth.AuthorizationId);
+        Assert.Equal(employeeId, expiredAuth.EmployeeId);
+        Assert.Equal("EMP200", expiredAuth.EmployeeNumber);
+        Assert.Equal("Carlos Rodriguez", expiredAuth.EmployeeName);
+        Assert.Equal("WorkPermit", expiredAuth.AuthorizationType);
+        Assert.Equal("WP999888", expiredAuth.DocumentNumber);
+        Assert.Equal(expirationDate, expiredAuth.ExpirationDate);
+        Assert.True(expiredAuth.DaysUntilExpiration < 0);
+        Assert.Equal("Operations", expiredAuth.Department);
     }
 
     [Fact]
@@ -328,12 +327,12 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.TotalActive.Should().Be(100);
-        result.ExpiringSoon.Should().Be(0);
-        result.Expired.Should().Be(0);
-        result.ExpiringAuthorizations.Should().BeEmpty();
-        result.ExpiredAuthorizations.Should().BeEmpty();
-        result.SponsorshipStatusSummary["NotRequired"].Should().Be(100);
+        Assert.Equal(100, result.TotalActive);
+        Assert.Equal(0, result.ExpiringSoon);
+        Assert.Equal(0, result.Expired);
+        Assert.Empty(result.ExpiringAuthorizations);
+        Assert.Empty(result.ExpiredAuthorizations);
+        Assert.Equal(100, result.SponsorshipStatusSummary["NotRequired"]);
     }
 
     [Fact]
@@ -375,11 +374,11 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.ExpiringAuthorizations.Should().HaveCount(1);
+        Assert.Single(result.ExpiringAuthorizations);
         var expiringAuth = result.ExpiringAuthorizations.First();
-        expiringAuth.EmployeeNumber.Should().Be("Unknown");
-        expiringAuth.EmployeeName.Should().Be("Unknown");
-        expiringAuth.Department.Should().Be("Unknown");
+        Assert.Equal("Unknown", expiringAuth.EmployeeNumber);
+        Assert.Equal("Unknown", expiringAuth.EmployeeName);
+        Assert.Equal("Unknown", expiringAuth.Department);
     }
 
     [Fact]
@@ -460,8 +459,8 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
 
         // Assert
         var expiringAuth = result.ExpiringAuthorizations.First();
-        expiringAuth.DaysUntilExpiration.Should().NotBeNull();
-        expiringAuth.DaysUntilExpiration.Should().BeGreaterThanOrEqualTo(44).And.BeLessThanOrEqualTo(46);
+        Assert.NotNull(expiringAuth.DaysUntilExpiration);
+        Assert.True(expiringAuth.DaysUntilExpiration >= 44 && expiringAuth.DaysUntilExpiration <= 46);
     }
 
     [Fact]
@@ -512,7 +511,7 @@ public class GetWorkAuthorizationComplianceReportQueryHandlerTests
 
         // Assert
         var expiringAuth = result.ExpiringAuthorizations.First();
-        expiringAuth.ExpirationDate.Should().BeNull();
-        expiringAuth.DaysUntilExpiration.Should().BeNull();
+        Assert.Null(expiringAuth.ExpirationDate);
+        Assert.Null(expiringAuth.DaysUntilExpiration);
     }
 }

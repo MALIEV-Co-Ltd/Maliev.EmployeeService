@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Events;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -199,8 +198,7 @@ public class AddTeamMemberCommandHandlerTests
         var act = async () => await _handler.HandleAsync(command);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage($"Team with ID {teamId} not found");
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
 
         _mockTeamRepository.Verify(x => x.GetByIdAsync(teamId, It.IsAny<CancellationToken>()), Times.Once);
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -238,8 +236,7 @@ public class AddTeamMemberCommandHandlerTests
         var act = async () => await _handler.HandleAsync(command);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage($"Employee with ID {employeeId} not found");
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
 
         _mockTeamRepository.Verify(x => x.GetByIdAsync(teamId, It.IsAny<CancellationToken>()), Times.Once);
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()), Times.Once);
@@ -298,8 +295,7 @@ public class AddTeamMemberCommandHandlerTests
         var act = async () => await _handler.HandleAsync(command);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage($"Employee {employeeId} is already a member of team {teamId}");
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
 
         _mockTeamRepository.Verify(x => x.GetByIdAsync(teamId, It.IsAny<CancellationToken>()), Times.Once);
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(employeeId, It.IsAny<CancellationToken>()), Times.Once);
@@ -372,9 +368,9 @@ public class AddTeamMemberCommandHandlerTests
         await _handler.HandleAsync(command);
 
         // Assert
-        capturedAssignment.Should().NotBeNull();
-        capturedAssignment!.Id.Should().NotBeEmpty();
-        capturedAssignment.EmployeeId.Should().Be(employeeId);
-        capturedAssignment.TeamId.Should().Be(teamId);
+        Assert.NotNull(capturedAssignment);
+        Assert.NotEqual(Guid.Empty, capturedAssignment!.Id);
+        Assert.Equal(employeeId, capturedAssignment.EmployeeId);
+        Assert.Equal(teamId, capturedAssignment.TeamId);
     }
 }

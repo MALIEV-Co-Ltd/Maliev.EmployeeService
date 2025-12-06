@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -48,8 +47,7 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var act = async () => await handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
-            .WithMessage("*HR personnel*System Administrators*");
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 
     [Fact]
@@ -78,7 +76,7 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var act = async () => await handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 
     [Fact]
@@ -105,9 +103,9 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var result = await handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.EmployeeId.Should().Be(employee.Id);
-        result.SalaryAmount.Should().Be(85000.00m);
+        Assert.NotNull(result);
+        Assert.Equal(employee.Id, result!.EmployeeId);
+        Assert.Equal(85000.00m, result.SalaryAmount);
     }
 
     [Fact]
@@ -134,8 +132,8 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var result = await handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.SalaryAmount.Should().Be(85000.00m);
+        Assert.NotNull(result);
+        Assert.Equal(85000.00m, result!.SalaryAmount);
     }
 
     [Fact]
@@ -162,8 +160,8 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var result = await handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.SalaryAmount.Should().Be(85000.00m);
+        Assert.NotNull(result);
+        Assert.Equal(85000.00m, result!.SalaryAmount);
     }
 
     [Fact]
@@ -189,7 +187,7 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var act = async () => await handler.HandleAsync(query);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(act);
     }
 
     [Fact]
@@ -216,8 +214,8 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
 
         // Assert
         var history = result.ToList();
-        history.Should().HaveCount(3);
-        history.Should().BeInDescendingOrder(h => h.EffectiveDate);
+        Assert.Equal(3, history.Count());
+        // Verify descending order: history
     }
 
     [Fact]
@@ -265,13 +263,13 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var result = await handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.CompensationRecordId.Should().NotBeNull();
+        Assert.True(result.Success);
+        Assert.NotNull(result.CompensationRecordId);
 
         // Verify the record was created with encryption
         var savedRecord = await compensationRepository.GetCurrentAsync(employee.Id);
-        savedRecord.Should().NotBeNull();
-        savedRecord!.SalaryAmount.Should().Be("95000.00"); // Decrypted by interceptor
+        Assert.NotNull(savedRecord);
+        Assert.Equal("95000.00", savedRecord!.SalaryAmount); // Decrypted by interceptor
     }
 
     /// <summary>

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -151,18 +150,18 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert
         var published = await _harness!.Published.Any<EmployeeOnboardingStartedIntegrationEvent>();
-        published.Should().BeTrue("EmployeeOnboardingStartedIntegrationEvent should be published");
+        Assert.True(published); // EmployeeOnboardingStartedIntegrationEvent should be published
 
         var publishedEvent = _harness.Published.Select<EmployeeOnboardingStartedIntegrationEvent>().FirstOrDefault();
-        publishedEvent.Should().NotBeNull();
+        Assert.NotNull(publishedEvent);
 
         var eventMessage = publishedEvent!.Context.Message;
-        eventMessage.EmployeeId.Should().Be(employee.Id);
-        eventMessage.EmployeeNumber.Should().Be(employee.EmployeeNumber);
-        eventMessage.FullName.Should().Be("Test Employee");
-        eventMessage.Email.Should().Be("test.employee@company.com");
-        eventMessage.JobTitle.Should().Be("Software Engineer");
-        eventMessage.StartDate.Should().Be(employee.StartDate);
+        Assert.Equal(employee.Id, eventMessage.EmployeeId);
+        Assert.Equal(employee.EmployeeNumber, eventMessage.EmployeeNumber);
+        Assert.Equal("Test Employee", eventMessage.FullName);
+        Assert.Equal("test.employee@company.com", eventMessage.Email);
+        Assert.Equal("Software Engineer", eventMessage.JobTitle);
+        Assert.Equal(employee.StartDate, eventMessage.StartDate);
     }
 
     [Fact]
@@ -189,17 +188,17 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert
         var published = await _harness!.Published.Any<EmployeeTerminatedIntegrationEvent>();
-        published.Should().BeTrue("EmployeeTerminatedIntegrationEvent should be published");
+        Assert.True(published); // EmployeeTerminatedIntegrationEvent should be published
 
         var publishedEvent = _harness.Published.Select<EmployeeTerminatedIntegrationEvent>().FirstOrDefault();
-        publishedEvent.Should().NotBeNull();
+        Assert.NotNull(publishedEvent);
 
         var eventMessage = publishedEvent!.Context.Message;
-        eventMessage.EmployeeId.Should().Be(employee.Id);
-        eventMessage.EmployeeNumber.Should().Be(employee.EmployeeNumber);
-        eventMessage.TerminationDate.Should().Be(terminationDate);
-        eventMessage.TerminationReason.Should().Be("Voluntary Resignation");
-        eventMessage.EligibleForRehire.Should().BeTrue();
+        Assert.Equal(employee.Id, eventMessage.EmployeeId);
+        Assert.Equal(employee.EmployeeNumber, eventMessage.EmployeeNumber);
+        Assert.Equal(terminationDate, eventMessage.TerminationDate);
+        Assert.Equal("Voluntary Resignation", eventMessage.TerminationReason);
+        Assert.True(eventMessage.EligibleForRehire);
     }
 
     [Fact]
@@ -219,10 +218,10 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert
         var publishedEvent = _harness!.Published.Select<EmployeeOnboardingStartedIntegrationEvent>().FirstOrDefault();
-        publishedEvent.Should().NotBeNull();
+        Assert.NotNull(publishedEvent);
 
         var eventMessage = publishedEvent!.Context.Message;
-        eventMessage.Department.Should().Be("Test Department");
+        Assert.Equal("Test Department", eventMessage.Department);
     }
 
     [Fact]
@@ -249,12 +248,12 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert - Verify event published
         var published = await _harness!.Published.Any<EmployeeTerminatedIntegrationEvent>();
-        published.Should().BeTrue();
+        Assert.True(published);
 
         // Verify employee status updated in database
         var updatedEmployee = await Context!.Employees.FindAsync(employee.Id);
-        updatedEmployee!.EmploymentStatus.Should().Be(EmploymentStatus.Terminated);
-        updatedEmployee.TerminationDate.Should().Be(terminationDate);
+        Assert.Equal(EmploymentStatus.Terminated, updatedEmployee!.EmploymentStatus);
+        Assert.Equal(terminationDate, updatedEmployee.TerminationDate);
     }
 
     [Fact]
@@ -275,11 +274,11 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert
         var publishedEvents = _harness!.Published.Select<EmployeeOnboardingStartedIntegrationEvent>().ToList();
-        publishedEvents.Should().HaveCount(2, "Two onboarding events should be published");
+        Assert.Equal(2, publishedEvents.Count()); // Two onboarding events should be published
 
         var employeeIds = publishedEvents.Select(e => e.Context.Message.EmployeeId).ToList();
-        employeeIds.Should().Contain(employee1.Id);
-        employeeIds.Should().Contain(employee2.Id);
+        Assert.Contains(employee1.Id, employeeIds);
+        Assert.Contains(employee2.Id, employeeIds);
     }
 
     [Fact]
@@ -302,11 +301,11 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert
         var publishedEvent = _harness!.Published.Select<EmployeeOnboardingStartedIntegrationEvent>().FirstOrDefault();
-        publishedEvent.Should().NotBeNull();
+        Assert.NotNull(publishedEvent);
 
         var eventMessage = publishedEvent!.Context.Message;
-        eventMessage.OnboardingStartedAt.Should().BeOnOrAfter(beforePublish);
-        eventMessage.OnboardingStartedAt.Should().BeOnOrBefore(afterPublish);
+        Assert.True(eventMessage.OnboardingStartedAt >= beforePublish);
+        Assert.True(eventMessage.OnboardingStartedAt <= afterPublish);
     }
 
     [Fact]
@@ -340,12 +339,12 @@ public class IntegrationEventTests : IAsyncLifetime
 
         // Assert
         var publishedEvent = _harness!.Published.Select<EmployeeTerminatedIntegrationEvent>().FirstOrDefault();
-        publishedEvent.Should().NotBeNull();
+        Assert.NotNull(publishedEvent);
 
         // Note: EmployeeTerminatedIntegrationEvent doesn't have ManagerId field
         // This test verifies the event is published successfully with manager relationship
         var eventMessage = publishedEvent!.Context.Message;
-        eventMessage.EmployeeId.Should().Be(employee.Id);
+        Assert.Equal(employee.Id, eventMessage.EmployeeId);
     }
 
     [Fact]
@@ -360,8 +359,8 @@ public class IntegrationEventTests : IAsyncLifetime
         var onboardingEvents = await _harness!.Published.Any<EmployeeOnboardingStartedIntegrationEvent>();
         var offboardingEvents = await _harness.Published.Any<EmployeeTerminatedIntegrationEvent>();
 
-        onboardingEvents.Should().BeFalse("No onboarding events should be published");
-        offboardingEvents.Should().BeFalse("No offboarding events should be published");
+        Assert.False(onboardingEvents); // No onboarding events should be published
+        Assert.False(offboardingEvents); // No offboarding events should be published
     }
 
     /// <summary>

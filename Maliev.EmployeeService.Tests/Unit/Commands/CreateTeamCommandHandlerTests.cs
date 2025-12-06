@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Events;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -85,7 +84,7 @@ public class CreateTeamCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
 
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(teamLeadId, It.IsAny<CancellationToken>()), Times.Once);
 
@@ -123,7 +122,7 @@ public class CreateTeamCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
 
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
 
@@ -159,8 +158,7 @@ public class CreateTeamCommandHandlerTests
         var act = async () => await _handler.HandleAsync(command);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage($"Team lead with ID {teamLeadId} not found");
+        await Assert.ThrowsAsync<InvalidOperationException>(act);
 
         _mockEmployeeRepository.Verify(x => x.GetByIdAsync(teamLeadId, It.IsAny<CancellationToken>()), Times.Once);
         _mockTeamRepository.Verify(x => x.AddAsync(It.IsAny<Team>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -189,7 +187,7 @@ public class CreateTeamCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
 
         _mockTeamRepository.Verify(x => x.AddAsync(
             It.Is<Team>(t =>
@@ -231,8 +229,8 @@ public class CreateTeamCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeEmpty();
-        capturedTeam.Should().NotBeNull();
-        capturedTeam!.Id.Should().NotBeEmpty();
+        Assert.NotEqual(Guid.Empty, result);
+        Assert.NotNull(capturedTeam);
+        Assert.NotEqual(Guid.Empty, capturedTeam!.Id);
     }
 }

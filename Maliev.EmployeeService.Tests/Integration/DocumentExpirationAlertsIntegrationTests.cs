@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -91,9 +90,9 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().HaveCountGreaterThanOrEqualTo(2);
-        resultList.Should().Contain(d => d.Id == documentAtThreshold.Id);
-        resultList.Should().Contain(d => d.Id == documentWithinThreshold.Id);
+        Assert.True(resultList.Count >= 2);
+        Assert.Contains(resultList, d => d.Id == documentAtThreshold.Id);
+        Assert.Contains(resultList, d => d.Id == documentWithinThreshold.Id);
     }
 
     [Fact]
@@ -147,7 +146,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().NotContain(d => d.Id == documentBeyondThreshold.Id);
+        Assert.DoesNotContain(resultList, d => d.Id == documentBeyondThreshold.Id);
     }
 
     [Fact]
@@ -201,7 +200,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().NotContain(d => d.Id == archivedDocument.Id);
+        Assert.DoesNotContain(resultList, d => d.Id == archivedDocument.Id);
     }
 
     [Fact]
@@ -255,7 +254,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().NotContain(d => d.Id == expiredDocument.Id);
+        Assert.DoesNotContain(resultList, d => d.Id == expiredDocument.Id);
     }
 
     [Fact]
@@ -309,7 +308,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().NotContain(d => d.Id == documentWithoutExpiration.Id);
+        Assert.DoesNotContain(resultList, d => d.Id == documentWithoutExpiration.Id);
     }
 
     [Fact]
@@ -381,10 +380,10 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().HaveCountGreaterThanOrEqualTo(2);
-        resultList.Should().Contain(d => d.Id == expiredDocuments[0].Id);
-        resultList.Should().Contain(d => d.Id == expiredDocuments[1].Id);
-        resultList.Should().OnlyContain(d => d.ExpirationDate.HasValue && d.ExpirationDate.Value < DateTime.UtcNow);
+        Assert.True(resultList.Count >= 2);
+        Assert.Contains(resultList, d => d.Id == expiredDocuments[0].Id);
+        Assert.Contains(resultList, d => d.Id == expiredDocuments[1].Id);
+        Assert.All(resultList, d  => Assert.True(d.ExpirationDate.HasValue && d.ExpirationDate.Value < DateTime.UtcNow));
     }
 
     [Fact]
@@ -438,7 +437,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().NotContain(d => d.Id == archivedExpiredDocument.Id);
+        Assert.DoesNotContain(resultList, d => d.Id == archivedExpiredDocument.Id);
     }
 
     [Fact]
@@ -492,7 +491,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
 
         // Assert
         var resultList = result.ToList();
-        resultList.Should().NotContain(d => d.Id == futureExpirationDocument.Id);
+        Assert.DoesNotContain(resultList, d => d.Id == futureExpirationDocument.Id);
     }
 
     [Fact]
@@ -600,33 +599,33 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         Context.ChangeTracker.Clear();
         var result90 = await documentRepository.GetExpiringDocumentsAsync(90);
         var list90 = result90.ToList();
-        list90.Should().Contain(d => d.Id == doc90Id);
-        list90.Should().Contain(d => d.Id == doc60Id);
-        list90.Should().Contain(d => d.Id == doc30Id);
-        list90.Should().Contain(d => d.Id == doc14Id);
+        Assert.Contains(list90, d => d.Id == doc90Id);
+        Assert.Contains(list90, d => d.Id == doc60Id);
+        Assert.Contains(list90, d => d.Id == doc30Id);
+        Assert.Contains(list90, d => d.Id == doc14Id);
 
         Context.ChangeTracker.Clear();
         var result60 = await documentRepository.GetExpiringDocumentsAsync(60);
         var list60 = result60.ToList();
-        list60.Should().NotContain(d => d.Id == doc90Id);
-        list60.Should().Contain(d => d.Id == doc60Id);
-        list60.Should().Contain(d => d.Id == doc30Id);
-        list60.Should().Contain(d => d.Id == doc14Id);
+        Assert.DoesNotContain(list60, d => d.Id == doc90Id);
+        Assert.Contains(list60, d => d.Id == doc60Id);
+        Assert.Contains(list60, d => d.Id == doc30Id);
+        Assert.Contains(list60, d => d.Id == doc14Id);
 
         Context.ChangeTracker.Clear();
         var result30 = await documentRepository.GetExpiringDocumentsAsync(30);
         var list30 = result30.ToList();
-        list30.Should().NotContain(d => d.Id == doc90Id);
-        list30.Should().NotContain(d => d.Id == doc60Id);
-        list30.Should().Contain(d => d.Id == doc30Id);
-        list30.Should().Contain(d => d.Id == doc14Id);
+        Assert.DoesNotContain(list30, d => d.Id == doc90Id);
+        Assert.DoesNotContain(list30, d => d.Id == doc60Id);
+        Assert.Contains(list30, d => d.Id == doc30Id);
+        Assert.Contains(list30, d => d.Id == doc14Id);
 
         Context.ChangeTracker.Clear();
         var result14 = await documentRepository.GetExpiringDocumentsAsync(14);
         var list14 = result14.ToList();
-        list14.Should().NotContain(d => d.Id == doc90Id);
-        list14.Should().NotContain(d => d.Id == doc60Id);
-        list14.Should().NotContain(d => d.Id == doc30Id);
-        list14.Should().Contain(d => d.Id == doc14Id);
+        Assert.DoesNotContain(list14, d => d.Id == doc90Id);
+        Assert.DoesNotContain(list14, d => d.Id == doc60Id);
+        Assert.DoesNotContain(list14, d => d.Id == doc30Id);
+        Assert.Contains(list14, d => d.Id == doc14Id);
     }
 }

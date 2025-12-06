@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -80,12 +79,12 @@ public class StartOffboardingCommandHandlerTests
         var result = await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
-        result.Should().Be(employeeId);
+        Assert.Equal(employeeId, result);
 
         // Verify employee status updated
-        employee.TerminationDate.Should().Be(terminationDate);
-        employee.EmploymentStatus.Should().Be(EmploymentStatus.Terminated);
-        employee.ModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        Assert.Equal(terminationDate, employee.TerminationDate);
+        Assert.Equal(EmploymentStatus.Terminated, employee.EmploymentStatus);
+        Assert.True(Math.Abs((employee.ModifiedDate!.Value - DateTime.UtcNow).TotalSeconds) <= 5);
 
         // Verify checklist created
         _offboardingRepositoryMock.Verify(
@@ -131,7 +130,7 @@ public class StartOffboardingCommandHandlerTests
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _handler.HandleAsync(command, CancellationToken.None));
 
-        exception.Message.Should().Contain(employeeId.ToString());
+        Assert.Contains(employeeId.ToString(), exception.Message);
 
         // Verify no checklist or event created
         _offboardingRepositoryMock.Verify(
@@ -189,26 +188,25 @@ public class StartOffboardingCommandHandlerTests
         await _handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
-        capturedChecklist.Should().NotBeNull();
-        capturedChecklist.Should().NotBeEmpty();
+        Assert.NotNull(capturedChecklist);
+        Assert.NotEmpty(capturedChecklist);
 
         // Verify essential checklist items
-        capturedChecklist.Should().Contain(item => item.ItemDescription.Contains("exit interview"));
-        capturedChecklist.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        capturedChecklist.Should().Contain(item => item.ItemDescription.Contains("access card"));
-        capturedChecklist.Should().Contain(item => item.ItemDescription.Contains("final paycheck"));
+        Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("exit interview"));
+        Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("access card"));
+        Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("final paycheck"));
 
         // Verify all items have correct employee ID
-        capturedChecklist.Should().AllSatisfy(item =>
-        {
-            item.EmployeeId.Should().Be(employeeId);
-            item.CompletionStatus.Should().BeFalse();
-            item.DisplayOrder.Should().BeGreaterThan(0);
-        });
+        Assert.All(capturedChecklist, item  => { 
+            Assert.Equal(employeeId, item.EmployeeId);
+            Assert.False(item.CompletionStatus);
+            Assert.True(item.DisplayOrder > 0);
+         });
 
         // Verify blocking items exist
         var blockingItems = capturedChecklist.Where(item => item.BlocksFinalPaycheck).ToList();
-        blockingItems.Should().NotBeEmpty("there should be items that block final paycheck");
+        Assert.NotEmpty(blockingItems); // there should be items that block final paycheck
     }
 
     [Fact]

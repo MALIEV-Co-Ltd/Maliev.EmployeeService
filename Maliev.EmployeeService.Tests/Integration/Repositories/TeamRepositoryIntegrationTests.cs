@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -64,13 +63,13 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetWithMembersAsync(team.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("Engineering Team");
-        result.TeamLead.Should().NotBeNull();
-        result.TeamLead!.EmployeeNumber.Should().Be("EMP001");
-        result.TeamMembers.Should().HaveCount(2);
-        result.TeamMembers.Should().Contain(tm => tm.EmployeeId == member1.Id && tm.IsPrimary);
-        result.TeamMembers.Should().Contain(tm => tm.EmployeeId == member2.Id && !tm.IsPrimary);
+        Assert.NotNull(result);
+        Assert.Equal("Engineering Team", result!.Name);
+        Assert.NotNull(result.TeamLead);
+        Assert.Equal("EMP001", result.TeamLead!.EmployeeNumber);
+        Assert.Equal(2, result.TeamMembers.Count());
+        Assert.Contains(result.TeamMembers, tm => tm.EmployeeId == member1.Id && tm.IsPrimary);
+        Assert.Contains(result.TeamMembers, tm => tm.EmployeeId == member2.Id && !tm.IsPrimary);
     }
 
     [Fact]
@@ -98,9 +97,9 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetWithTeamLeadAsync(team.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.TeamLead.Should().NotBeNull();
-        result.TeamLead!.FullName.Should().Be("John Doe");
+        Assert.NotNull(result);
+        Assert.NotNull(result!.TeamLead);
+        Assert.Equal("John Doe", result.TeamLead!.FullName);
     }
 
     [Fact]
@@ -146,10 +145,10 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetAllActiveAsync();
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain(t => t.Name == "Active Team 1");
-        result.Should().Contain(t => t.Name == "Active Team 2");
-        result.Should().NotContain(t => t.Name == "Inactive Team");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, t => t.Name == "Active Team 1");
+        Assert.Contains(result, t => t.Name == "Active Team 2");
+        Assert.DoesNotContain(result, t => t.Name == "Inactive Team");
     }
 
     [Fact]
@@ -191,8 +190,8 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetByTeamTypeAsync("Engineering");
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().AllSatisfy(t => t.TeamType.Should().Be("Engineering"));
+        Assert.Equal(2, result.Count());
+        Assert.All(result, t => Assert.Equal("Engineering", t.TeamType));
     }
 
     [Fact]
@@ -241,10 +240,10 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetByTeamLeadAsync(teamLead.Id);
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().AllSatisfy(t => t.TeamLeadId.Should().Be(teamLead.Id));
-        result.Should().Contain(t => t.Name == "Team 1");
-        result.Should().Contain(t => t.Name == "Team 2");
+        Assert.Equal(2, result.Count());
+        Assert.All(result, t => Assert.Equal(teamLead.Id, t.TeamLeadId));
+        Assert.Contains(result, t => t.Name == "Team 1");
+        Assert.Contains(result, t => t.Name == "Team 2");
     }
 
     [Fact]
@@ -308,10 +307,10 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetTeamsByEmployeeAsync(employee.Id);
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain(t => t.Name == "Engineering Team");
-        result.Should().Contain(t => t.Name == "Product Team");
-        result.Should().NotContain(t => t.Name == "Other Team");
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, t => t.Name == "Engineering Team");
+        Assert.Contains(result, t => t.Name == "Product Team");
+        Assert.DoesNotContain(result, t => t.Name == "Other Team");
     }
 
     [Fact]
@@ -348,7 +347,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.IsEmployeeMemberAsync(employee.Id, team.Id);
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -375,7 +374,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.IsEmployeeMemberAsync(employee.Id, team.Id);
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -430,8 +429,8 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetPrimaryTeamAsync(employee.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("Primary Team");
+        Assert.NotNull(result);
+        Assert.Equal("Primary Team", result!.Name);
     }
 
     [Fact]
@@ -447,7 +446,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         var result = await repository.GetPrimaryTeamAsync(employee.Id);
 
         // Assert
-        result.Should().BeNull();
+        Assert.Null(result);
     }
 
     /// <summary>

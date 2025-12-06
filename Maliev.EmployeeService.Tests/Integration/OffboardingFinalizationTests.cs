@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -71,12 +70,12 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var status = await getStatusHandler.HandleAsync(statusQuery, CancellationToken.None);
 
         // Assert
-        status.CanReleaseFinalPaycheck.Should().BeFalse(
+        Assert.False(status.CanReleaseFinalPaycheck,
             "Cannot release paycheck when blocking items are incomplete");
 
         var blockingItems = status.ChecklistItems.Where(item => item.BlocksFinalPaycheck && !item.CompletionStatus).ToList();
-        status.BlockingItemsCount.Should().Be(blockingItems.Count);
-        status.BlockingItemsCount.Should().BeGreaterThan(0);
+        Assert.Equal(blockingItems.Count, status.BlockingItemsCount);
+        Assert.True(status.BlockingItemsCount > 0);
     }
 
     [Fact]
@@ -128,7 +127,7 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var initialStatusQuery = new GetOffboardingStatusQuery { EmployeeId = employee.Id };
         var initialStatus = await getStatusHandler.HandleAsync(initialStatusQuery, CancellationToken.None);
 
-        initialStatus.CanReleaseFinalPaycheck.Should().BeFalse();
+        Assert.False(initialStatus.CanReleaseFinalPaycheck);
 
         // Get all blocking items
         var blockingItems = initialStatus.ChecklistItems.Where(item => item.BlocksFinalPaycheck).ToList();
@@ -151,18 +150,17 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var finalStatus = await getStatusHandler.HandleAsync(finalStatusQuery, CancellationToken.None);
 
         // Assert
-        finalStatus.CanReleaseFinalPaycheck.Should().BeTrue(
+        Assert.True(finalStatus.CanReleaseFinalPaycheck,
             "Should allow paycheck release when all blocking items are complete");
 
-        finalStatus.BlockingItemsCount.Should().Be(0,
-            "No blocking items should remain incomplete");
+        Assert.Equal(0, finalStatus.BlockingItemsCount); // No blocking items should remain incomplete
 
         // Verify all blocking items are marked as complete
         var allBlockingItemsComplete = finalStatus.ChecklistItems
             .Where(item => item.BlocksFinalPaycheck)
             .All(item => item.CompletionStatus);
 
-        allBlockingItemsComplete.Should().BeTrue(
+        Assert.True(allBlockingItemsComplete,
             "All blocking items should be marked as complete");
     }
 
@@ -234,10 +232,10 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var finalStatus = await getStatusHandler.HandleAsync(finalStatusQuery, CancellationToken.None);
 
         // Assert
-        finalStatus.CanReleaseFinalPaycheck.Should().BeFalse(
+        Assert.False(finalStatus.CanReleaseFinalPaycheck,
             "Cannot release paycheck when even one blocking item is incomplete");
 
-        finalStatus.BlockingItemsCount.Should().BeGreaterThan(0,
+        Assert.True(finalStatus.BlockingItemsCount > 0,
             "At least one blocking item should remain incomplete");
     }
 
@@ -308,7 +306,7 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var finalStatus = await getStatusHandler.HandleAsync(finalStatusQuery, CancellationToken.None);
 
         // Assert
-        finalStatus.CanReleaseFinalPaycheck.Should().BeFalse(
+        Assert.False(finalStatus.CanReleaseFinalPaycheck,
             "Completing only non-blocking items should not allow paycheck release");
 
         // Verify blocking items are still incomplete
@@ -316,8 +314,7 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
             .Where(item => item.BlocksFinalPaycheck && !item.CompletionStatus)
             .ToList();
 
-        incompleteBlockingItems.Should().NotBeEmpty(
-            "Blocking items should remain incomplete");
+        Assert.NotEmpty(incompleteBlockingItems); // Blocking items should remain incomplete
     }
 
     [Fact]
@@ -371,14 +368,14 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
             CancellationToken.None);
 
         // Assert
-        blockingItems.Should().NotBeEmpty();
-        blockingItems.Should().OnlyContain(item => item.BlocksFinalPaycheck == true,
-            "Should only return items that block paycheck");
+        Assert.NotEmpty(blockingItems);
+        Assert.All(blockingItems, item  => Assert.True(item.BlocksFinalPaycheck == true,
+            "Should only return items that block paycheck"));
 
         // Verify specific blocking items
         var blockingItemsList = blockingItems.ToList();
-        blockingItemsList.Should().Contain(item => item.ItemDescription.Contains("laptop"));
-        blockingItemsList.Should().Contain(item => item.ItemDescription.Contains("access card"));
+        Assert.Contains(blockingItemsList, item => item.ItemDescription.Contains("laptop"));
+        Assert.Contains(blockingItemsList, item => item.ItemDescription.Contains("access card"));
     }
 
     [Fact]
@@ -449,8 +446,8 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var finalStatus = await getStatusHandler.HandleAsync(finalStatusQuery, CancellationToken.None);
 
         // Assert
-        finalStatus.CompletedItems.Should().Be(itemsToComplete.Count);
-        finalStatus.CompletionPercentage.Should().BeApproximately(50m, 10m,
+        Assert.Equal(itemsToComplete.Count, finalStatus.CompletedItems);
+        Assert.True(Math.Abs(finalStatus.CompletionPercentage - 50m) <= 10m,
             "Completion percentage should be around 50% when half the items are complete");
     }
 

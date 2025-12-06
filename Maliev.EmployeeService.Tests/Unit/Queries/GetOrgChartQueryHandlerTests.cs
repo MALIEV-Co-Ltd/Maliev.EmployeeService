@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -41,7 +40,7 @@ public class GetOrgChartQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.OrgChart.Should().BeNull();
+        Assert.Null(result.OrgChart);
     }
 
     [Fact]
@@ -73,13 +72,13 @@ public class GetOrgChartQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.OrgChart.Should().NotBeNull();
-        result.OrgChart!.EmployeeId.Should().Be(managerId);
-        result.OrgChart.FullName.Should().Be("John Manager");
-        result.OrgChart.Level.Should().Be(0);
-        result.OrgChart.DirectReports.Should().BeEmpty();
-        result.OrgChart.DirectReportsCount.Should().Be(0);
-        result.OrgChart.TotalReportsCount.Should().Be(0);
+        Assert.NotNull(result.OrgChart);
+        Assert.Equal(managerId, result.OrgChart!.EmployeeId);
+        Assert.Equal("John Manager", result.OrgChart.FullName);
+        Assert.Equal(0, result.OrgChart.Level);
+        Assert.Empty(result.OrgChart.DirectReports);
+        Assert.Equal(0, result.OrgChart.DirectReportsCount);
+        Assert.Equal(0, result.OrgChart.TotalReportsCount);
     }
 
     [Fact]
@@ -145,18 +144,18 @@ public class GetOrgChartQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.OrgChart.Should().NotBeNull();
-        result.OrgChart!.DirectReportsCount.Should().Be(2);
-        result.OrgChart.TotalReportsCount.Should().Be(2);
-        result.OrgChart.DirectReports.Should().HaveCount(2);
+        Assert.NotNull(result.OrgChart);
+        Assert.Equal(2, result.OrgChart!.DirectReportsCount);
+        Assert.Equal(2, result.OrgChart.TotalReportsCount);
+        Assert.Equal(2, result.OrgChart.DirectReports.Count);
 
         var alice = result.OrgChart.DirectReports.First(r => r.FullName == "Alice Developer");
-        alice.Level.Should().Be(1);
-        alice.JobTitle.Should().Be("Senior Dev");
+        Assert.Equal(1, alice.Level);
+        Assert.Equal("Senior Dev", alice.JobTitle);
 
         var bob = result.OrgChart.DirectReports.First(r => r.FullName == "Bob Developer");
-        bob.Level.Should().Be(1);
-        bob.WorkLocation.Should().Be("Remote");
+        Assert.Equal(1, bob.Level);
+        Assert.Equal("Remote", bob.WorkLocation);
     }
 
     [Fact]
@@ -213,22 +212,22 @@ public class GetOrgChartQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.OrgChart.Should().NotBeNull();
-        result.OrgChart!.Level.Should().Be(0);
-        result.OrgChart.DirectReportsCount.Should().Be(1);
-        result.OrgChart.TotalReportsCount.Should().Be(2); // 1 direct + 1 indirect
+        Assert.NotNull(result.OrgChart);
+        Assert.Equal(0, result.OrgChart!.Level);
+        Assert.Equal(1, result.OrgChart.DirectReportsCount);
+        Assert.Equal(2, result.OrgChart.TotalReportsCount); // 1 direct + 1 indirect
 
         var teamLeadNode = result.OrgChart.DirectReports.First();
-        teamLeadNode.Level.Should().Be(1);
-        teamLeadNode.FullName.Should().Be("Alice Lead");
-        teamLeadNode.DirectReportsCount.Should().Be(1);
-        teamLeadNode.TotalReportsCount.Should().Be(1);
+        Assert.Equal(1, teamLeadNode.Level);
+        Assert.Equal("Alice Lead", teamLeadNode.FullName);
+        Assert.Equal(1, teamLeadNode.DirectReportsCount);
+        Assert.Equal(1, teamLeadNode.TotalReportsCount);
 
         var developerNode = teamLeadNode.DirectReports.First();
-        developerNode.Level.Should().Be(2);
-        developerNode.FullName.Should().Be("Bob Developer");
-        developerNode.DirectReportsCount.Should().Be(0);
-        developerNode.TotalReportsCount.Should().Be(0);
+        Assert.Equal(2, developerNode.Level);
+        Assert.Equal("Bob Developer", developerNode.FullName);
+        Assert.Equal(0, developerNode.DirectReportsCount);
+        Assert.Equal(0, developerNode.TotalReportsCount);
     }
 
     [Fact]
@@ -283,14 +282,14 @@ public class GetOrgChartQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.OrgChart.Should().NotBeNull();
-        result.OrgChart!.Level.Should().Be(0);
-        result.OrgChart.DirectReports.Should().HaveCount(1);
+        Assert.NotNull(result.OrgChart);
+        Assert.Equal(0, result.OrgChart!.Level);
+        Assert.Single(result.OrgChart.DirectReports);
 
         var level1Node = result.OrgChart.DirectReports.First();
-        level1Node.Level.Should().Be(1);
-        level1Node.DirectReports.Should().BeEmpty(); // Should stop here due to depth limit
-        level1Node.DirectReportsCount.Should().Be(1); // But still shows the count
+        Assert.Equal(1, level1Node.Level);
+        Assert.Empty(level1Node.DirectReports); // Should stop here due to depth limit
+        Assert.Equal(1, level1Node.DirectReportsCount); // But still shows the count
     }
 
     [Fact]
@@ -345,18 +344,18 @@ public class GetOrgChartQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.OrgChart.Should().NotBeNull();
-        result.OrgChart!.DirectReportsCount.Should().Be(2); // 2 team leads
-        result.OrgChart.TotalReportsCount.Should().Be(5); // 2 team leads + 3 developers
+        Assert.NotNull(result.OrgChart);
+        Assert.Equal(2, result.OrgChart!.DirectReportsCount); // 2 team leads
+        Assert.Equal(5, result.OrgChart.TotalReportsCount); // 2 team leads + 3 developers
 
         // Check first branch
         var tl1Node = result.OrgChart.DirectReports.First(r => r.EmployeeNumber == "TL1");
-        tl1Node.DirectReportsCount.Should().Be(2);
-        tl1Node.TotalReportsCount.Should().Be(2);
+        Assert.Equal(2, tl1Node.DirectReportsCount);
+        Assert.Equal(2, tl1Node.TotalReportsCount);
 
         // Check second branch
         var tl2Node = result.OrgChart.DirectReports.First(r => r.EmployeeNumber == "TL2");
-        tl2Node.DirectReportsCount.Should().Be(1);
-        tl2Node.TotalReportsCount.Should().Be(1);
+        Assert.Equal(1, tl2Node.DirectReportsCount);
+        Assert.Equal(1, tl2Node.TotalReportsCount);
     }
 }

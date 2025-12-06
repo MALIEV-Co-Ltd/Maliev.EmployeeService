@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Xunit;
@@ -22,7 +21,7 @@ public class DepartmentTests
         var result = department.IsRootDepartment;
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public class DepartmentTests
         var result = department.IsRootDepartment;
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -62,7 +61,7 @@ public class DepartmentTests
         var result = department.HasSubDepartments;
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -80,7 +79,7 @@ public class DepartmentTests
         var result = department.HasSubDepartments;
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -105,7 +104,7 @@ public class DepartmentTests
         var headcount = department.CurrentHeadcount;
 
         // Assert
-        headcount.Should().Be(3); // Only 3 active employees
+        Assert.Equal(3, headcount); // Only 3 active employees
     }
 
     [Fact]
@@ -123,7 +122,7 @@ public class DepartmentTests
         var headcount = department.CurrentHeadcount;
 
         // Assert
-        headcount.Should().Be(0);
+        Assert.Equal(0, headcount);
     }
 
     [Fact]
@@ -147,8 +146,8 @@ public class DepartmentTests
         var result = department.IsApproachingHeadcountLimit;
 
         // Assert
-        result.Should().BeTrue();
-        department.CurrentHeadcount.Should().Be(40);
+        Assert.True(result);
+        Assert.Equal(40, department.CurrentHeadcount);
     }
 
     [Fact]
@@ -172,7 +171,7 @@ public class DepartmentTests
         var result = department.IsApproachingHeadcountLimit;
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -196,7 +195,7 @@ public class DepartmentTests
         var result = department.IsApproachingHeadcountLimit;
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -220,7 +219,7 @@ public class DepartmentTests
         var result = department.IsApproachingHeadcountLimit;
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -244,7 +243,7 @@ public class DepartmentTests
         var result = department.IsAtHeadcountLimit;
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -268,7 +267,7 @@ public class DepartmentTests
         var result = department.IsAtHeadcountLimit;
 
         // Assert
-        result.Should().BeTrue();
+        Assert.True(result);
     }
 
     [Fact]
@@ -292,7 +291,7 @@ public class DepartmentTests
         var result = department.IsAtHeadcountLimit;
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 
     [Fact]
@@ -316,6 +315,6 @@ public class DepartmentTests
         var result = department.IsAtHeadcountLimit;
 
         // Assert
-        result.Should().BeFalse();
+        Assert.False(result);
     }
 }

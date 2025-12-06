@@ -1,7 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Prometheus;
 
 namespace Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 
@@ -11,29 +11,21 @@ namespace Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 /// </summary>
 public class DatabaseMetricsInterceptor : DbCommandInterceptor
 {
-    private static readonly Histogram QueryDuration = Metrics.CreateHistogram(
+    private static readonly Meter Meter = new("employees");
+
+    private static readonly Histogram<double> QueryDuration = Meter.CreateHistogram<double>(
         "db_query_duration_seconds",
-        "Database query execution duration in seconds",
-        new HistogramConfiguration
-        {
-            LabelNames = new[] { "command_type", "operation" },
-            Buckets = new[] { 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0 }
-        });
+        "seconds",
+        "Database query execution duration");
 
-    private static readonly Counter QueryTotal = Metrics.CreateCounter(
+    private static readonly Counter<long> QueryTotal = Meter.CreateCounter<long>(
         "db_queries_total",
-        "Total number of database queries executed",
-        new CounterConfiguration
-        {
-            LabelNames = new[] { "command_type", "operation", "status" }
-        });
+        "1",
+        "Total number of database queries executed");
 
-    // Static constructor to initialize metrics with default values
     static DatabaseMetricsInterceptor()
     {
-        // Initialize with labeled variations to ensure metrics and labels appear in output
-        QueryDuration.WithLabels("Text", "select").Observe(0);
-        QueryTotal.WithLabels("Text", "select", "success").Inc(0);
+        // No explicit initialization needed for OTEL histograms/counters
     }
 
     public override InterceptionResult<DbDataReader> ReaderExecuting(
@@ -136,14 +128,15 @@ public class DatabaseMetricsInterceptor : DbCommandInterceptor
         var durationSeconds = duration.TotalSeconds;
 
         // Record duration histogram
-        QueryDuration
-            .WithLabels(commandType, operation)
-            .Observe(durationSeconds);
+        QueryDuration.Record(durationSeconds,
+            new KeyValuePair<string, object?>("command_type", commandType),
+            new KeyValuePair<string, object?>("operation", operation));
 
         // Record query counter
-        QueryTotal
-            .WithLabels(commandType, operation, status)
-            .Inc();
+        QueryTotal.Add(1,
+            new KeyValuePair<string, object?>("command_type", commandType),
+            new KeyValuePair<string, object?>("operation", operation),
+            new KeyValuePair<string, object?>("status", status));
     }
 
     private static string DetermineOperation(string commandText)

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
@@ -38,8 +37,8 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
         _mockTeamRepository.Verify(x => x.GetTeamsByEmployeeAsync(employeeId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -99,18 +98,18 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
+        Assert.NotNull(result);
+        Assert.Single(result);
 
         var teamDto = result[0];
-        teamDto.Id.Should().Be(teamId);
-        teamDto.Name.Should().Be("Engineering Team");
-        teamDto.Description.Should().Be("Backend engineering team");
-        teamDto.TeamType.Should().Be("Engineering");
-        teamDto.TeamLeadId.Should().Be(teamLeadId);
-        teamDto.TeamLeadName.Should().Be("John Manager");
-        teamDto.IsActive.Should().BeTrue();
-        teamDto.MemberCount.Should().Be(1);
+        Assert.Equal(teamId, teamDto.Id);
+        Assert.Equal("Engineering Team", teamDto.Name);
+        Assert.Equal("Backend engineering team", teamDto.Description);
+        Assert.Equal("Engineering", teamDto.TeamType);
+        Assert.Equal(teamLeadId, teamDto.TeamLeadId);
+        Assert.Equal("John Manager", teamDto.TeamLeadName);
+        Assert.True(teamDto.IsActive);
+        Assert.Equal(1, teamDto.MemberCount);
     }
 
     [Fact]
@@ -185,11 +184,11 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(3);
-        result.Should().Contain(t => t.Name == "Engineering Team");
-        result.Should().Contain(t => t.Name == "Product Team");
-        result.Should().Contain(t => t.Name == "DevOps Team");
+        Assert.NotNull(result);
+        Assert.Equal(3, result.Count());
+        Assert.Contains(result, t => t.Name == "Engineering Team");
+        Assert.Contains(result, t => t.Name == "Product Team");
+        Assert.Contains(result, t => t.Name == "DevOps Team");
     }
 
     [Fact]
@@ -228,10 +227,10 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result[0].TeamLeadId.Should().BeNull();
-        result[0].TeamLeadName.Should().BeNull();
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Null(result[0].TeamLeadId);
+        Assert.Null(result[0].TeamLeadName);
     }
 
     [Fact]
@@ -269,10 +268,10 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result[0].IsActive.Should().BeFalse();
-        result[0].ModifiedDate.Should().NotBeNull();
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.False(result[0].IsActive);
+        Assert.NotNull(result[0].ModifiedDate);
     }
 
     [Fact]
@@ -325,9 +324,9 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result[0].MemberCount.Should().Be(3);
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal(3, result[0].MemberCount);
     }
 
     [Fact]
@@ -375,11 +374,11 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(3);
-        result.Should().Contain(t => t.TeamType == "Engineering");
-        result.Should().Contain(t => t.TeamType == "Product");
-        result.Should().Contain(t => t.TeamType == "Project");
+        Assert.NotNull(result);
+        Assert.Equal(3, result.Count());
+        Assert.Contains(result, t => t.TeamType == "Engineering");
+        Assert.Contains(result, t => t.TeamType == "Product");
+        Assert.Contains(result, t => t.TeamType == "Project");
     }
 
     [Fact]
@@ -411,9 +410,9 @@ public class GetEmployeeTeamsQueryHandlerTests
         var result = await _handler.HandleAsync(query);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result[0].CreatedDate.Should().BeCloseTo(createdDate, TimeSpan.FromSeconds(1));
-        result[0].ModifiedDate.Should().BeCloseTo(modifiedDate, TimeSpan.FromSeconds(1));
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.True(Math.Abs((result[0].CreatedDate - createdDate).TotalSeconds) <= 1);
+        Assert.True(Math.Abs((result[0].ModifiedDate!.Value - modifiedDate).TotalSeconds) <= 1);
     }
 }

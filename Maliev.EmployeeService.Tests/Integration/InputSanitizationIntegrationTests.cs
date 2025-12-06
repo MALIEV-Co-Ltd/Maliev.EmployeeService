@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
 using Maliev.EmployeeService.Application.DTOs;
 using Xunit;
 
@@ -32,16 +31,16 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Create request with employee ID header for authorization
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/v1/profile/{employee.Id}/emergency-contacts");
-        request.Headers.Add("X-Test-Employee-Id", employee.Id.ToString());
+        // Authenticate as the employee
+        AuthenticateAs(employee.Id);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/employees/v1/profile/{employee.Id}/emergency-contacts");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
 
         // Assert - POST creates typically return 201 or 200
         var content = await response.Content.ReadAsStringAsync();
-        response.IsSuccessStatusCode.Should().BeTrue($"Expected success but got {response.StatusCode}. Response: {content}");
+        Assert.True(response.IsSuccessStatusCode, $"Expected success but got {response.StatusCode}. Response: {content}");
         // If request succeeded, sanitization worked
     }
 
@@ -60,15 +59,15 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Create request with employee ID header for authorization
-        var request = new HttpRequestMessage(HttpMethod.Put, $"/v1/profile/{employee.Id}/profile");
-        request.Headers.Add("X-Test-Employee-Id", employee.Id.ToString());
+        // Authenticate as the employee
+        AuthenticateAs(employee.Id);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/employees/v1/profile/{employee.Id}/profile");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
 
         // Assert - PUT updates typically return 200 OK
-        response.IsSuccessStatusCode.Should().BeTrue();
+        Assert.True(response.IsSuccessStatusCode);
         // If request succeeded, sanitization worked
     }
 
@@ -86,13 +85,13 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         var response = await _client.PostAsJsonAsync("/employees/v1/departments", dto);
 
         // Assert - CreateDepartment returns 201 Created for successful creation
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         // For a 201 Created response, the department details are in the Location header or we need to fetch them
         // The tests expect to verify sanitization, but the response is just {id, message}
         // For simplicity, if the request succeeded, it means validation passed and sanitization worked
         // The actual sanitization verification would require fetching the created department or checking database
-        response.Should().NotBeNull();
+        Assert.NotNull(response);
     }
 
     [Fact]
@@ -111,15 +110,15 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Create request with employee ID header for authorization
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/v1/profile/{employee.Id}/emergency-contacts");
-        request.Headers.Add("X-Test-Employee-Id", employee.Id.ToString());
+        // Authenticate as the employee
+        AuthenticateAs(employee.Id);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/employees/v1/profile/{employee.Id}/emergency-contacts");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        Assert.True(response.IsSuccessStatusCode);
         // Normal input should pass validation and be accepted
     }
 
@@ -137,10 +136,10 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         var response = await _client.PostAsJsonAsync("/employees/v1/departments", dto);
 
         // Assert - CreateDepartment returns 201 Created
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         // If request succeeded, sanitization worked (validation would have rejected malicious input)
-        response.Should().NotBeNull();
+        Assert.NotNull(response);
     }
 
     [Fact]
@@ -157,16 +156,16 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
             MobilePhone = "   "
         };
 
-        // Act & Assert - Should not throw exception
-        // Create request with employee ID header for authorization
-        var request = new HttpRequestMessage(HttpMethod.Put, $"/v1/profile/{employee.Id}/profile");
-        request.Headers.Add("X-Test-Employee-Id", employee.Id.ToString());
+        // Act
+        // Authenticate as the employee
+        AuthenticateAs(employee.Id);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/employees/v1/profile/{employee.Id}/profile");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
 
         // The validation might fail due to required fields, but sanitization should not cause an exception
         // We're primarily testing that the sanitizer doesn't crash on null/empty values
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
+        Assert.Contains(response.StatusCode, new[] { HttpStatusCode.OK, HttpStatusCode.BadRequest });
     }
 }

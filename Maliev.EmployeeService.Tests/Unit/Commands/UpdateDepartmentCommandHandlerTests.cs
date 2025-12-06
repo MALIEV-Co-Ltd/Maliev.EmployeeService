@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -48,8 +47,8 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Be("Department not found");
+        Assert.False(result.Success);
+        Assert.Equal("Department not found", result.ErrorMessage);
     }
 
     [Fact]
@@ -83,9 +82,9 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Cannot deactivate department with 5 active employee(s)");
-        result.ErrorMessage.Should().Contain("reassign employees first");
+        Assert.False(result.Success);
+        Assert.Contains("Cannot deactivate department with 5 active employee(s)", result.ErrorMessage);
+        Assert.Contains("reassign employees first", result.ErrorMessage);
     }
 
     [Fact]
@@ -119,8 +118,8 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        department.IsActive.Should().BeFalse();
+        Assert.True(result.Success);
+        Assert.False(department.IsActive);
         _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -156,8 +155,8 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Cannot set headcount limit (5) below current headcount (10)");
+        Assert.False(result.Success);
+        Assert.Contains("Cannot set headcount limit (5) below current headcount (10)", result.ErrorMessage);
     }
 
     [Fact]
@@ -192,10 +191,10 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.Warnings.Should().HaveCount(1);
-        result.Warnings[0].Should().Contain("80.0% capacity");
-        result.Warnings[0].Should().Contain("8/10");
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("80.0% capacity", result.Warnings[0]);
+        Assert.Contains("8/10", result.Warnings[0]);
     }
 
     [Fact]
@@ -235,8 +234,8 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Be("Parent department not found");
+        Assert.False(result.Success);
+        Assert.Equal("Parent department not found", result.ErrorMessage);
     }
 
     [Fact]
@@ -271,8 +270,8 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Be("Department cannot be its own parent");
+        Assert.False(result.Success);
+        Assert.Equal("Department cannot be its own parent", result.ErrorMessage);
     }
 
     [Fact]
@@ -309,12 +308,12 @@ public class UpdateDepartmentCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        department.Name.Should().Be("Updated Engineering");
-        department.Description.Should().Be("New description");
-        department.HeadcountLimit.Should().Be(50);
-        department.IsActive.Should().BeTrue();
-        department.ModifiedDate.Should().NotBeNull();
+        Assert.True(result.Success);
+        Assert.Equal("Updated Engineering", department.Name);
+        Assert.Equal("New description", department.Description);
+        Assert.Equal(50, department.HeadcountLimit);
+        Assert.True(department.IsActive);
+        Assert.NotNull(department.ModifiedDate);
         _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

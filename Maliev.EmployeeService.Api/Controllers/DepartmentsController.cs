@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using FluentValidation;
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
@@ -14,26 +13,25 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/departments")]
+[Route("employees/v{version:apiVersion}/departments")]
 [Authorize]
 public class DepartmentsController : ControllerBase
 {
     private readonly IDepartmentRepository _departmentRepository;
     private readonly CreateDepartmentCommandHandler _createDepartmentHandler;
     private readonly UpdateDepartmentCommandHandler _updateDepartmentHandler;
-    private readonly IValidator<CreateDepartmentDto> _createDepartmentValidator;
-    private readonly IValidator<UpdateDepartmentCommand> _updateDepartmentValidator;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<DepartmentsController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DepartmentsController"/> class
+    /// </summary>
     public DepartmentsController(
         IDepartmentRepository departmentRepository,
         CreateDepartmentCommandHandler createDepartmentHandler,
         UpdateDepartmentCommandHandler updateDepartmentHandler,
-        IValidator<CreateDepartmentDto> createDepartmentValidator,
-        IValidator<UpdateDepartmentCommand> updateDepartmentValidator,
         IEmployeeRepository employeeRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
@@ -42,8 +40,6 @@ public class DepartmentsController : ControllerBase
         _departmentRepository = departmentRepository;
         _createDepartmentHandler = createDepartmentHandler;
         _updateDepartmentHandler = updateDepartmentHandler;
-        _createDepartmentValidator = createDepartmentValidator;
-        _updateDepartmentValidator = updateDepartmentValidator;
         _employeeRepository = employeeRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
@@ -208,13 +204,6 @@ public class DepartmentsController : ControllerBase
         [FromBody] CreateDepartmentDto createDto,
         CancellationToken cancellationToken)
     {
-        // Validate
-        var validationResult = await _createDepartmentValidator.ValidateAsync(createDto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var command = new CreateDepartmentCommand(createDto);
         var result = await _createDepartmentHandler.HandleAsync(command, cancellationToken);
 
@@ -301,18 +290,11 @@ public class DepartmentsController : ControllerBase
     {
         updateCommand.DepartmentId = departmentId;
 
-        // Validate
-        var validationResult = await _updateDepartmentValidator.ValidateAsync(updateCommand, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
-        }
-
         var result = await _updateDepartmentHandler.HandleAsync(updateCommand, cancellationToken);
 
         if (!result.Success)
         {
-            return BadRequest(new { message = result.ErrorMessage });
+            return BadRequest(new { errors = new[] { result.ErrorMessage } });
         }
 
         _logger.LogInformation("Department {DepartmentId} updated", departmentId);

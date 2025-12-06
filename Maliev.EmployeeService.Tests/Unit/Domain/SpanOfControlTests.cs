@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
@@ -26,7 +25,7 @@ public class SpanOfControlTests
         var maxSpan = manager.GetMaxSpanOfControl();
 
         // Assert
-        maxSpan.Should().Be(15, "IC managers should have a limit of 15 direct reports");
+        Assert.Equal(15, maxSpan); // IC managers should have a limit of 15 direct reports
     }
 
     [Fact]
@@ -50,7 +49,7 @@ public class SpanOfControlTests
         var maxSpan = seniorManager.GetMaxSpanOfControl();
 
         // Assert
-        maxSpan.Should().Be(8, "Manager-of-managers should have a limit of 8 direct reports");
+        Assert.Equal(8, maxSpan); // Manager-of-managers should have a limit of 8 direct reports
     }
 
     [Fact]
@@ -64,7 +63,7 @@ public class SpanOfControlTests
         var maxSpan = employee.GetMaxSpanOfControl();
 
         // Assert
-        maxSpan.Should().Be(15, "Employees with no direct reports should default to IC manager limit");
+        Assert.Equal(15, maxSpan); // Employees with no direct reports should default to IC manager limit
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class SpanOfControlTests
         var currentSpan = manager.GetCurrentSpanOfControl();
 
         // Assert
-        currentSpan.Should().Be(3, "Should return the actual count of direct reports");
+        Assert.Equal(3, currentSpan); // Should return the actual count of direct reports
     }
 
     [Fact]
@@ -101,12 +100,12 @@ public class SpanOfControlTests
         var result = manager.ValidateSpanOfControl(additionalReports: 2);
 
         // Assert
-        result.IsValid.Should().BeTrue();
-        result.ErrorMessage.Should().BeNull();
-        result.MaxSpanOfControl.Should().Be(15);
-        result.CurrentSpanOfControl.Should().Be(3);
-        result.ProjectedSpanOfControl.Should().Be(5);
-        result.Warnings.Should().BeEmpty();
+        Assert.True(result.IsValid);
+        Assert.Null(result.ErrorMessage);
+        Assert.Equal(15, result.MaxSpanOfControl);
+        Assert.Equal(3, result.CurrentSpanOfControl);
+        Assert.Equal(5, result.ProjectedSpanOfControl);
+        Assert.Empty(result.Warnings);
     }
 
     [Fact]
@@ -124,13 +123,13 @@ public class SpanOfControlTests
         var result = manager.ValidateSpanOfControl(additionalReports: 2);
 
         // Assert
-        result.IsValid.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Span of control limit exceeded");
-        result.ErrorMessage.Should().Contain("Maximum: 15");
-        result.ErrorMessage.Should().Contain("Projected: 16");
-        result.MaxSpanOfControl.Should().Be(15);
-        result.CurrentSpanOfControl.Should().Be(14);
-        result.ProjectedSpanOfControl.Should().Be(16);
+        Assert.False(result.IsValid);
+        Assert.Contains("Span of control limit exceeded", result.ErrorMessage);
+        Assert.Contains("Maximum: 15", result.ErrorMessage);
+        Assert.Contains("Projected: 16", result.ErrorMessage);
+        Assert.Equal(15, result.MaxSpanOfControl);
+        Assert.Equal(14, result.CurrentSpanOfControl);
+        Assert.Equal(16, result.ProjectedSpanOfControl);
     }
 
     [Fact]
@@ -149,11 +148,11 @@ public class SpanOfControlTests
         var result = manager.ValidateSpanOfControl();
 
         // Assert
-        result.IsValid.Should().BeTrue();
-        result.Warnings.Should().HaveCount(1);
-        result.Warnings[0].Should().Contain("Approaching span of control limit");
-        result.Warnings[0].Should().Contain("12/15");
-        result.Warnings[0].Should().Contain("80");
+        Assert.True(result.IsValid);
+        Assert.Single(result.Warnings);
+        Assert.Contains("Approaching span of control limit", result.Warnings[0]);
+        Assert.Contains("12/15", result.Warnings[0]);
+        Assert.Contains("80", result.Warnings[0]);
     }
 
     [Fact]
@@ -177,12 +176,12 @@ public class SpanOfControlTests
         var result = seniorManager.ValidateSpanOfControl();
 
         // Assert
-        result.IsValid.Should().BeTrue();
-        result.MaxSpanOfControl.Should().Be(8, "Manager-of-managers limit");
-        result.CurrentSpanOfControl.Should().Be(7);
-        result.Warnings.Should().HaveCount(1);
-        result.Warnings[0].Should().Contain("7/8");
-        result.Warnings[0].Should().Contain("87.5");
+        Assert.True(result.IsValid);
+        Assert.Equal(8, result.MaxSpanOfControl); // Manager-of-managers limit
+        Assert.Equal(7, result.CurrentSpanOfControl);
+        Assert.Single(result.Warnings);
+        Assert.Contains("7/8", result.Warnings[0]);
+        Assert.Contains("87.5", result.Warnings[0]);
     }
 
     [Fact]
@@ -204,11 +203,11 @@ public class SpanOfControlTests
         var result = seniorManager.ValidateSpanOfControl(additionalReports: 1);
 
         // Assert
-        result.IsValid.Should().BeFalse();
-        result.ErrorMessage.Should().Contain("Span of control limit exceeded");
-        result.MaxSpanOfControl.Should().Be(8);
-        result.CurrentSpanOfControl.Should().Be(8);
-        result.ProjectedSpanOfControl.Should().Be(9);
+        Assert.False(result.IsValid);
+        Assert.Contains("Span of control limit exceeded", result.ErrorMessage);
+        Assert.Equal(8, result.MaxSpanOfControl);
+        Assert.Equal(8, result.CurrentSpanOfControl);
+        Assert.Equal(9, result.ProjectedSpanOfControl);
     }
 
     [Fact]
@@ -226,10 +225,10 @@ public class SpanOfControlTests
         var result = manager.ValidateSpanOfControl();
 
         // Assert
-        result.IsValid.Should().BeTrue();
-        result.CurrentSpanOfControl.Should().Be(15);
-        result.ProjectedSpanOfControl.Should().Be(15);
-        result.Warnings.Should().HaveCount(1, "Should warn at 100% capacity");
+        Assert.True(result.IsValid);
+        Assert.Equal(15, result.CurrentSpanOfControl);
+        Assert.Equal(15, result.ProjectedSpanOfControl);
+        Assert.Single(result.Warnings); // Should warn at 100% capacity
     }
 
     /// <summary>

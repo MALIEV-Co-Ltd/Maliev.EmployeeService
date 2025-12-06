@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -76,11 +75,11 @@ public class AssignMandatoryTrainingCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(3);
-        result.Should().Contain("Safety Training");
-        result.Should().Contain("Code of Conduct");
-        result.Should().Contain("Data Privacy");
+        Assert.NotNull(result);
+        Assert.Equal(3, result.Count());
+        Assert.Contains("Safety Training", result);
+        Assert.Contains("Code of Conduct", result);
+        Assert.Contains("Data Privacy", result);
     }
 
     [Fact]
@@ -126,9 +125,9 @@ public class AssignMandatoryTrainingCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain("Contractor Safety");
-        result.Should().Contain("NDA Training");
+        Assert.Equal(2, result.Count());
+        Assert.Contains("Contractor Safety", result);
+        Assert.Contains("NDA Training", result);
     }
 
     [Fact]
@@ -185,11 +184,11 @@ public class AssignMandatoryTrainingCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().HaveCount(4);
-        result.Should().Contain("Safety Training");
-        result.Should().Contain("Code of Conduct");
-        result.Should().Contain("Leadership Training");
-        result.Should().Contain("Performance Management");
+        Assert.Equal(4, result.Count());
+        Assert.Contains("Safety Training", result);
+        Assert.Contains("Code of Conduct", result);
+        Assert.Contains("Leadership Training", result);
+        Assert.Contains("Performance Management", result);
     }
 
     [Fact]
@@ -224,8 +223,8 @@ public class AssignMandatoryTrainingCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.NotNull(result);
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -299,8 +298,8 @@ public class AssignMandatoryTrainingCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().Contain("Basic Training");
-        result.Should().Contain("Advanced Training");
+        Assert.Equal(2, result.Count());
+        Assert.Contains("Basic Training", result);
+        Assert.Contains("Advanced Training", result);
     }
 }

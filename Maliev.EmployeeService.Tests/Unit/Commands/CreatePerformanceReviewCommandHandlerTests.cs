@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
@@ -92,9 +91,9 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.PerformanceReviewId.Should().NotBeEmpty();
-        result.ErrorMessage.Should().BeNull();
+        Assert.True(result.Success);
+        Assert.NotEqual(Guid.Empty, result.PerformanceReviewId);
+        Assert.Null(result.ErrorMessage);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(
             It.Is<PerformanceReview>(pr =>
@@ -130,9 +129,9 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.PerformanceReviewId.Should().BeNull();
-        result.ErrorMessage.Should().Contain("not found");
+        Assert.False(result.Success);
+        Assert.Null(result.PerformanceReviewId);
+        Assert.Contains("not found", result.ErrorMessage);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(It.IsAny<PerformanceReview>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockUnitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -169,9 +168,9 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.PerformanceReviewId.Should().BeNull();
-        result.ErrorMessage.Should().Contain("Cannot create performance review for inactive employee");
+        Assert.False(result.Success);
+        Assert.Null(result.PerformanceReviewId);
+        Assert.Contains("Cannot create performance review for inactive employee", result.ErrorMessage);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(It.IsAny<PerformanceReview>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -220,9 +219,9 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeFalse();
-        result.PerformanceReviewId.Should().BeNull();
-        result.ErrorMessage.Should().Contain("Review period end date must be after start date");
+        Assert.False(result.Success);
+        Assert.Null(result.PerformanceReviewId);
+        Assert.Contains("Review period end date must be after start date", result.ErrorMessage);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(It.IsAny<PerformanceReview>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -283,8 +282,8 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
-        result.PerformanceReviewId.Should().NotBeEmpty();
+        Assert.True(result.Success);
+        Assert.NotEqual(Guid.Empty, result.PerformanceReviewId);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(
             It.Is<PerformanceReview>(pr =>
@@ -349,7 +348,7 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(
             It.Is<PerformanceReview>(pr =>
@@ -416,7 +415,7 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(
             It.Is<PerformanceReview>(pr => pr.CreatedBy == currentUserId),
@@ -479,7 +478,7 @@ public class CreatePerformanceReviewCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         // Assert
-        result.Success.Should().BeTrue();
+        Assert.True(result.Success);
 
         _mockPerformanceReviewRepository.Verify(x => x.AddAsync(
             It.Is<PerformanceReview>(pr => pr.SelfAssessment == null),

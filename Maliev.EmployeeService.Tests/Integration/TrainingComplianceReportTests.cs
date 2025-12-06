@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -53,13 +52,13 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.Should().NotBeNull();
-        report.TotalEmployees.Should().Be(2);
-        report.EmployeesWithExpiredCertifications.Should().Be(0);
-        report.EmployeesWithExpiringCertifications.Should().Be(0);
-        report.ComplianceRate.Should().Be(100m);
-        report.EmployeeDetails.Should().HaveCount(2);
-        report.EmployeeDetails.Should().OnlyContain(e => e.IsCompliant);
+        Assert.NotNull(report);
+        Assert.Equal(2, report.TotalEmployees);
+        Assert.Equal(0, report.EmployeesWithExpiredCertifications);
+        Assert.Equal(0, report.EmployeesWithExpiringCertifications);
+        Assert.Equal(100m, report.ComplianceRate);
+        Assert.Equal(2, report.EmployeeDetails.Count());
+        Assert.All(report.EmployeeDetails, e  => Assert.True(e.IsCompliant));
     }
 
     [Fact]
@@ -97,17 +96,17 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.TotalEmployees.Should().Be(2);
-        report.EmployeesWithExpiredCertifications.Should().Be(1);
-        report.ComplianceRate.Should().Be(50m);
+        Assert.Equal(2, report.TotalEmployees);
+        Assert.Equal(1, report.EmployeesWithExpiredCertifications);
+        Assert.Equal(50m, report.ComplianceRate);
 
         var compliantDetail = report.EmployeeDetails.First(e => e.EmployeeNumber == "EMP001");
-        compliantDetail.IsCompliant.Should().BeTrue();
-        compliantDetail.ExpiredCertifications.Should().Be(0);
+        Assert.True(compliantDetail.IsCompliant);
+        Assert.Equal(0, compliantDetail.ExpiredCertifications);
 
         var nonCompliantDetail = report.EmployeeDetails.First(e => e.EmployeeNumber == "EMP002");
-        nonCompliantDetail.IsCompliant.Should().BeFalse();
-        nonCompliantDetail.ExpiredCertifications.Should().Be(1);
+        Assert.False(nonCompliantDetail.IsCompliant);
+        Assert.Equal(1, nonCompliantDetail.ExpiredCertifications);
     }
 
     [Fact]
@@ -141,9 +140,9 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.EmployeesWithExpiringCertifications.Should().Be(1);
-        report.EmployeeDetails.First().ExpiringCertifications.Should().Be(1);
-        report.EmployeeDetails.First().IsCompliant.Should().BeTrue(); // Still compliant, just expiring
+        Assert.Equal(1, report.EmployeesWithExpiringCertifications);
+        Assert.Equal(1, report.EmployeeDetails.First().ExpiringCertifications);
+        Assert.True(report.EmployeeDetails.First().IsCompliant); // Still compliant, just expiring
     }
 
     [Fact]
@@ -175,10 +174,10 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.TotalEmployees.Should().Be(1);
-        report.EmployeeDetails.Should().HaveCount(1);
-        report.EmployeeDetails.First().EmployeeNumber.Should().Be("EMP001");
-        report.EmployeeDetails.First().Department.Should().Be("Engineering");
+        Assert.Equal(1, report.TotalEmployees);
+        Assert.Single(report.EmployeeDetails);
+        Assert.Equal("EMP001", report.EmployeeDetails.First().EmployeeNumber);
+        Assert.Equal("Engineering", report.EmployeeDetails.First().Department);
     }
 
     [Fact]
@@ -214,7 +213,7 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.EmployeeDetails.First().TotalTrainings.Should().Be(1); // Only mandatory
+        Assert.Equal(1, report.EmployeeDetails.First().TotalTrainings); // Only mandatory
     }
 
     [Fact]
@@ -252,9 +251,9 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.EmployeeDetails.Should().HaveCount(1);
-        report.EmployeeDetails.First().EmployeeNumber.Should().Be("EMP002");
-        report.EmployeeDetails.First().IsCompliant.Should().BeFalse();
+        Assert.Single(report.EmployeeDetails);
+        Assert.Equal("EMP002", report.EmployeeDetails.First().EmployeeNumber);
+        Assert.False(report.EmployeeDetails.First().IsCompliant);
     }
 
     [Fact]
@@ -284,9 +283,9 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.TotalEmployees.Should().Be(1);
-        report.EmployeeDetails.Should().HaveCount(1);
-        report.EmployeeDetails.First().EmployeeNumber.Should().Be("EMP001");
+        Assert.Equal(1, report.TotalEmployees);
+        Assert.Single(report.EmployeeDetails);
+        Assert.Equal("EMP001", report.EmployeeDetails.First().EmployeeNumber);
     }
 
     [Fact]
@@ -328,10 +327,10 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
 
         // Assert
         var employeeDetail = report.EmployeeDetails.First();
-        employeeDetail.TotalTrainings.Should().Be(3);
-        employeeDetail.ExpiredCertifications.Should().Be(1);
-        employeeDetail.ExpiringCertifications.Should().Be(1);
-        employeeDetail.IsCompliant.Should().BeFalse(); // Has expired certification
+        Assert.Equal(3, employeeDetail.TotalTrainings);
+        Assert.Equal(1, employeeDetail.ExpiredCertifications);
+        Assert.Equal(1, employeeDetail.ExpiringCertifications);
+        Assert.False(employeeDetail.IsCompliant); // Has expired certification
     }
 
     [Fact]
@@ -353,9 +352,9 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var report = await handler.HandleAsync(query);
 
         // Assert
-        report.TotalEmployees.Should().Be(0);
-        report.ComplianceRate.Should().Be(100m); // Default to 100% when no employees
-        report.EmployeeDetails.Should().BeEmpty();
+        Assert.Equal(0, report.TotalEmployees);
+        Assert.Equal(100m, report.ComplianceRate); // Default to 100% when no employees
+        Assert.Empty(report.EmployeeDetails);
     }
 
     // Helper methods

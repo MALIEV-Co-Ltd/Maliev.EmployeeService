@@ -13,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/reports")]
+[Route("employees/v{version:apiVersion}/reports")]
 [Authorize]
 public class ReportsController : ControllerBase
 {
@@ -25,6 +25,9 @@ public class ReportsController : ControllerBase
     private readonly GetSpanOfControlReportQueryHandler _spanOfControlHandler;
     private readonly GetLeaveUtilizationReportQueryHandler _leaveUtilizationHandler;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReportsController"/> class
+    /// </summary>
     public ReportsController(
         GetHeadcountReportQueryHandler headcountHandler,
         GetTurnoverAnalysisQueryHandler turnoverHandler,
