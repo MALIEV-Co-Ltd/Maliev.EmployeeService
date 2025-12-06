@@ -5,7 +5,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for SearchEmployeesQuery
 /// Performs multi-criteria search with filtering, sorting, and pagination
 /// User Story 12 - Reporting & Analytics
@@ -14,14 +14,21 @@ public class SearchEmployeesQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="SearchEmployeesQueryHandler"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
     public SearchEmployeesQueryHandler(IEmployeeRepository employeeRepository)
     {
         _employeeRepository = employeeRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to search employees
     /// </summary>
+    /// <param name="query">The query parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DTO containing the employee search results.</returns>
     public async Task<EmployeeSearchResultDto> HandleAsync(
         SearchEmployeesQuery query,
         CancellationToken cancellationToken = default)
@@ -113,6 +120,13 @@ public class SearchEmployeesQueryHandler
         };
     }
 
+    ///<summary>
+    /// Applies sorting to the employee query based on the specified sort field and direction.
+    /// </summary>
+    /// <param name="query">The IQueryable of employees.</param>
+    /// <param name="sortBy">The field to sort by (e.g., "name", "employeeNumber", "hireDate", "department").</param>
+    /// <param name="sortDirection">The sort direction ("asc" for ascending, "desc" for descending).</param>
+    /// <returns>The sorted IQueryable of employees.</returns>
     private IQueryable<Domain.Entities.Employee> ApplySorting(
         IQueryable<Domain.Entities.Employee> query,
         string? sortBy,

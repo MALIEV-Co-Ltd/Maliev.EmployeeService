@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for GetDiversityMetricsQuery
 /// Analyzes employee demographics for diversity reporting
 /// User Story 12 - Reporting & Analytics
@@ -13,14 +13,21 @@ public class GetDiversityMetricsQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="GetDiversityMetricsQueryHandler"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
     public GetDiversityMetricsQueryHandler(IEmployeeRepository employeeRepository)
     {
         _employeeRepository = employeeRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to generate diversity metrics
     /// </summary>
+    /// <param name="query">The query parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DTO containing the diversity metrics report.</returns>
     public async Task<DiversityMetricsDto> HandleAsync(
         GetDiversityMetricsQuery query,
         CancellationToken cancellationToken = default)
@@ -113,6 +120,12 @@ public class GetDiversityMetricsQueryHandler
         return report;
     }
 
+    ///<summary>
+    /// Calculates the age of an employee based on their date of birth and an as-of date.
+    /// </summary>
+    /// <param name="dateOfBirth">The employee's date of birth.</param>
+    /// <param name="asOfDate">The date as of which to calculate the age.</param>
+    /// <returns>The calculated age in years.</returns>
     private static int CalculateAge(DateTime dateOfBirth, DateTime asOfDate)
     {
         var age = asOfDate.Year - dateOfBirth.Year;
@@ -124,6 +137,11 @@ public class GetDiversityMetricsQueryHandler
         return age;
     }
 
+    ///<summary>
+    /// Determines the age band for a given age.
+    /// </summary>
+    /// <param name="age">The age to categorize.</param>
+    /// <returns>A string representing the age band.</returns>
     private static string GetAgeBand(int age)
     {
         return age switch

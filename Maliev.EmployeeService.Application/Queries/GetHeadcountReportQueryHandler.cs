@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for GetHeadcountReportQuery
 /// Aggregates employee headcount by department, employment type, tenure, and location
 /// User Story 12 - Reporting & Analytics
@@ -13,14 +13,21 @@ public class GetHeadcountReportQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="GetHeadcountReportQueryHandler"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
     public GetHeadcountReportQueryHandler(IEmployeeRepository employeeRepository)
     {
         _employeeRepository = employeeRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to generate headcount report
     /// </summary>
+    /// <param name="query">The query parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DTO containing the headcount report.</returns>
     public async Task<HeadcountReportDto> HandleAsync(
         GetHeadcountReportQuery query,
         CancellationToken cancellationToken = default)
@@ -95,6 +102,11 @@ public class GetHeadcountReportQueryHandler
         return report;
     }
 
+    ///<summary>
+    /// Helper method to determine the tenure band for an employee.
+    /// </summary>
+    /// <param name="tenureYears">The tenure in years.</param>
+    /// <returns>A string representing the tenure band.</returns>
     private static string GetTenureBand(double tenureYears)
     {
         return tenureYears switch

@@ -5,7 +5,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Services;
 
-/// <summary>
+///<summary>
 /// Service for calculating and exposing business KPI metrics
 /// Constitution Principle X - Business Metrics requirement
 /// Phase 15 - Business Metrics & Analytics
@@ -73,6 +73,13 @@ public class BusinessMetricsService
         _leaveUtilizationRates.TryAdd("Annual", 0);
     }
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="BusinessMetricsService"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
+    /// <param name="departmentRepository">The department repository.</param>
+    /// <param name="leaveRequestRepository">The leave request repository.</param>
+    /// <param name="leaveBalanceRepository">The leave balance repository.</param>
     public BusinessMetricsService(
         IEmployeeRepository employeeRepository,
         IDepartmentRepository departmentRepository,
@@ -85,10 +92,12 @@ public class BusinessMetricsService
         _leaveBalanceRepository = leaveBalanceRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Calculate and update all business metrics
     /// Should be called periodically (e.g., every 5 minutes)
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateAllMetricsAsync(CancellationToken cancellationToken = default)
     {
         await UpdateActiveEmployeeCountAsync(cancellationToken);
@@ -100,9 +109,11 @@ public class BusinessMetricsService
         await UpdateLeaveApprovalTimeAsync(cancellationToken);
     }
 
-    /// <summary>
+    ///<summary>
     /// T418: Calculate active employee count by department and employment type
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateActiveEmployeeCountAsync(CancellationToken cancellationToken = default)
     {
         var employees = await _employeeRepository.GetAllAsync(cancellationToken);
@@ -131,9 +142,11 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// T419: Calculate monthly turnover rate (voluntary vs involuntary)
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateTurnoverRateAsync(CancellationToken cancellationToken = default)
     {
         var employees = await _employeeRepository.GetAllAsync(cancellationToken);
@@ -164,9 +177,11 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// T422: Calculate headcount by department name
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateDepartmentHeadcountAsync(CancellationToken cancellationToken = default)
     {
         var employees = await _employeeRepository.GetAllAsync(cancellationToken);
@@ -182,9 +197,11 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// T423: Calculate probation completion rate
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateProbationCompletionRateAsync(CancellationToken cancellationToken = default)
     {
         var employees = await _employeeRepository.GetAllAsync(cancellationToken);
@@ -212,9 +229,11 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// T424: Calculate leave balance utilization rate by leave type
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateLeaveUtilizationRateAsync(CancellationToken cancellationToken = default)
     {
         var balances = await _leaveBalanceRepository.GetAllAsync(cancellationToken);
@@ -235,10 +254,12 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// T420: Track onboarding duration (histogram)
     /// Call this when an employee status changes to Active
     /// </summary>
+    /// <param name="hireDate">The hire date of the employee.</param>
+    /// <param name="activeDate">The date when the employee became active.</param>
     public void RecordOnboardingDuration(DateTime hireDate, DateTime activeDate)
     {
         var durationDays = (activeDate - hireDate).TotalDays;
@@ -248,10 +269,12 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// T421: Track leave approval time (histogram)
     /// Call this when a leave request is approved/rejected
     /// </summary>
+    /// <param name="submittedDate">The submission date of the leave request.</param>
+    /// <param name="approvalDate">The approval or rejection date of the leave request.</param>
     public void RecordLeaveApprovalTime(DateTime submittedDate, DateTime approvalDate)
     {
         var durationHours = (approvalDate - submittedDate).TotalHours;
@@ -261,9 +284,11 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// Update onboarding duration metrics from historical data
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task UpdateOnboardingDurationAsync(CancellationToken cancellationToken = default)
     {
         var employees = await _employeeRepository.GetAllAsync(cancellationToken);
@@ -284,9 +309,11 @@ public class BusinessMetricsService
         }
     }
 
-    /// <summary>
+    ///<summary>
     /// Update leave approval time metrics from historical data
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task UpdateLeaveApprovalTimeAsync(CancellationToken cancellationToken = default)
     {
         var requests = await _leaveRequestRepository.GetAllAsync(cancellationToken);

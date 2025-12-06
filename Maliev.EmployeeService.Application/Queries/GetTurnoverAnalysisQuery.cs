@@ -1,22 +1,22 @@
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Query to generate turnover analysis report
 /// User Story 12 - Reporting & Analytics
 /// </summary>
 public class GetTurnoverAnalysisQuery
 {
-    /// <summary>
+    ///<summary>
     /// Analysis period start date
     /// </summary>
     public DateTime StartDate { get; set; }
 
-    /// <summary>
+    ///<summary>
     /// Analysis period end date
     /// </summary>
     public DateTime EndDate { get; set; }
 
-    /// <summary>
+    ///<summary>
     /// Optional: Filter by specific department
     /// </summary>
     public Guid? DepartmentId { get; set; }

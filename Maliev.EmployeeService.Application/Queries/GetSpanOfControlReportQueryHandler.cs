@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for GetSpanOfControlReportQuery
 /// Analyzes manager span of control against organizational limits
 /// User Story 12 - Reporting & Analytics
@@ -18,7 +18,7 @@ public class GetSpanOfControlReportQueryHandler
         _employeeRepository = employeeRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to generate span of control report
     /// </summary>
     public async Task<SpanOfControlReportDto> HandleAsync(

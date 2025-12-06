@@ -5,7 +5,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for GetTurnoverAnalysisQuery
 /// Calculates turnover rates and trends with voluntary/involuntary breakdown
 /// User Story 12 - Reporting & Analytics
@@ -14,14 +14,21 @@ public class GetTurnoverAnalysisQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="GetTurnoverAnalysisQueryHandler"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
     public GetTurnoverAnalysisQueryHandler(IEmployeeRepository employeeRepository)
     {
         _employeeRepository = employeeRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to generate turnover analysis
     /// </summary>
+    /// <param name="query">The query parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DTO containing the turnover analysis report.</returns>
     public async Task<TurnoverAnalysisDto> HandleAsync(
         GetTurnoverAnalysisQuery query,
         CancellationToken cancellationToken = default)

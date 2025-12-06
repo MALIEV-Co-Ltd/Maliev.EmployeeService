@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for GetCompensationAnalysisQuery
 /// Provides anonymized salary statistics and ranges
 /// User Story 12 - Reporting & Analytics
@@ -14,6 +14,11 @@ public class GetCompensationAnalysisQueryHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICompensationRepository _compensationRepository;
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="GetCompensationAnalysisQueryHandler"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
+    /// <param name="compensationRepository">The compensation repository.</param>
     public GetCompensationAnalysisQueryHandler(
         IEmployeeRepository employeeRepository,
         ICompensationRepository compensationRepository)
@@ -22,9 +27,12 @@ public class GetCompensationAnalysisQueryHandler
         _compensationRepository = compensationRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to generate compensation analysis
     /// </summary>
+    /// <param name="query">The query parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DTO containing the compensation analysis report.</returns>
     public async Task<CompensationAnalysisDto> HandleAsync(
         GetCompensationAnalysisQuery query,
         CancellationToken cancellationToken = default)
@@ -134,6 +142,12 @@ public class GetCompensationAnalysisQueryHandler
         return report;
     }
 
+    ///<summary>
+    /// Calculates salary statistics (min, max, average, median, percentiles).
+    /// </summary>
+    /// <param name="salaries">The list of salaries.</param>
+    /// <param name="currency">The currency code.</param>
+    /// <returns>A DTO containing salary statistics.</returns>
     private static SalaryStatisticsDto CalculateStatistics(List<decimal> salaries, string currency)
     {
         if (!salaries.Any())
@@ -155,6 +169,12 @@ public class GetCompensationAnalysisQueryHandler
         };
     }
 
+    ///<summary>
+    /// Calculates a percentile from a sorted list of values.
+    /// </summary>
+    /// <param name="sortedValues">A sorted list of decimal values.</param>
+    /// <param name="percentile">The percentile to calculate (e.g., 25, 50, 75).</param>
+    /// <returns>The calculated percentile value.</returns>
     private static decimal GetPercentile(List<decimal> sortedValues, double percentile)
     {
         if (!sortedValues.Any()) return 0;

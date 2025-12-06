@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using FluentValidation;
+
 using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Queries;

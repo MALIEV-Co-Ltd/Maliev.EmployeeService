@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Enums;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
-/// <summary>
+///<summary>
 /// Handler for GetLeaveUtilizationReportQuery
 /// Analyzes leave accrual, usage, and carryover patterns
 /// User Story 12 - Reporting & Analytics
@@ -14,6 +14,11 @@ public class GetLeaveUtilizationReportQueryHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ILeaveBalanceRepository _leaveBalanceRepository;
 
+    ///<summary>
+    /// Initializes a new instance of the <see cref="GetLeaveUtilizationReportQueryHandler"/> class.
+    /// </summary>
+    /// <param name="employeeRepository">The employee repository.</param>
+    /// <param name="leaveBalanceRepository">The leave balance repository.</param>
     public GetLeaveUtilizationReportQueryHandler(
         IEmployeeRepository employeeRepository,
         ILeaveBalanceRepository leaveBalanceRepository)
@@ -22,9 +27,12 @@ public class GetLeaveUtilizationReportQueryHandler
         _leaveBalanceRepository = leaveBalanceRepository;
     }
 
-    /// <summary>
+    ///<summary>
     /// Handles the query to generate leave utilization report
     /// </summary>
+    /// <param name="query">The query parameters.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DTO containing the leave utilization report.</returns>
     public async Task<LeaveUtilizationReportDto> HandleAsync(
         GetLeaveUtilizationReportQuery query,
         CancellationToken cancellationToken = default)
