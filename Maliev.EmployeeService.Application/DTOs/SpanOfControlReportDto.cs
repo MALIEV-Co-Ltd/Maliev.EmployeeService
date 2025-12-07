@@ -3,7 +3,7 @@ namespace Maliev.EmployeeService.Application.DTOs;
 ///<summary>
 /// DTO for span of control report
 /// Identifies managers at or exceeding span of control limits
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class SpanOfControlReportDto
 {

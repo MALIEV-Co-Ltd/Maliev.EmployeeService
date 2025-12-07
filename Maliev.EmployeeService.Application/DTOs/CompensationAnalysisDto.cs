@@ -3,7 +3,7 @@ namespace Maliev.EmployeeService.Application.DTOs;
 ///<summary>
 /// DTO for compensation analysis report
 /// Contains anonymized salary ranges and statistics
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class CompensationAnalysisDto
 {

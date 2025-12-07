@@ -8,7 +8,7 @@ namespace Maliev.EmployeeService.Application.Services;
 ///<summary>
 /// Service for calculating and exposing business KPI metrics
 /// Constitution Principle X - Business Metrics requirement
-/// Phase 15 - Business Metrics & Analytics
+/// Phase 15 - Business Metrics &amp; Analytics
 /// </summary>
 public class BusinessMetricsService
 {

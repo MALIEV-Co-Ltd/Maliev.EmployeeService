@@ -8,7 +8,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Handler for SearchEmployeesQuery
 /// Performs multi-criteria search with filtering, sorting, and pagination
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class SearchEmployeesQueryHandler
 {

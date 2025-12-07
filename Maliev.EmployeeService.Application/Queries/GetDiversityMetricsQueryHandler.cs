@@ -7,7 +7,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Handler for GetDiversityMetricsQuery
 /// Analyzes employee demographics for diversity reporting
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetDiversityMetricsQueryHandler
 {

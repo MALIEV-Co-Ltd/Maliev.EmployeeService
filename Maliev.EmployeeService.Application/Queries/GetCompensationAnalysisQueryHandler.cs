@@ -7,7 +7,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Handler for GetCompensationAnalysisQuery
 /// Provides anonymized salary statistics and ranges
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetCompensationAnalysisQueryHandler
 {

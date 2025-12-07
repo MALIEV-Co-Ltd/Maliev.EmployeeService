@@ -3,7 +3,7 @@ namespace Maliev.EmployeeService.Application.DTOs;
 ///<summary>
 /// DTO for leave utilization report
 /// Analyzes leave accrual, usage, and carryover patterns
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class LeaveUtilizationReportDto
 {

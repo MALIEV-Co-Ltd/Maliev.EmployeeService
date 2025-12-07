@@ -7,7 +7,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Handler for GetHeadcountReportQuery
 /// Aggregates employee headcount by department, employment type, tenure, and location
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetHeadcountReportQueryHandler
 {

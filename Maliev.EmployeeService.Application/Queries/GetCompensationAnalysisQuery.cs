@@ -3,7 +3,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Query to get compensation analysis
 /// Restricted to HR Specialist role or higher
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetCompensationAnalysisQuery
 {

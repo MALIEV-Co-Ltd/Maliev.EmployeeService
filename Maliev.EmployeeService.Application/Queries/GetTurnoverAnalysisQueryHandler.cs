@@ -8,7 +8,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Handler for GetTurnoverAnalysisQuery
 /// Calculates turnover rates and trends with voluntary/involuntary breakdown
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetTurnoverAnalysisQueryHandler
 {

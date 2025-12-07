@@ -7,7 +7,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Handler for GetSpanOfControlReportQuery
 /// Analyzes manager span of control against organizational limits
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetSpanOfControlReportQueryHandler
 {

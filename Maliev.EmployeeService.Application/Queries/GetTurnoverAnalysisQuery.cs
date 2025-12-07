@@ -2,7 +2,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 
 ///<summary>
 /// Query to generate turnover analysis report
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetTurnoverAnalysisQuery
 {

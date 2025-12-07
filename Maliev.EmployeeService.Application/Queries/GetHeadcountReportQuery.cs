@@ -2,7 +2,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 
 ///<summary>
 /// Query to generate headcount report with various aggregations
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetHeadcountReportQuery
 {

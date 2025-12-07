@@ -3,7 +3,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 ///<summary>
 /// Query to get span of control report
 /// Identifies managers at or exceeding span limits
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class GetSpanOfControlReportQuery
 {

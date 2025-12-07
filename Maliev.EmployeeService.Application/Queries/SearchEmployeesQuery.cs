@@ -2,7 +2,7 @@ namespace Maliev.EmployeeService.Application.Queries;
 
 ///<summary>
 /// Query to search employees with multi-criteria filtering
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class SearchEmployeesQuery
 {

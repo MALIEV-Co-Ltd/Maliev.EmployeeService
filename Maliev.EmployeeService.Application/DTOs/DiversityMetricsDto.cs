@@ -2,7 +2,7 @@ namespace Maliev.EmployeeService.Application.DTOs;
 
 ///<summary>
 /// DTO for diversity metrics report
-/// User Story 12 - Reporting & Analytics
+/// User Story 12 - Reporting &amp; Analytics
 /// </summary>
 public class DiversityMetricsDto
 {
