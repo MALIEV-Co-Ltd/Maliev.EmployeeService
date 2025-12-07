@@ -13,8 +13,14 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj", "Maliev.EmployeeService.Api/"]
-COPY ["Maliev.EmployeeService.Data/Maliev.EmployeeService.Data.csproj", "Maliev.EmployeeService.Data/"]
+COPY ["Maliev.EmployeeService.Application/Maliev.EmployeeService.Application.csproj", "Maliev.EmployeeService.Application/"]
+COPY ["Maliev.EmployeeService.Domain/Maliev.EmployeeService.Domain.csproj", "Maliev.EmployeeService.Domain/"]
+COPY ["Maliev.EmployeeService.Infrastructure/Maliev.EmployeeService.Infrastructure.csproj", "Maliev.EmployeeService.Infrastructure/"]
 COPY ["nuget.config", "."]
+
+# Switch to PackageReference for CI build
+RUN sed -i 's|<ProjectReference Include="..\..\\Maliev.Aspire\\Maliev.Aspire.ServiceDefaults\\Maliev.Aspire.ServiceDefaults.csproj" />|<PackageReference Include="Maliev.Aspire.ServiceDefaults" Version="1.0.0" />|g' Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj
+
 RUN --mount=type=secret,id=nuget_username \
   --mount=type=secret,id=nuget_password \
   NUGET_USERNAME=$(cat /run/secrets/nuget_username) \
