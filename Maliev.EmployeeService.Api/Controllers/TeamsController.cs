@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/teams")]
+[Route("employee/v{version:apiVersion}/teams")]
 [Authorize]
 public class TeamsController : ControllerBase
 {

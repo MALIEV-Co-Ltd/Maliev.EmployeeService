@@ -11,10 +11,10 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// <typeparam name="T">Entity type</typeparam>
 public class Repository<T> : IRepository<T> where T : class
 {
-    protected readonly EmployeeServiceDbContext _context;
+    protected readonly EmployeeDbContext _context;
     protected readonly DbSet<T> _dbSet;
 
-    public Repository(EmployeeServiceDbContext context)
+    public Repository(EmployeeDbContext context)
     {
         _context = context;
         _dbSet = context.Set<T>();

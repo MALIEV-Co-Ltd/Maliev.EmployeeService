@@ -10,9 +10,9 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class SkillRepository : ISkillRepository
 {
-    private readonly EmployeeServiceDbContext _context;
+    private readonly EmployeeDbContext _context;
 
-    public SkillRepository(EmployeeServiceDbContext context)
+    public SkillRepository(EmployeeDbContext context)
     {
         _context = context;
     }

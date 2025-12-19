@@ -16,7 +16,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/employees/{employeeId:guid}")]
+[Route("employee/v{version:apiVersion}/employees/{employeeId:guid}")]
 [RequireCompensationAccess("HR Compensation and Benefits Administration")]
 public class CompensationController : ControllerBase
 {

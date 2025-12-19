@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class DocumentRepository : Repository<Document>, IDocumentRepository
 {
-    public DocumentRepository(EmployeeServiceDbContext context) : base(context)
+    public DocumentRepository(EmployeeDbContext context) : base(context)
     {
     }
 

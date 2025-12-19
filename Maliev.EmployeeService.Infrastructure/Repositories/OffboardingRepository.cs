@@ -10,9 +10,9 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class OffboardingRepository : IOffboardingRepository
 {
-    private readonly EmployeeServiceDbContext _context;
+    private readonly EmployeeDbContext _context;
 
-    public OffboardingRepository(EmployeeServiceDbContext context)
+    public OffboardingRepository(EmployeeDbContext context)
     {
         _context = context;
     }

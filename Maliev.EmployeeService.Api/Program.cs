@@ -17,42 +17,18 @@ builder.AddGoogleSecretManagerVolume(); // Load secrets from /mnt/secrets if ava
 
 // --- Infrastructure & Observability ---
 builder.AddServiceDefaults(); // OpenTelemetry, health checks, resilience
-builder.AddServiceMeters("employees"); // Register service meters for OpenTelemetry business metrics
+builder.AddServiceMeters("employees-meter"); // Register service meters for OpenTelemetry business metrics
 
-builder.AddRedisDistributedCache(instanceName: "EmployeeService:"); // Redis with in-memory fallback
+builder.AddRedisDistributedCache(instanceName: "employee:"); // Redis with in-memory fallback
 builder.AddMassTransitWithRabbitMq(); // RabbitMQ message bus (non-blocking startup)
 
-// Database Context (skip in Testing environment - configured by TestWebApplicationFactory)
-if (!builder.Environment.IsEnvironment("Testing"))
-{
-    var connectionString = builder.Configuration.GetConnectionString("EmployeeDbContext")
-        ?? throw new InvalidOperationException("Database connection string not found. Expected 'ConnectionStrings:EmployeeDbContext'");
-
-    builder.Services.AddDbContext<EmployeeServiceDbContext>((serviceProvider, options) =>
+builder.AddPostgresDbContext<EmployeeDbContext>(
+    connectionStringName: "EmployeeDbContext",
+    configureOptions: options =>
     {
-        options.UseNpgsql(connectionString, npgsqlOptions =>
-        {
-            npgsqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorCodesToAdd: null);
-        });
-
         options.ConfigureWarnings(warnings =>
             warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandError));
-
-        // Add interceptors
-        var auditLogInterceptor = serviceProvider.GetRequiredService<AuditLogInterceptor>();
-        var databaseMetricsInterceptor = serviceProvider.GetRequiredService<DatabaseMetricsInterceptor>();
-        options.AddInterceptors(auditLogInterceptor, databaseMetricsInterceptor);
-
-        if (builder.Environment.IsDevelopment())
-        {
-            options.EnableSensitiveDataLogging();
-            options.EnableDetailedErrors();
-        }
     });
-}
 
 // --- API Configuration ---
 builder.AddDefaultCors(); // CORS from CORS:AllowedOrigins config
@@ -131,9 +107,9 @@ builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompress
 
 // Core application services
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-builder.Services.AddScoped<AuditLogInterceptor>();
+builder.Services.AddSingleton<AuditLogInterceptor>();
 builder.Services.AddSingleton<DatabaseMetricsInterceptor>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
 // Repository and Unit of Work
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Maliev.EmployeeService.Infrastructure.Repositories.Repository<>));
@@ -304,18 +280,15 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHand
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-// Run database migrations on startup (skip in Testing environment)
-if (!app.Environment.IsEnvironment("Testing"))
+// Run database migrations on startup
+try
 {
-    try
-    {
-        await app.MigrateDatabaseAsync<EmployeeServiceDbContext>();
-    }
-    catch (Exception ex)
-    {
-        Log.MigrationFailed(logger, ex);
-        // Don't throw - allow app to start for debugging
-    }
+    await app.MigrateDatabaseAsync<EmployeeDbContext>();
+}
+catch (Exception ex)
+{
+    Log.MigrationFailed(logger, ex);
+    // Don't throw - allow app to start for debugging
 }
 
 // Force initialization of metrics
@@ -347,10 +320,10 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map Aspire default endpoints (/health, /alive, /metrics)
-app.MapDefaultEndpoints(servicePrefix: "employees");
+app.MapDefaultEndpoints(servicePrefix: "employee");
 
 // Map OpenAPI and Scalar documentation (dev/staging only)
-app.MapApiDocumentation(servicePrefix: "employees");
+app.MapApiDocumentation(servicePrefix: "employee");
 
 // Seed database ONLY for local development (not Kubernetes)
 var enableSeeding = app.Configuration.GetValue<bool>("Database:EnableSeeding", false);
@@ -362,7 +335,7 @@ if (app.Environment.IsDevelopment() && enableSeeding)
     {
         try
         {
-            var context = scope.ServiceProvider.GetRequiredService<EmployeeServiceDbContext>();
+            var context = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
             var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<DatabaseSeeder>>();
             var seeder = new DatabaseSeeder(context, seedLogger);
 

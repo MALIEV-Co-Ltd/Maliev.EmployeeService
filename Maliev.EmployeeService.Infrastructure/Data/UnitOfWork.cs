@@ -8,11 +8,11 @@ namespace Maliev.EmployeeService.Infrastructure.Data;
 /// </summary>
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly EmployeeServiceDbContext _context;
+    private readonly EmployeeDbContext _context;
     private IDbContextTransaction? _currentTransaction;
     private bool _disposed;
 
-    public UnitOfWork(EmployeeServiceDbContext context)
+    public UnitOfWork(EmployeeDbContext context)
     {
         _context = context;
     }

@@ -14,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/work-authorization")]
+[Route("employee/v{version:apiVersion}/work-authorization")]
 [Authorize]
 public class WorkAuthorizationController : ControllerBase
 {

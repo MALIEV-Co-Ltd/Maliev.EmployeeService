@@ -10,7 +10,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class EmergencyContactRepository : Repository<EmergencyContact>, IEmergencyContactRepository
 {
-    public EmergencyContactRepository(EmployeeServiceDbContext context) : base(context)
+    public EmergencyContactRepository(EmployeeDbContext context) : base(context)
     {
     }
 

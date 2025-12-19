@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class PerformanceReviewRepository : Repository<PerformanceReview>, IPerformanceReviewRepository
 {
-    public PerformanceReviewRepository(EmployeeServiceDbContext context) : base(context)
+    public PerformanceReviewRepository(EmployeeDbContext context) : base(context)
     {
     }
 

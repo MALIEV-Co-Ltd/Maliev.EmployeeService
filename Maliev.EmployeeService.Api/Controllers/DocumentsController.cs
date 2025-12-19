@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/documents")]
+[Route("employee/v{version:apiVersion}/documents")]
 [Authorize]
 public class DocumentsController : ControllerBase
 {

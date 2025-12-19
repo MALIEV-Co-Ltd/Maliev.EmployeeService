@@ -17,7 +17,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/training")]
+[Route("employee/v{version:apiVersion}/training")]
 [Authorize]
 public class TrainingController : ControllerBase
 {

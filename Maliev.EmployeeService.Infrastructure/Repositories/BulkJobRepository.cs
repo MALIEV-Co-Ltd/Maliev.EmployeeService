@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class BulkJobRepository : Repository<BulkJob>, IBulkJobRepository
 {
-    public BulkJobRepository(EmployeeServiceDbContext context) : base(context)
+    public BulkJobRepository(EmployeeDbContext context) : base(context)
     {
     }
 

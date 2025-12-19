@@ -9,11 +9,11 @@ namespace Maliev.EmployeeService.Infrastructure.Data;
 /// </summary>
 public class DatabaseSeeder
 {
-    private readonly EmployeeServiceDbContext _context;
+    private readonly EmployeeDbContext _context;
     private readonly ILogger<DatabaseSeeder> _logger;
 
     public DatabaseSeeder(
-        EmployeeServiceDbContext context,
+        EmployeeDbContext context,
         ILogger<DatabaseSeeder> logger)
     {
         _context = context;

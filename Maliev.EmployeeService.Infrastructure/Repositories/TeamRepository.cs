@@ -10,7 +10,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class TeamRepository : Repository<Team>, ITeamRepository
 {
-    public TeamRepository(EmployeeServiceDbContext context) : base(context)
+    public TeamRepository(EmployeeDbContext context) : base(context)
     {
     }
 

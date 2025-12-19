@@ -13,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/departments")]
+[Route("employee/v{version:apiVersion}/departments")]
 [Authorize]
 public class DepartmentsController : ControllerBase
 {

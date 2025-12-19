@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class LeaveBalanceRepository : Repository<LeaveBalance>, ILeaveBalanceRepository
 {
-    public LeaveBalanceRepository(EmployeeServiceDbContext context) : base(context)
+    public LeaveBalanceRepository(EmployeeDbContext context) : base(context)
     {
     }
 

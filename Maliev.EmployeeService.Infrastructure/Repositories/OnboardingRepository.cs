@@ -10,9 +10,9 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class OnboardingRepository : IOnboardingRepository
 {
-    private readonly EmployeeServiceDbContext _context;
+    private readonly EmployeeDbContext _context;
 
-    public OnboardingRepository(EmployeeServiceDbContext context)
+    public OnboardingRepository(EmployeeDbContext context)
     {
         _context = context;
     }

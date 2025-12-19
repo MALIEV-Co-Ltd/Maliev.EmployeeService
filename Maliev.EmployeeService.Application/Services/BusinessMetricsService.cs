@@ -17,7 +17,7 @@ public class BusinessMetricsService
     private readonly ILeaveRequestRepository _leaveRequestRepository;
     private readonly ILeaveBalanceRepository _leaveBalanceRepository;
 
-    private static readonly Meter Meter = new("employees");
+    private static readonly Meter Meter = new("employees-meter");
 
     // Data stores for Observable Gauges
     private static readonly ConcurrentDictionary<(string Department, string EmploymentType), int> _activeEmployeeCounts = new();

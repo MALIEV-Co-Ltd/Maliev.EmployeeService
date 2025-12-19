@@ -14,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/leave")]
+[Route("employee/v{version:apiVersion}/leave")]
 [Authorize]
 public class LeaveController : ControllerBase
 {

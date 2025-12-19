@@ -13,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}")]
+[Route("employee/v{version:apiVersion}")]
 public class OnboardingOffboardingController : ControllerBase
 {
     private readonly StartOnboardingCommandHandler _startOnboardingHandler;

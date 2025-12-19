@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class LeaveApprovalRepository : Repository<LeaveApproval>, ILeaveApprovalRepository
 {
-    public LeaveApprovalRepository(EmployeeServiceDbContext context) : base(context)
+    public LeaveApprovalRepository(EmployeeDbContext context) : base(context)
     {
     }
 

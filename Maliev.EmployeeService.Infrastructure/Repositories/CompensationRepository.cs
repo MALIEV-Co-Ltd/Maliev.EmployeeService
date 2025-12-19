@@ -13,7 +13,7 @@ public class CompensationRepository : Repository<CompensationRecord>, ICompensat
 {
     private readonly IEncryptionService _encryptionService;
 
-    public CompensationRepository(EmployeeServiceDbContext context, IEncryptionService encryptionService) : base(context)
+    public CompensationRepository(EmployeeDbContext context, IEncryptionService encryptionService) : base(context)
     {
         _encryptionService = encryptionService;
     }

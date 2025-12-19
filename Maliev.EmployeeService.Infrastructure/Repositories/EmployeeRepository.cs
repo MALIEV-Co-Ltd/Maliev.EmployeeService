@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class EmployeeRepository : Repository<Employee>, IEmployeeRepository
 {
-    public EmployeeRepository(EmployeeServiceDbContext context) : base(context)
+    public EmployeeRepository(EmployeeDbContext context) : base(context)
     {
     }
 

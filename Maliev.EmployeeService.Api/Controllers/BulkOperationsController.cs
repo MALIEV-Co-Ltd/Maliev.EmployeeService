@@ -16,7 +16,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/bulk")]
+[Route("employee/v{version:apiVersion}/bulk")]
 [Authorize]
 public class BulkOperationsController : ControllerBase
 {

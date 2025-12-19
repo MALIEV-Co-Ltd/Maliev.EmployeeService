@@ -10,7 +10,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class BenefitsRepository : Repository<BenefitsEnrollment>, IBenefitsRepository
 {
-    public BenefitsRepository(EmployeeServiceDbContext context) : base(context)
+    public BenefitsRepository(EmployeeDbContext context) : base(context)
     {
     }
 

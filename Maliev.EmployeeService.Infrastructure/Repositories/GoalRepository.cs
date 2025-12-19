@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class GoalRepository : Repository<Goal>, IGoalRepository
 {
-    public GoalRepository(EmployeeServiceDbContext context) : base(context)
+    public GoalRepository(EmployeeDbContext context) : base(context)
     {
     }
 

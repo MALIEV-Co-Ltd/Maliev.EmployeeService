@@ -10,7 +10,7 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class WorkAuthorizationRepository : Repository<WorkAuthorization>, IWorkAuthorizationRepository
 {
-    public WorkAuthorizationRepository(EmployeeServiceDbContext context) : base(context)
+    public WorkAuthorizationRepository(EmployeeDbContext context) : base(context)
     {
     }
 

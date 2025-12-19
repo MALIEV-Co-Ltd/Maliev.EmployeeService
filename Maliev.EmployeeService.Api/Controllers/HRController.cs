@@ -13,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("employees/v{version:apiVersion}/hr")]
+[Route("employee/v{version:apiVersion}/hr")]
 [Authorize(Policy = Policies.RequireHROrAdmin)]
 public class HRController : ControllerBase
 {

@@ -11,9 +11,9 @@ namespace Maliev.EmployeeService.Infrastructure.Repositories;
 /// </summary>
 public class MandatoryTrainingRepository : IMandatoryTrainingRepository
 {
-    private readonly EmployeeServiceDbContext _context;
+    private readonly EmployeeDbContext _context;
 
-    public MandatoryTrainingRepository(EmployeeServiceDbContext context)
+    public MandatoryTrainingRepository(EmployeeDbContext context)
     {
         _context = context;
     }
