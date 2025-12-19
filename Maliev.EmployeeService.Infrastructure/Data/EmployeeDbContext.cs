@@ -2,22 +2,35 @@ using Microsoft.EntityFrameworkCore;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Infrastructure.Data.Extensions;
+using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 
 namespace Maliev.EmployeeService.Infrastructure.Data;
 
 /// <summary>
 /// Database context for Employee Service with support for encrypted sensitive fields
 /// </summary>
-public class EmployeeServiceDbContext : DbContext
+public class EmployeeDbContext : DbContext
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly AuditLogInterceptor _auditLogInterceptor;
+    private readonly DatabaseMetricsInterceptor _databaseMetricsInterceptor;
 
-    public EmployeeServiceDbContext(
-        DbContextOptions<EmployeeServiceDbContext> options,
-        IEncryptionService encryptionService)
+    public EmployeeDbContext(
+        DbContextOptions<EmployeeDbContext> options,
+        IEncryptionService encryptionService,
+        AuditLogInterceptor auditLogInterceptor,
+        DatabaseMetricsInterceptor databaseMetricsInterceptor)
         : base(options)
     {
         _encryptionService = encryptionService;
+        _auditLogInterceptor = auditLogInterceptor;
+        _databaseMetricsInterceptor = databaseMetricsInterceptor;
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.AddInterceptors(_auditLogInterceptor, _databaseMetricsInterceptor);
+        base.OnConfiguring(optionsBuilder);
     }
 
     // Authentication & Authorization
