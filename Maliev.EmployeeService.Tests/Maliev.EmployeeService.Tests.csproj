@@ -15,7 +15,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
+    <PackageReference Include="Testcontainers" Version="4.2.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.2.0" />
+    <PackageReference Include="Testcontainers.Redis" Version="4.2.0" />
+    <PackageReference Include="Testcontainers.RabbitMq" Version="4.2.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="Azure.Identity" Version="1.14.1" />
@@ -35,6 +39,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Maliev.EmployeeService.Api\Maliev.EmployeeService.Api.csproj" />
+    <ProjectReference Include="..\..\Maliev.Aspire\Maliev.Aspire.ServiceDefaults\Maliev.Aspire.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

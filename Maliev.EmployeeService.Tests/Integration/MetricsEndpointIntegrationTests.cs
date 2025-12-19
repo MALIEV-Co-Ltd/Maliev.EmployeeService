@@ -11,7 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// </summary>
 public class MetricsEndpointIntegrationTests : WebApplicationTestBase
 {
-    public MetricsEndpointIntegrationTests(CustomWebApplicationFactory factory) : base(factory)
+    public MetricsEndpointIntegrationTests(EmployeeServiceTestFactory factory) : base(factory)
     {
     }
 
@@ -19,7 +19,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldReturnPrometheusFormat()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -41,7 +41,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldContainBusinessMetrics()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -64,7 +64,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldContainTechnicalMetrics()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -84,10 +84,10 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldContainHttpMetrics()
     {
         // Arrange - Make a test request to generate HTTP metrics
-        await _client.GetAsync("/employees/liveness");
+        await _client.GetAsync("/employee/liveness");
 
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -102,7 +102,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldContainProcessMetrics()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -117,7 +117,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldHaveCorrectMetricLabels()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -154,7 +154,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
         await Task.Delay(500);
 
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -181,7 +181,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
         _client.DefaultRequestHeaders.Remove("Authorization");
 
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert - Metrics endpoint should be accessible without authentication for Prometheus scraping
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -191,8 +191,8 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldReturnConsistentFormat()
     {
         // Act - Call metrics endpoint multiple times
-        var response1 = await _client.GetAsync("/employees/metrics");
-        var response2 = await _client.GetAsync("/employees/metrics");
+        var response1 = await _client.GetAsync("/employee/metrics");
+        var response2 = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response1.StatusCode);
@@ -213,7 +213,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldIncludeMetricHelp()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -229,7 +229,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldIncludeMetricTypes()
     {
         // Act
-        var response = await _client.GetAsync("/employees/metrics");
+        var response = await _client.GetAsync("/employee/metrics");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

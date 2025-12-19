@@ -9,7 +9,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// </summary>
 public class SecurityHeadersIntegrationTests : WebApplicationTestBase
 {
-    public SecurityHeadersIntegrationTests(CustomWebApplicationFactory factory) : base(factory)
+    public SecurityHeadersIntegrationTests(EmployeeServiceTestFactory factory) : base(factory)
     {
     }
 
@@ -17,7 +17,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldIncludeXContentTypeOptions()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -29,7 +29,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldIncludeXFrameOptions()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -41,7 +41,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldIncludeXXssProtection()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -53,7 +53,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldIncludeReferrerPolicy()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -65,7 +65,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldIncludeContentSecurityPolicy()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -81,7 +81,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldIncludePermissionsPolicy()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -97,7 +97,7 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task GetRequest_ShouldRemoveServerHeader()
     {
         // Act
-        var response = await _client.GetAsync("/employees/liveness");
+        var response = await _client.GetAsync("/employee/liveness");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -111,8 +111,8 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
         // Arrange - Test multiple endpoints (excluding readiness as it may fail if dependencies aren't available)
         var endpoints = new[]
         {
-            "/employees/liveness",
-            "/employees/metrics"
+            "/employee/liveness",
+            "/employee/metrics"
         };
 
         // Act & Assert
@@ -133,8 +133,8 @@ public class SecurityHeadersIntegrationTests : WebApplicationTestBase
     public async Task SecurityHeaders_ShouldBeConsistentAcrossRequests()
     {
         // Act - Make multiple requests
-        var response1 = await _client.GetAsync("/employees/liveness");
-        var response2 = await _client.GetAsync("/employees/liveness");
+        var response1 = await _client.GetAsync("/employee/liveness");
+        var response2 = await _client.GetAsync("/employee/liveness");
 
         // Assert - Headers should be identical
         Assert.Equal(HttpStatusCode.OK, response1.StatusCode);

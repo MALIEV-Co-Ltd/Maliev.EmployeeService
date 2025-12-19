@@ -1,42 +1,30 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text.Encodings.Web;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Maliev.EmployeeService.Api;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Maliev.EmployeeService.Infrastructure.Security;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Maliev.EmployeeService.Tests.Testing;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using Moq;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
 /// <summary>
 /// Base class for integration tests that test HTTP endpoints
-/// Uses WebApplicationFactory to start the full API stack
-/// TODO: Violates testing policy requiring PostgreSQL - needs refactoring for proper database setup
+/// Uses unified BaseIntegrationTestFactory for consistent infrastructure
 /// </summary>
-public abstract class WebApplicationTestBase : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTestFactory>, IAsyncLifetime
 {
-    protected readonly CustomWebApplicationFactory _factory;
+    protected readonly EmployeeServiceTestFactory _factory;
     protected readonly HttpClient _client;
 
-    protected WebApplicationTestBase(CustomWebApplicationFactory factory)
+    protected WebApplicationTestBase(EmployeeServiceTestFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
@@ -56,7 +44,7 @@ public abstract class WebApplicationTestBase : IClassFixture<CustomWebApplicatio
     protected async Task<Department> CreateTestDepartmentAsync(string name)
     {
         using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<EmployeeServiceDbContext>();
+        var context = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
 
         var department = new Department
         {
@@ -83,7 +71,7 @@ public abstract class WebApplicationTestBase : IClassFixture<CustomWebApplicatio
         string email = "test@example.com")
     {
         using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<EmployeeServiceDbContext>();
+        var context = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
 
         var employee = new Employee
         {
@@ -121,138 +109,44 @@ public abstract class WebApplicationTestBase : IClassFixture<CustomWebApplicatio
 }
 
 /// <summary>
-/// Custom WebApplicationFactory for testing
-/// Configures in-memory database and test authentication
-/// TODO: Violates testing policy requiring PostgreSQL - needs refactoring
+/// EmployeeService integration test factory using unified base class
 /// </summary>
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, EmployeeDbContext>
 {
-    // Shared database name for all DbContext instances in this factory
-    // This ensures test data persists across HTTP requests
-    private readonly string _databaseName = $"TestDb_{Guid.NewGuid()}";
-
-    // RSA key for test JWT tokens
-    private readonly RSA _testRsa;
-    private const string TestIssuer = "test-issuer";
-    private const string TestAudience = "test-audience";
-
-    public CustomWebApplicationFactory()
+    public EmployeeServiceTestFactory()
     {
-        // Generate ephemeral RSA key for test JWT tokens
-        _testRsa = RSA.Create(2048);
-    }
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            // Add test configuration
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "RABBITMQ_ENABLED", "false" }, // Disable RabbitMQ for tests
-                { "ASPNETCORE_ENVIRONMENT", "Testing" },
-                { "ConnectionStrings:EmployeeServiceDb", "Host=localhost;Database=test" }, // Dummy connection string
-                { "Jwt:Issuer", TestIssuer },
-                { "Jwt:Audience", TestAudience },
-                { "Jwt:PublicKey", "dummy-key-will-be-replaced-by-test-rsa" }
-                // ENCRYPTION_KEY not provided - will use built-in development fallback
-            });
-        });
-
-        builder.ConfigureTestServices(services =>
-        {
-            // Register encryption service (required by DbContext)
-            services.AddSingleton<IEncryptionService>(sp =>
-            {
-                var configuration = sp.GetRequiredService<IConfiguration>();
-                return new EncryptionService(configuration);
-            });
-
-            // Add in-memory database for testing
-            // Program.cs skips DbContext registration in Testing environment, so we provide it here
-            // Use shared database name so test data persists across HTTP requests
-            services.AddDbContext<EmployeeServiceDbContext>(options =>
-            {
-                options.UseInMemoryDatabase(_databaseName);
-                // Suppress the ManyServiceProvidersCreatedWarning for integration tests
-                // Multiple test classes create their own factory instances, which is expected
-                options.ConfigureWarnings(warnings =>
-                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning));
-            });
-
-            // PostConfigure JWT Bearer options to use our test RSA key
-            // This works because we enabled AddJwtAuthentication() in Program.cs for Testing environment
-            services.PostConfigureAll<JwtBearerOptions>(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = TestIssuer,
-                    ValidAudience = TestAudience,
-                    IssuerSigningKey = new RsaSecurityKey(_testRsa),
-                    ClockSkew = TimeSpan.Zero // No clock skew for tests
-                };
-            });
-        });
-
-        builder.UseEnvironment("Testing");
+        // Force initialization of metrics (same as Program.cs line 295)
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(
+            typeof(Maliev.EmployeeService.Application.Services.BusinessMetricsService).TypeHandle);
     }
 
     /// <summary>
-    /// Creates a test JWT token with specified claims for integration testing.
+    /// Override CreateDbContext to provide required dependencies for EmployeeDbContext
     /// </summary>
-    /// <param name="userId">User ID claim</param>
-    /// <param name="roles">User roles</param>
-    /// <param name="additionalClaims">Additional claims to include</param>
-    /// <returns>JWT token string</returns>
-    public string CreateTestJwtToken(string userId = "test-user", string[]? roles = null, Dictionary<string, string>? additionalClaims = null)
+    public override EmployeeDbContext CreateDbContext()
     {
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, userId),
-            new(JwtRegisteredClaimNames.Sub, userId),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        var connectionString = Environment.GetEnvironmentVariable($"ConnectionStrings__{DbConnectionStringName}")
+            ?? throw new InvalidOperationException($"Connection string '{DbConnectionStringName}' not found");
 
-        // Add roles - include all roles needed for test access
-        roles ??= new[] { "Employee", "HRSpecialist", "HRGeneralist", "SystemAdministrator" };
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
+        var optionsBuilder = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<EmployeeDbContext>();
+        optionsBuilder.UseNpgsql(connectionString);
 
-        // Add additional claims
-        if (additionalClaims != null)
-        {
-            foreach (var (key, value) in additionalClaims)
-            {
-                claims.Add(new Claim(key, value));
-            }
-        }
+        // Create mock dependencies for testing
+        var mockEncryptionService = new Mock<IEncryptionService>();
+        mockEncryptionService.Setup(x => x.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
+        mockEncryptionService.Setup(x => x.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
 
-        var credentials = new SigningCredentials(
-            new RsaSecurityKey(_testRsa),
-            SecurityAlgorithms.RsaSha256);
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        var auditLogInterceptor = new Infrastructure.Data.Interceptors.AuditLogInterceptor(
+            mockCurrentUserService.Object,
+            mockHttpContextAccessor.Object);
+        var databaseMetricsInterceptor = new Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor();
 
-        var token = new JwtSecurityToken(
-            issuer: TestIssuer,
-            audience: TestAudience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _testRsa.Dispose();
-        }
-        base.Dispose(disposing);
+        return new EmployeeDbContext(
+            optionsBuilder.Options,
+            mockEncryptionService.Object,
+            auditLogInterceptor,
+            databaseMetricsInterceptor);
     }
 }

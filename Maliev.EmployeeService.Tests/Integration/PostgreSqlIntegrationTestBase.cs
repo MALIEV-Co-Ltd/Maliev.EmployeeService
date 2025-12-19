@@ -9,7 +9,12 @@ using Xunit;
 using System.Threading;
 using Npgsql;
 
+using Maliev.EmployeeService.Domain.Enums;
+
 namespace Maliev.EmployeeService.Tests.Integration;
+// ... (start of class)
+
+
 
 /// <summary>
 /// Base class for integration tests that require PostgreSQL database
@@ -23,7 +28,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     private static readonly Dictionary<Type, bool> _firstTestTracker = new Dictionary<Type, bool>();
     private readonly Type _testClassType;
 
-    protected EmployeeServiceDbContext Context { get; private set; } = null!;
+    protected EmployeeDbContext Context { get; private set; } = null!;
     protected IEncryptionService EncryptionService { get; private set; } = null!;
 
     protected PostgreSqlIntegrationTestBase()
@@ -33,7 +38,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 
         // Create PostgreSQL container for testing
         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+            .WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
@@ -47,53 +52,64 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     /// </summary>
     public virtual async Task InitializeAsync()
     {
-        // Start PostgreSQL container
-        await _postgresContainer.StartAsync();
-
-        // Setup encryption service
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "ASPNETCORE_ENVIRONMENT", "Testing" }
-            })
-            .Build();
-
-        EncryptionService = new EncryptionService(configuration);
-
-        // Create DbContext with encryption service (used by value converters)
-        var options = new DbContextOptionsBuilder<EmployeeServiceDbContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString())
-            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
-            .EnableSensitiveDataLogging()
-            .ConfigureWarnings(warnings =>
-            {
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning);
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
-            })
-            .Options;
-
-        Context = new EmployeeServiceDbContext(options, EncryptionService);
-
-        var retries = 5;
-        while (retries > 0)
+        try
         {
-            try
+            // Start PostgreSQL container
+            await _postgresContainer.StartAsync();
+
+            // Setup encryption service
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    { "ASPNETCORE_ENVIRONMENT", "Testing" }
+                })
+                .Build();
+
+            EncryptionService = new EncryptionService(configuration);
+
+            // Create DbContext with encryption service (used by value converters)
+            var options = new DbContextOptionsBuilder<EmployeeDbContext>()
+                .UseNpgsql(_postgresContainer.GetConnectionString())
+                .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+                .EnableSensitiveDataLogging()
+                .ConfigureWarnings(warnings =>
+                {
+                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning);
+                    warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
+                })
+                .Options;
+
+            Context = new EmployeeDbContext(
+                options,
+                EncryptionService,
+                new AuditLogInterceptor(new DummyCurrentUserService(), new Microsoft.AspNetCore.Http.HttpContextAccessor()),
+                new DatabaseMetricsInterceptor());
+
+
+            var retries = 5;
+            while (retries > 0)
             {
-                await Context.Database.MigrateAsync();
-                break;
+                try
+                {
+                    await Context.Database.MigrateAsync();
+                    break;
+                }
+                catch (NpgsqlException)
+                {
+                    if (--retries == 0) throw;
+                    await Task.Delay(5000);
+                }
             }
-            catch (NpgsqlException)
-            {
-                if (--retries == 0) throw;
-                await Task.Delay(5000);
-            }
+
+            // Clear any existing data to ensure clean state for first test
+            // This is important because some tests may not call InitializeTestAsync() manually
+            await ClearDatabaseAsync();
         }
-
-
-
-        // Clear any existing data to ensure clean state for first test
-        // This is important because some tests may not call InitializeTestAsync() manually
-        await ClearDatabaseAsync();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"INITIALIZE ASYNC FAILED: {ex}");
+            throw;
+        }
     }
 
     /// <summary>
@@ -167,5 +183,17 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
         {
             _cleanupLock.Release();
         }
+    }
+
+    private class DummyCurrentUserService : ICurrentUserService
+    {
+        public bool IsAuthenticated => true;
+        public string? UserId => "test-user-id";
+        public Guid? EmployeeId => Guid.NewGuid();
+        public string? Email => "test@example.com";
+        public IEnumerable<string> Roles => new[] { "Employee" };
+        public Role PrimaryRole => Role.Employee;
+        public bool IsInRole(string role) => true;
+        public IEnumerable<System.Security.Claims.Claim> Claims => Enumerable.Empty<System.Security.Claims.Claim>();
     }
 }

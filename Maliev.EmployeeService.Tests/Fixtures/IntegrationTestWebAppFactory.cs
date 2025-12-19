@@ -9,15 +9,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Testcontainers.PostgreSql;
+using Testcontainers.Redis;
+using Testcontainers.RabbitMq;
 
 namespace Maliev.EmployeeService.Tests.Fixtures;
 
 public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer;
+    private readonly RedisContainer _redisContainer;
+    private readonly RabbitMqContainer _rabbitmqContainer;
     private readonly RSA _testRsa;
+    private bool _containersStarted;
     private const string TestIssuer = "test-issuer";
     private const string TestAudience = "test-audience";
 
@@ -27,54 +33,82 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         _testRsa = RSA.Create(2048);
 
         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:18")
+            .WithImage("postgres:18-alpine")
             .WithDatabase("employee_test")
             .WithUsername("postgres")
             .WithPassword("postgres")
+            .Build();
+
+        _redisContainer = new RedisBuilder()
+            .WithImage("redis:7-alpine")
+            .Build();
+
+        _rabbitmqContainer = new RabbitMqBuilder()
+            .WithImage("rabbitmq:4.2.1-alpine")
             .Build();
     }
 
     public async Task InitializeAsync()
     {
-        // Start PostgreSQL container (RabbitMQ and Redis use in-memory fallbacks in Testing environment)
-        await _postgresContainer.StartAsync();
+        if (_containersStarted)
+            return;
+
+        await Task.WhenAll(
+            _postgresContainer.StartAsync(),
+            _redisContainer.StartAsync(),
+            _rabbitmqContainer.StartAsync()
+        );
+
+        // Wait for Redis to be ready
+        using (var connection = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(_redisContainer.GetConnectionString()))
+        {
+            var db = connection.GetDatabase();
+            await db.PingAsync();
+        }
+
+        _containersStarted = true;
     }
 
-    public new async Task DisposeAsync()
+    async Task IAsyncLifetime.DisposeAsync()
     {
-        await _postgresContainer.DisposeAsync();
+        await Task.WhenAll(
+            _postgresContainer.DisposeAsync().AsTask(),
+            _redisContainer.DisposeAsync().AsTask(),
+            _rabbitmqContainer.DisposeAsync().AsTask()
+        );
         _testRsa.Dispose();
         await base.DisposeAsync();
     }
 
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        // Ensure containers are started before creating host
+        if (!_containersStarted)
+        {
+            InitializeAsync().GetAwaiter().GetResult();
+        }
+
+        // Set connection strings as environment variables
+        Environment.SetEnvironmentVariable("ConnectionStrings__EmployeeDbContext", _postgresContainer.GetConnectionString());
+        Environment.SetEnvironmentVariable("ConnectionStrings__redis", _redisContainer.GetConnectionString());
+        Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", _rabbitmqContainer.GetConnectionString());
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+
+        return base.CreateHost(builder);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Set environment FIRST to ensure it's available during configuration
         builder.UseEnvironment("Testing");
-
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            // Clear existing sources and add test configuration with highest priority
-            config.Sources.Clear();
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "RABBITMQ_ENABLED", "false" }, // Disable RabbitMQ for tests
-                { "ASPNETCORE_ENVIRONMENT", "Testing" },
-                { "Jwt:Issuer", TestIssuer },
-                { "Jwt:Audience", TestAudience },
-                { "Jwt:PublicKey", "dummy-key-will-be-replaced-by-test-rsa" }
-                // ENCRYPTION_KEY not provided - will use built-in development fallback
-            });
-        });
 
         builder.ConfigureTestServices(services =>
         {
             // Remove existing DbContext registration
-            services.RemoveAll<DbContextOptions<EmployeeServiceDbContext>>();
-            services.RemoveAll<EmployeeServiceDbContext>();
+            services.RemoveAll<DbContextOptions<EmployeeDbContext>>();
+            services.RemoveAll<EmployeeDbContext>();
 
             // Add DbContext with Testcontainers connection string
-            services.AddDbContext<EmployeeServiceDbContext>(options =>
+            services.AddDbContext<EmployeeDbContext>(options =>
             {
                 options.UseNpgsql(_postgresContainer.GetConnectionString());
             });
@@ -94,12 +128,6 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
                     ClockSkew = TimeSpan.Zero // No clock skew for tests
                 };
             });
-
-            // Build service provider and apply migrations
-            var serviceProvider = services.BuildServiceProvider();
-            using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<EmployeeServiceDbContext>();
-            dbContext.Database.Migrate();
         });
     }
 

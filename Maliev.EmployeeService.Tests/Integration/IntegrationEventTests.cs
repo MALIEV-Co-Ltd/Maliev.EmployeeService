@@ -30,7 +30,7 @@ public class IntegrationEventTests : IAsyncLifetime
 {
     private ITestHarness? _harness;
     private ServiceProvider? _provider;
-    private EmployeeServiceDbContext? Context;
+    private EmployeeDbContext? Context;
     private PostgreSqlContainer? _postgresContainer;
     private IEncryptionService? _encryptionService;
 
@@ -38,7 +38,7 @@ public class IntegrationEventTests : IAsyncLifetime
     {
         // Start PostgreSQL container
         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+            .WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
@@ -59,6 +59,12 @@ public class IntegrationEventTests : IAsyncLifetime
 
         var services = new ServiceCollection();
 
+        // Register interceptor dependencies
+        services.AddSingleton<ICurrentUserService>(new DummyCurrentUserService());
+        services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor, Microsoft.AspNetCore.Http.HttpContextAccessor>();
+        services.AddSingleton<AuditLogInterceptor>();
+        services.AddSingleton<DatabaseMetricsInterceptor>();
+
         // Add encryption service (required by DbContext value converters)
         services.AddSingleton<IEncryptionService>(_encryptionService);
 
@@ -73,7 +79,7 @@ public class IntegrationEventTests : IAsyncLifetime
         });
 
         // Configure PostgreSQL database with encryption (using value converters)
-        services.AddDbContext<EmployeeServiceDbContext>(options =>
+        services.AddDbContext<EmployeeDbContext>(options =>
             options.UseNpgsql(_postgresContainer.GetConnectionString())
                 .ConfigureWarnings(warnings =>
                 {
@@ -102,7 +108,7 @@ public class IntegrationEventTests : IAsyncLifetime
 
         _provider = services.BuildServiceProvider();
         _harness = _provider.GetRequiredService<ITestHarness>();
-        Context = _provider.GetRequiredService<EmployeeServiceDbContext>();
+        Context = _provider.GetRequiredService<EmployeeDbContext>();
 
         // Apply migrations to create database schema
         await Context.Database.MigrateAsync();
@@ -403,5 +409,16 @@ public class IntegrationEventTests : IAsyncLifetime
         await Context.SaveChangesAsync();
 
         return employee;
+    }
+
+
+    private class DummyCurrentUserService : ICurrentUserService
+    {
+        public Guid? EmployeeId => Guid.NewGuid();
+        public string? Email => "test.employee@company.com";
+        public IEnumerable<string> Roles => new[] { "Employee" };
+        public bool IsAuthenticated => true;
+        public Role PrimaryRole => Role.Employee;
+        public bool IsInRole(string role) => true;
     }
 }

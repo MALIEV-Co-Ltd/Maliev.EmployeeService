@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Maliev.EmployeeService.Api.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// </summary>
 public class InputSanitizationIntegrationTests : WebApplicationTestBase
 {
-    public InputSanitizationIntegrationTests(CustomWebApplicationFactory factory) : base(factory)
+    public InputSanitizationIntegrationTests(EmployeeServiceTestFactory factory) : base(factory)
     {
     }
 
@@ -33,7 +34,7 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         // Act
         // Authenticate as the employee
         AuthenticateAs(employee.Id);
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/employees/v1/profile/{employee.Id}/emergency-contacts");
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/employee/v1/profile/{employee.Id}/emergency-contacts");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
@@ -63,7 +64,7 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         // Act
         // Authenticate as the employee
         AuthenticateAs(employee.Id);
-        var request = new HttpRequestMessage(HttpMethod.Put, $"/employees/v1/profile/{employee.Id}/profile");
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/employee/v1/profile/{employee.Id}/profile");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
@@ -83,8 +84,9 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
             Description = "Test department<a href='data:text/html,<script>alert(1)</script>'>link</a>"
         };
 
-        // Act
-        var response = await _client.PostAsJsonAsync("/employees/v1/departments", dto);
+        // Act - Authenticate as HR to create department
+        AuthenticateAs(Guid.NewGuid(), new[] { Roles.HR });
+        var response = await _client.PostAsJsonAsync("/employee/v1/departments", dto);
 
         // Assert - CreateDepartment returns 201 Created for successful creation
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -114,7 +116,7 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         // Act
         // Authenticate as the employee
         AuthenticateAs(employee.Id);
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/employees/v1/profile/{employee.Id}/emergency-contacts");
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/employee/v1/profile/{employee.Id}/emergency-contacts");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
@@ -134,8 +136,9 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
             Description = "Normal description"
         };
 
-        // Act
-        var response = await _client.PostAsJsonAsync("/employees/v1/departments", dto);
+        // Act - Authenticate as HR to create department
+        AuthenticateAs(Guid.NewGuid(), new[] { Roles.HR });
+        var response = await _client.PostAsJsonAsync("/employee/v1/departments", dto);
 
         // Assert - CreateDepartment returns 201 Created
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -161,7 +164,7 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         // Act
         // Authenticate as the employee
         AuthenticateAs(employee.Id);
-        var request = new HttpRequestMessage(HttpMethod.Put, $"/employees/v1/profile/{employee.Id}/profile");
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/employee/v1/profile/{employee.Id}/profile");
         request.Content = JsonContent.Create(dto);
 
         var response = await _client.SendAsync(request);
