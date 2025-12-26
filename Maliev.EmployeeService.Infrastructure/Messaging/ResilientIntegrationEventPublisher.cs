@@ -1,8 +1,10 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
 namespace Maliev.EmployeeService.Infrastructure.Messaging;
@@ -19,17 +21,29 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
     private readonly Counter<long> _publishAttempts;
     private readonly Counter<long> _publishFailures;
     private readonly Counter<long> _circuitBreakerStateChanges;
+    private readonly KeyValuePair<string, object?>[] _defaultTags;
 
     public ResilientIntegrationEventPublisher(
         IntegrationEventPublisher innerPublisher,
         ILogger<ResilientIntegrationEventPublisher> logger,
-        IMeterFactory meterFactory)
+        IMeterFactory meterFactory,
+        IConfiguration configuration)
     {
         _innerPublisher = innerPublisher;
         _logger = logger;
 
         // Create metrics
-        var meter = meterFactory.Create("Maliev.EmployeeService.RabbitMQ");
+        var serviceName = configuration["Service:Name"] ?? "EmployeeService";
+        var meter = meterFactory.Create($"{serviceName.ToLower()}-rabbitmq-meter");
+
+        _defaultTags = new[]
+        {
+            new KeyValuePair<string, object?>("service_name", serviceName),
+            new KeyValuePair<string, object?>("version", configuration["Service:Version"] ?? "1.0.0"),
+            new KeyValuePair<string, object?>("region", configuration["Service:Region"] ?? "global"),
+            new KeyValuePair<string, object?>("environment", configuration["ASPNETCORE_ENVIRONMENT"] ?? "Production")
+        };
+
         _publishAttempts = meter.CreateCounter<long>("rabbitmq_publish_attempts_total",
             description: "Total number of RabbitMQ publish attempts");
         _publishFailures = meter.CreateCounter<long>("rabbitmq_publish_failures_total",
@@ -74,19 +88,31 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
                 _logger.LogError(
                     "Circuit breaker OPENED for RabbitMQ publishing. Will remain open for {BreakDuration}s",
                     breakDuration.TotalSeconds);
-                _circuitBreakerStateChanges.Add(1, new KeyValuePair<string, object?>("state", "open"));
+                
+                var tags = new TagList(_defaultTags.Length + 1);
+                foreach (var tag in _defaultTags) tags.Add(tag);
+                tags.Add("state", "open");
+                _circuitBreakerStateChanges.Add(1, tags);
                 return ValueTask.CompletedTask;
             },
             OnClosed = args =>
             {
                 _logger.LogInformation("Circuit breaker CLOSED for RabbitMQ publishing. Normal operation resumed.");
-                _circuitBreakerStateChanges.Add(1, new KeyValuePair<string, object?>("state", "closed"));
+                
+                var tags = new TagList(_defaultTags.Length + 1);
+                foreach (var tag in _defaultTags) tags.Add(tag);
+                tags.Add("state", "closed");
+                _circuitBreakerStateChanges.Add(1, tags);
                 return ValueTask.CompletedTask;
             },
             OnHalfOpened = args =>
             {
                 _logger.LogInformation("Circuit breaker HALF-OPEN for RabbitMQ publishing. Testing connection...");
-                _circuitBreakerStateChanges.Add(1, new KeyValuePair<string, object?>("state", "half-open"));
+                
+                var tags = new TagList(_defaultTags.Length + 1);
+                foreach (var tag in _defaultTags) tags.Add(tag);
+                tags.Add("state", "half-open");
+                _circuitBreakerStateChanges.Add(1, tags);
                 return ValueTask.CompletedTask;
             }
         };
@@ -104,7 +130,12 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
     public async Task PublishAsync<TEvent>(TEvent integrationEvent, string exchange, string routingKey, CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        _publishAttempts.Add(1, new KeyValuePair<string, object?>("event_type", typeof(TEvent).Name));
+        // Pre-allocate TagList with expected capacity (_defaultTags.Length + 1 for event_type)
+        // This avoids internal array resizing during tag addition
+        var tags = new TagList(_defaultTags.Length + 1);
+        foreach (var tag in _defaultTags) tags.Add(tag);
+        tags.Add("event_type", typeof(TEvent).Name);
+        _publishAttempts.Add(1, tags);
 
         try
         {
@@ -115,9 +146,11 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (BrokenCircuitException ex)
         {
-            _publishFailures.Add(1,
-                new KeyValuePair<string, object?>("event_type", typeof(TEvent).Name),
-                new KeyValuePair<string, object?>("reason", "circuit_breaker_open"));
+            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            foreach (var tag in _defaultTags) failTags.Add(tag);
+            failTags.Add("event_type", typeof(TEvent).Name);
+            failTags.Add("reason", "circuit_breaker_open");
+            _publishFailures.Add(1, failTags);
 
             _logger.LogError(
                 "Failed to publish {EventType}: Circuit breaker is OPEN. RabbitMQ is unavailable.",
@@ -128,9 +161,11 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (Exception ex)
         {
-            _publishFailures.Add(1,
-                new KeyValuePair<string, object?>("event_type", typeof(TEvent).Name),
-                new KeyValuePair<string, object?>("reason", "exception"));
+            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            foreach (var tag in _defaultTags) failTags.Add(tag);
+            failTags.Add("event_type", typeof(TEvent).Name);
+            failTags.Add("reason", "exception");
+            _publishFailures.Add(1, failTags);
 
             _logger.LogError(
                 ex,
@@ -147,7 +182,10 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
     public async Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        _publishAttempts.Add(1, new KeyValuePair<string, object?>("event_type", typeof(TEvent).Name));
+        var tags = new TagList();
+        foreach (var tag in _defaultTags) tags.Add(tag);
+        tags.Add("event_type", typeof(TEvent).Name);
+        _publishAttempts.Add(1, tags);
 
         try
         {
@@ -158,9 +196,11 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (BrokenCircuitException ex)
         {
-            _publishFailures.Add(1,
-                new KeyValuePair<string, object?>("event_type", typeof(TEvent).Name),
-                new KeyValuePair<string, object?>("reason", "circuit_breaker_open"));
+            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            foreach (var tag in _defaultTags) failTags.Add(tag);
+            failTags.Add("event_type", typeof(TEvent).Name);
+            failTags.Add("reason", "circuit_breaker_open");
+            _publishFailures.Add(1, failTags);
 
             _logger.LogError(
                 "Failed to publish {EventType}: Circuit breaker is OPEN. RabbitMQ is unavailable.",
@@ -171,9 +211,11 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (Exception ex)
         {
-            _publishFailures.Add(1,
-                new KeyValuePair<string, object?>("event_type", typeof(TEvent).Name),
-                new KeyValuePair<string, object?>("reason", "exception"));
+            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            foreach (var tag in _defaultTags) failTags.Add(tag);
+            failTags.Add("event_type", typeof(TEvent).Name);
+            failTags.Add("reason", "exception");
+            _publishFailures.Add(1, failTags);
 
             _logger.LogError(
                 ex,

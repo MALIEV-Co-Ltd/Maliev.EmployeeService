@@ -8,7 +8,7 @@ namespace Maliev.EmployeeService.Infrastructure.BackgroundServices;
 /// <summary>
 /// Background service that sends reminders for work authorizations expiring soon
 /// Runs daily at 9:00 AM to alert HR about authorizations expiring in 90/60/30/14 days
-/// User Story 11 - Work Authorization & Visa Tracking
+/// User Story 11 - Work Authorization and Visa Tracking
 /// </summary>
 public class WorkAuthorizationExpirationReminderService : BackgroundService
 {

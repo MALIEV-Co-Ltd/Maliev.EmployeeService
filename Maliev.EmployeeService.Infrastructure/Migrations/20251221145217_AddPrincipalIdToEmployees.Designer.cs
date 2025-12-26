@@ -3,6 +3,7 @@ using System;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Maliev.EmployeeService.Infrastructure.Migrations
 {
     [DbContext(typeof(EmployeeDbContext))]
-    partial class EmployeeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251221145217_AddPrincipalIdToEmployees")]
+    partial class AddPrincipalIdToEmployees
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -923,7 +926,7 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("preferred_name");
 
-                    b.Property<Guid>("PrincipalId")
+                    b.Property<Guid?>("PrincipalId")
                         .HasColumnType("uuid")
                         .HasColumnName("principal_id");
 
@@ -2366,6 +2369,66 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.ToTable("training_records", "employee");
                 });
 
+            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_date");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("LastLoginDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_date");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_date");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("role");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_users");
+
+                    b.HasIndex("EmployeeId")
+                        .HasDatabaseName("i_x_users_employee_id");
+
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_users_username");
+
+                    b.ToTable("users", "employee");
+                });
+
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.WorkAuthorization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2891,6 +2954,18 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("f_k_training_records_employees_employee_id");
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.User", b =>
+                {
+                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("f_k_users_employees_employee_id");
 
                     b.Navigation("Employee");
                 });

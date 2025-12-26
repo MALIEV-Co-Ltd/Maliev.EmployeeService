@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Infrastructure.Authentication;
 
@@ -11,52 +13,81 @@ namespace Maliev.EmployeeService.Infrastructure.Authentication;
 public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<CurrentUserService> _logger;
 
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    public CurrentUserService(
+        IHttpContextAccessor httpContextAccessor,
+        IServiceProvider serviceProvider,
+        ICacheService cacheService,
+        ILogger<CurrentUserService> logger)
     {
         _httpContextAccessor = httpContextAccessor;
+        _serviceProvider = serviceProvider;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
-    public Guid? EmployeeId
+    public Guid? PrincipalId
     {
         get
         {
-            var employeeIdClaim = _httpContextAccessor.HttpContext?.User?
-                .FindFirst("employee_id")?.Value;
+            var subClaim = _httpContextAccessor.HttpContext?.User?
+                .FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
 
-            return employeeIdClaim != null && Guid.TryParse(employeeIdClaim, out var id)
-                ? id
-                : null;
+            if (string.IsNullOrEmpty(subClaim))
+            {
+                return null;
+            }
+
+            if (Guid.TryParse(subClaim, out var id))
+            {
+                return id;
+            }
+
+            throw new UnauthorizedAccessException("Malformed principal identity in token.");
         }
     }
+
+    public async Task<Guid?> GetEmployeeIdAsync(CancellationToken cancellationToken = default)
+    {
+        var principalId = PrincipalId;
+        if (principalId == null)
+        {
+            return null;
+        }
+
+        var cacheKey = $"principal_mapping:{principalId}";
+        
+        // Try get from cache
+        var cachedEmployeeId = await _cacheService.GetAsync<EmployeeIdCacheWrapper>(cacheKey, cancellationToken);
+        if (cachedEmployeeId != null)
+        {
+            return cachedEmployeeId.Id;
+        }
+
+        // Lookup in DB via resolved repository
+        using var scope = _serviceProvider.CreateScope();
+        var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
+        
+        var employee = await employeeRepository.GetByPrincipalIdAsync(principalId.Value, cancellationToken);
+        if (employee != null)
+        {
+            // Cache for 24 hours (US3)
+            await _cacheService.SetAsync(cacheKey, new EmployeeIdCacheWrapper(employee.Id), absoluteExpiration: TimeSpan.FromHours(24), cancellationToken: cancellationToken);
+            return employee.Id;
+        }
+
+        return null;
+    }
+
+    public record EmployeeIdCacheWrapper(Guid Id);
 
     public string? Email =>
         _httpContextAccessor.HttpContext?.User?
             .FindFirst(ClaimTypes.Email)?.Value;
-
-    public IEnumerable<string> Roles =>
-        _httpContextAccessor.HttpContext?.User?
-            .FindAll(ClaimTypes.Role)
-            .Select(c => c.Value) ?? Enumerable.Empty<string>();
-
-    public Role PrimaryRole
-    {
-        get
-        {
-            var roles = Roles.ToList();
-
-            // Priority order: SystemAdministrator > HRSpecialist > HRGeneralist > Manager > Employee
-            if (roles.Contains("SystemAdministrator")) return Role.SystemAdministrator;
-            if (roles.Contains("HRSpecialist")) return Role.HRSpecialist;
-            if (roles.Contains("HRGeneralist")) return Role.HRGeneralist;
-            if (roles.Contains("Manager")) return Role.Manager;
-
-            return Role.Employee; // Default
-        }
-    }
-
-    public bool IsInRole(string role) =>
-        _httpContextAccessor.HttpContext?.User?.IsInRole(role) ?? false;
 
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
