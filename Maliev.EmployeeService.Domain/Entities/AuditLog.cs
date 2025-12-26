@@ -16,7 +16,7 @@ public class AuditLog
     public DateTime Timestamp { get; set; }
 
     /// <summary>
-    /// User ID who performed the action
+    /// Identity identifier who performed the action (IAM PrincipalId after migration)
     /// </summary>
     public Guid? UserId { get; set; }
 
