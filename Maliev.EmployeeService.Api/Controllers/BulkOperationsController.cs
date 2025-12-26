@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -7,6 +7,9 @@ using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
+using Maliev.Aspire.ServiceDefaults.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using System.Security.Claims;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -54,7 +57,7 @@ public class BulkOperationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>CSV file download</returns>
     [HttpPost("employees/export")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.ReportsGenerate)]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> ExportEmployees(
@@ -65,10 +68,17 @@ public class BulkOperationsController : ControllerBase
         [FromQuery] bool includePersonalData = true,
         CancellationToken cancellationToken = default)
     {
-        // Salary data requires admin or HR role
-        if (includeSalaryData && !User.IsInRole(Roles.HR) && !User.IsInRole(Roles.Admin))
+        // Salary data requires CompensationRead permission
+        if (includeSalaryData)
         {
-            return Forbid("Salary data export requires HR or Admin role");
+            var iamClient = HttpContext.RequestServices.GetRequiredService<IIamServiceClient>();
+            var principalId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            if (string.IsNullOrEmpty(principalId) || 
+                !await iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, cancellationToken: cancellationToken))
+            {
+                return Forbid("Salary data export requires CompensationRead permission");
+            }
         }
 
         var query = new ExportEmployeesQuery
@@ -93,7 +103,7 @@ public class BulkOperationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Job status information</returns>
     [HttpGet("jobs/{jobId}/status")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(BulkJobStatusDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BulkJobStatusDto>> GetJobStatus(
@@ -120,7 +130,7 @@ public class BulkOperationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Import job information</returns>
     [HttpPost("employees/import")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.ProfilesCreate)]
     [ProducesResponseType(typeof(ImportEmployeesResultDto), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ImportEmployeesResultDto>> ImportEmployees(
@@ -151,7 +161,7 @@ public class BulkOperationsController : ControllerBase
             CsvContent = csvContent,
             SkipInvalidRows = skipInvalidRows,
             DryRun = dryRun,
-            InitiatedByUserId = _currentUserService.EmployeeId ?? Guid.Empty
+            InitiatedByUserId = _currentUserService.PrincipalId ?? Guid.Empty
         };
 
         var jobId = await _importHandler.HandleAsync(command, cancellationToken);
@@ -176,7 +186,7 @@ public class BulkOperationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Salary increase result with preview or execution details</returns>
     [HttpPost("compensation/salary-increase")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.CompensationUpdate)]
     [ProducesResponseType(typeof(BulkSalaryIncreaseResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BulkSalaryIncreaseResultDto>> BulkSalaryIncrease(
@@ -195,7 +205,7 @@ public class BulkOperationsController : ControllerBase
             Reason = request.Reason,
             EffectiveDate = request.EffectiveDate,
             PreviewOnly = request.PreviewOnly,
-            InitiatedByUserId = _currentUserService.EmployeeId ?? Guid.Empty
+            InitiatedByUserId = _currentUserService.PrincipalId ?? Guid.Empty
         };
 
         var result = await _salaryIncreaseHandler.HandleAsync(command, cancellationToken);

@@ -1,6 +1,8 @@
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Api.Security;
 
@@ -10,29 +12,27 @@ namespace Maliev.EmployeeService.Api.Security;
 public class ResourceAuthorizationHandler : AuthorizationHandler<ResourceAccessRequirement, ResourceAccessContext>
 {
     private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<ResourceAuthorizationHandler> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResourceAuthorizationHandler"/> class
+    /// Initializes a new instance of the <see cref="ResourceAuthorizationHandler"/> class.
     /// </summary>
-    /// <param name="_currentUserService">The current user service</param>
-    /// <param name="logger">The logger instance</param>
     public ResourceAuthorizationHandler(
         ICurrentUserService _currentUserService,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ILogger<ResourceAuthorizationHandler> logger)
     {
         this._currentUserService = _currentUserService;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Handles the authorization requirement for resource access
-    /// </summary>
-    /// <param name="context">The authorization context</param>
-    /// <param name="requirement">The resource access requirement</param>
-    /// <param name="resource">The resource access context</param>
-    /// <returns>A task representing the asynchronous operation</returns>
-    protected override Task HandleRequirementAsync(
+    /// <inheritdoc/>
+    protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         ResourceAccessRequirement requirement,
         ResourceAccessContext resource)
@@ -41,52 +41,39 @@ public class ResourceAuthorizationHandler : AuthorizationHandler<ResourceAccessR
         {
             _logger.LogWarning("User is not authenticated");
             context.Fail();
-            return Task.CompletedTask;
+            return;
         }
 
-        var currentUserId = _currentUserService.EmployeeId;
-        if (currentUserId == null)
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId))
         {
-            _logger.LogWarning("Current user ID is null");
+            _logger.LogWarning("Current user principal ID is null");
             context.Fail();
-            return Task.CompletedTask;
+            return;
         }
 
-        // Admin and HR have access to all resources
-        if (_currentUserService.IsInRole(Roles.Admin) || _currentUserService.IsInRole(Roles.HR))
+        // Use IAM for permission validation
+        var resourcePath = $"employee/{resource.EmployeeId}";
+        var hasPermission = await _iamClient.CheckPermissionAsync(
+            principalId,
+            requirement.RequiredPermission,
+            resourcePath);
+
+        if (hasPermission)
         {
             context.Succeed(requirement);
-            return Task.CompletedTask;
-        }
-
-        // Manager can access direct reports
-        if (_currentUserService.IsInRole(Roles.Manager))
-        {
-            if (resource.ManagerId == currentUserId || resource.EmployeeId == currentUserId)
-            {
-                context.Succeed(requirement);
-                return Task.CompletedTask;
-            }
-        }
-
-        // Employee can only access own resources
-        if (_currentUserService.IsInRole(Roles.Employee))
-        {
-            if (resource.EmployeeId == currentUserId)
-            {
-                context.Succeed(requirement);
-                return Task.CompletedTask;
-            }
+            return;
         }
 
         _logger.LogWarning(
-            "User {UserId} does not have permission to access resource for employee {EmployeeId}",
-            currentUserId,
+            "IAM denied permission {Permission} for user {UserId} on resource {EmployeeId}",
+            requirement.RequiredPermission,
+            principalId,
             resource.EmployeeId);
 
         context.Fail();
-        return Task.CompletedTask;
     }
+
 }
 
 /// <summary>

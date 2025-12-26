@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Events;
@@ -7,6 +7,7 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -63,6 +64,7 @@ public class TeamsController : ControllerBase
     /// <returns>List of all active teams</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet]
+    [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllTeams(CancellationToken cancellationToken = default)
     {
@@ -116,22 +118,13 @@ public class TeamsController : ControllerBase
     /// <returns>List of teams for the employee</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("employee/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(List<TeamDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployeeTeams(
         Guid employeeId,
         CancellationToken cancellationToken = default)
     {
-        // Authorization: Employees can view their own teams, HR and Admin can view any
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {UserId} attempted to access teams for employee {EmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var query = new GetEmployeeTeamsQuery(employeeId);
         var result = await _getEmployeeTeamsHandler.HandleAsync(query, cancellationToken);
 
@@ -207,7 +200,7 @@ public class TeamsController : ControllerBase
     /// <returns>Created team ID</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -230,7 +223,7 @@ public class TeamsController : ControllerBase
             var teamId = await _createTeamHandler.HandleAsync(command, cancellationToken);
 
             _logger.LogInformation("Team {TeamId} created by user {UserId}",
-                teamId, _currentUserService.EmployeeId);
+                teamId, _currentUserService.PrincipalId);
 
             return CreatedAtAction(
                 nameof(GetTeamDetails),
@@ -252,7 +245,7 @@ public class TeamsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Success result</returns>
     [HttpPost("{teamId:guid}/members")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -272,7 +265,7 @@ public class TeamsController : ControllerBase
             await _addTeamMemberHandler.HandleAsync(command, cancellationToken);
 
             _logger.LogInformation("Employee {EmployeeId} added to team {TeamId} by user {UserId}",
-                request.EmployeeId, teamId, _currentUserService.EmployeeId);
+                request.EmployeeId, teamId, _currentUserService.PrincipalId);
 
             return NoContent();
         }
@@ -291,7 +284,7 @@ public class TeamsController : ControllerBase
     /// <returns>Success result</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpDelete("{teamId:guid}/members/{employeeId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -331,13 +324,13 @@ public class TeamsController : ControllerBase
             EmployeeNumber = employee.EmployeeNumber,
             EmployeeName = employee.FullName,
             RemovedAt = DateTime.UtcNow,
-            RemovedBy = _currentUserService.EmployeeId ?? Guid.Empty
+            RemovedBy = _currentUserService.PrincipalId ?? Guid.Empty
         };
 
         await _eventPublisher.PublishAsync(teamMemberRemovedEvent, cancellationToken);
 
         _logger.LogInformation("Employee {EmployeeId} removed from team {TeamId} by user {UserId}",
-            employeeId, teamId, _currentUserService.EmployeeId);
+            employeeId, teamId, _currentUserService.PrincipalId);
 
         return NoContent();
     }
@@ -350,7 +343,7 @@ public class TeamsController : ControllerBase
     /// <returns>Success result</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("{teamId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -408,20 +401,16 @@ public class TeamsController : ControllerBase
             {
                 TeamId = team.Id,
                 TeamName = team.Name,
-                TeamType = team.TeamType,
-                Description = team.Description,
-                TeamLeadId = team.TeamLeadId,
-                IsActive = team.IsActive,
-                UpdatedAt = DateTime.UtcNow,
-                UpdatedBy = _currentUserService.EmployeeId ?? Guid.Empty,
-                Changes = changes
+                Changes = changes,
+                UpdatedBy = _currentUserService.PrincipalId ?? Guid.Empty,
+                UpdatedAt = DateTime.UtcNow
             };
 
             await _eventPublisher.PublishAsync(teamUpdatedEvent, cancellationToken);
         }
 
-        _logger.LogInformation("Team {TeamId} updated by user {UserId}",
-            teamId, _currentUserService.EmployeeId);
+        _logger.LogInformation("Team {TeamId} updated by user {PrincipalId}",
+            team.Id, _currentUserService.PrincipalId);
 
         return NoContent();
     }
@@ -433,7 +422,7 @@ public class TeamsController : ControllerBase
     /// <returns>Success result</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpDelete("{teamId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -468,15 +457,15 @@ public class TeamsController : ControllerBase
                 TeamLeadId = team.TeamLeadId,
                 IsActive = team.IsActive,
                 UpdatedAt = DateTime.UtcNow,
-                UpdatedBy = _currentUserService.EmployeeId ?? Guid.Empty,
+                UpdatedBy = _currentUserService.PrincipalId ?? Guid.Empty,
                 Changes = changes
             };
 
             await _eventPublisher.PublishAsync(teamUpdatedEvent, cancellationToken);
         }
 
-        _logger.LogInformation("Team {TeamId} deactivated by user {UserId}",
-            teamId, _currentUserService.EmployeeId);
+        _logger.LogInformation("Team {TeamId} deactivated by user {PrincipalId}",
+            teamId, _currentUserService.PrincipalId);
 
         return NoContent();
     }

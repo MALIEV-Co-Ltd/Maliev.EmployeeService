@@ -1,11 +1,12 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -50,6 +51,7 @@ public class ManagersController : ControllerBase
     /// <returns>Paginated list of team members</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("{managerId:guid}/direct-reports")]
+    [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/managers/{managerId}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -59,16 +61,6 @@ public class ManagersController : ControllerBase
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
-        // Authorization: Managers can only view their own team, HR and Admin can view any team
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            _currentUserService.EmployeeId != managerId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to access team for manager {ManagerId}",
-                _currentUserService.EmployeeId, managerId);
-            return Forbid();
-        }
-
         // Validate pagination parameters
         if (pageNumber < 1)
         {
@@ -108,6 +100,7 @@ public class ManagersController : ControllerBase
     /// <returns>Hierarchical org chart</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("{managerId:guid}/org-chart")]
+    [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/managers/{managerId}")]
     [ProducesResponseType(typeof(OrgChartDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -117,16 +110,6 @@ public class ManagersController : ControllerBase
         [FromQuery] int depth = 3,
         CancellationToken cancellationToken = default)
     {
-        // Authorization: Managers can view their own org chart, HR and Admin can view any
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            _currentUserService.EmployeeId != managerId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to access org chart for manager {ManagerId}",
-                _currentUserService.EmployeeId, managerId);
-            return Forbid();
-        }
-
         // Validate depth parameter
         if (depth < 1 || depth > 5)
         {

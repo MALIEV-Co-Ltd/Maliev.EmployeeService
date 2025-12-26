@@ -40,16 +40,15 @@ public class GoogleCloudStorageHealthCheck : IHealthCheck
     {
         try
         {
-            // Use the same configuration path as HttpClient registration in Program.cs
-            // This will be populated from Google Secret Manager via ExternalServices__UploadService__BaseUrl
-            var uploadServiceUrl = _configuration["ExternalServices:UploadService:BaseUrl"] ?? "http://localhost:8082";
+            // Use Service Discovery URI
+            var uploadServiceUrl = "http://maliev-uploadservice-api";
 
             // Create HTTP client with timeout
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.Timeout = TimeSpan.FromSeconds(5);
 
             // Attempt to call the upload service health endpoint
-            var healthEndpoint = $"{uploadServiceUrl.TrimEnd('/')}/health";
+            var healthEndpoint = $"{uploadServiceUrl}/health";
             var response = await httpClient.GetAsync(healthEndpoint, cancellationToken);
 
             if (response.IsSuccessStatusCode)

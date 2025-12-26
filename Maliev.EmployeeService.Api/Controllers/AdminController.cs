@@ -1,8 +1,9 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -12,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("employee/v{version:apiVersion}/admin")]
-[Authorize(Policy = Policies.RequireAdminRole)]
+[RequirePermission(EmployeePermissions.AdminBackgroundJobs)]
 public class AdminController : ControllerBase
 {
     private readonly IBackgroundJobStatusService _backgroundJobStatusService;

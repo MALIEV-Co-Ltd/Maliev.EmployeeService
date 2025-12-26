@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -7,6 +7,7 @@ using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -59,21 +60,11 @@ public class PerformanceController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of performance reviews</returns>
     [HttpGet("employees/{employeeId:guid}/performance-reviews")]
+    [RequirePermission(EmployeePermissions.PerformanceRead, ResourcePathTemplate = "employee/{employeeId}/performance")]
     [ProducesResponseType(typeof(List<PerformanceReviewDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetPerformanceReviews(Guid employeeId, CancellationToken cancellationToken)
     {
-        // Employees can view their own reviews; HR/Admin/Managers can view their team
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to view performance reviews for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var query = new GetPerformanceReviewsQuery(employeeId);
         var result = await _getReviewsHandler.HandleAsync(query, cancellationToken);
 
@@ -88,7 +79,7 @@ public class PerformanceController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created performance review ID</returns>
     [HttpPost("employees/{employeeId:guid}/performance-reviews")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.PerformanceCreate, ResourcePathTemplate = "employee/{employeeId}/performance")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -97,14 +88,15 @@ public class PerformanceController : ControllerBase
         [FromBody] CreatePerformanceReviewDto reviewDto,
         CancellationToken cancellationToken)
     {
-        if (!_currentUserService.EmployeeId.HasValue)
+        var reviewerId = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
+        if (reviewerId == null)
         {
-            return BadRequest(new { message = "Employee ID not found in token" });
+            return BadRequest(new { message = "Reviewer employee profile not found" });
         }
 
         var command = new CreatePerformanceReviewCommand(
             employeeId,
-            _currentUserService.EmployeeId.Value,
+            reviewerId.Value,
             reviewDto.ReviewCycle,
             reviewDto.ReviewPeriodStart,
             reviewDto.ReviewPeriodEnd,
@@ -117,8 +109,8 @@ public class PerformanceController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        _logger.LogInformation("Performance review {ReviewId} created for employee {EmployeeId} by {ReviewerId}",
-            result.PerformanceReviewId, employeeId, _currentUserService.EmployeeId.Value);
+        _logger.LogInformation("Performance review {ReviewId} created for employee {EmployeeId} by reviewer {PrincipalId}",
+            result.PerformanceReviewId, employeeId, _currentUserService.PrincipalId);
 
         return CreatedAtAction(
             nameof(GetPerformanceReviews),
@@ -140,14 +132,15 @@ public class PerformanceController : ControllerBase
         Guid reviewId,
         CancellationToken cancellationToken)
     {
-        if (!_currentUserService.EmployeeId.HasValue)
+        var employeeId = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
+        if (employeeId == null)
         {
-            return BadRequest(new { message = "Employee ID not found in token" });
+            return BadRequest(new { message = "Employee profile not found" });
         }
 
         var command = new AcknowledgePerformanceReviewCommand(
             reviewId,
-            _currentUserService.EmployeeId.Value);
+            employeeId.Value);
 
         var result = await _acknowledgeReviewHandler.HandleAsync(command, cancellationToken);
 
@@ -156,8 +149,8 @@ public class PerformanceController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        _logger.LogInformation("Performance review {ReviewId} acknowledged by employee {EmployeeId}",
-            reviewId, _currentUserService.EmployeeId.Value);
+        _logger.LogInformation("Performance review {ReviewId} acknowledged by employee principal {PrincipalId}",
+            reviewId, _currentUserService.PrincipalId);
 
         return Ok(new { message = "Performance review acknowledged successfully" });
     }
@@ -170,6 +163,7 @@ public class PerformanceController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created goal ID</returns>
     [HttpPost("employees/{employeeId:guid}/goals")]
+    [RequirePermission(EmployeePermissions.PerformanceUpdate, ResourcePathTemplate = "employee/{employeeId}/performance")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -178,16 +172,6 @@ public class PerformanceController : ControllerBase
         [FromBody] CreateGoalDto goalDto,
         CancellationToken cancellationToken)
     {
-        // Employees can create goals for themselves; Managers can create for their team; HR can create for anyone
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to create goal for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var command = new CreateGoalCommand(
             employeeId,
             goalDto.Description,
@@ -202,8 +186,8 @@ public class PerformanceController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        _logger.LogInformation("Goal {GoalId} created for employee {EmployeeId}",
-            result.GoalId, employeeId);
+        _logger.LogInformation("Goal {GoalId} created for employee {EmployeeId} by principal {PrincipalId}",
+            result.GoalId, employeeId, _currentUserService.PrincipalId);
 
         return CreatedAtAction(
             nameof(GetGoals),
@@ -227,14 +211,15 @@ public class PerformanceController : ControllerBase
         [FromBody] UpdateGoalProgressDto updateDto,
         CancellationToken cancellationToken)
     {
-        if (!_currentUserService.EmployeeId.HasValue)
+        var employeeId = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
+        if (employeeId == null)
         {
-            return BadRequest(new { message = "Employee ID not found in token" });
+            return BadRequest(new { message = "Employee profile not found" });
         }
 
         var command = new UpdateGoalProgressCommand(
             goalId,
-            _currentUserService.EmployeeId.Value,
+            employeeId.Value,
             updateDto.CompletionStatus,
             updateDto.ProgressUpdate);
 
@@ -245,8 +230,8 @@ public class PerformanceController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        _logger.LogInformation("Goal {GoalId} progress updated by employee {EmployeeId}",
-            goalId, _currentUserService.EmployeeId.Value);
+        _logger.LogInformation("Goal {GoalId} progress updated by employee principal {PrincipalId}",
+            goalId, _currentUserService.PrincipalId);
 
         return Ok(new { message = "Goal progress updated successfully" });
     }
@@ -258,21 +243,11 @@ public class PerformanceController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of goals</returns>
     [HttpGet("employees/{employeeId:guid}/goals")]
+    [RequirePermission(EmployeePermissions.PerformanceRead, ResourcePathTemplate = "employee/{employeeId}/performance")]
     [ProducesResponseType(typeof(List<GoalDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetGoals(Guid employeeId, CancellationToken cancellationToken)
     {
-        // Employees can view their own goals; HR/Admin/Managers can view their team
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to view goals for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var goals = await _goalRepository.GetByEmployeeIdAsync(employeeId, cancellationToken);
 
         var goalDtos = goals.Select(g => new GoalDto

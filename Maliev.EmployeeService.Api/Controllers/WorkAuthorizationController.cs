@@ -1,11 +1,12 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -51,7 +52,7 @@ public class WorkAuthorizationController : ControllerBase
     /// <param name="command">Work authorization details</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("employees/{employeeId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.WorkAuthManage, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -77,6 +78,7 @@ public class WorkAuthorizationController : ControllerBase
     /// <param name="includeInactive">Include inactive authorizations</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("employees/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.WorkAuthManage, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(IEnumerable<WorkAuthorizationDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<WorkAuthorizationDto>>> GetWorkAuthorization(
@@ -102,7 +104,7 @@ public class WorkAuthorizationController : ControllerBase
     /// <param name="command">Updated authorization details</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("{authId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.WorkAuthManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -131,7 +133,7 @@ public class WorkAuthorizationController : ControllerBase
     /// <param name="daysUntilExpiration">Days until expiration threshold</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("expiring")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.WorkAuthManage)]
     [ProducesResponseType(typeof(IEnumerable<WorkAuthorizationDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<WorkAuthorizationDto>>> GetExpiringAuthorizations(
         [FromQuery] int daysUntilExpiration = 90,
@@ -171,7 +173,7 @@ public class WorkAuthorizationController : ControllerBase
     /// <param name="daysUntilExpiration">Days until expiration threshold for "expiring soon"</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("compliance-report")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.WorkAuthManage)]
     [ProducesResponseType(typeof(WorkAuthorizationComplianceReportDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<WorkAuthorizationComplianceReportDto>> GetComplianceReport(
         [FromQuery] int daysUntilExpiration = 90,

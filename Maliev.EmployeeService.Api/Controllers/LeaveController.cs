@@ -1,11 +1,12 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -70,20 +71,11 @@ public class LeaveController : ControllerBase
     /// <response code="200">Returns list of leave balances by type</response>
     /// <response code="403">User is not authorized to view these leave balances</response>
     [HttpGet("balances/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.LeaveRead, ResourcePathTemplate = "employee/{employeeId}/leave")]
     [ProducesResponseType(typeof(List<LeaveBalanceDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetLeaveBalances(Guid employeeId, [FromQuery] int? year, CancellationToken cancellationToken)
     {
-        // Employees can only view their own balances; HR/Admin can view any
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to view leave balances for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var query = new GetLeaveBalancesQuery(employeeId, year);
         var result = await _getBalancesHandler.HandleAsync(query, cancellationToken);
 
@@ -94,21 +86,11 @@ public class LeaveController : ControllerBase
     /// Get leave requests for an employee
     /// </summary>
     [HttpGet("requests/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.LeaveRead, ResourcePathTemplate = "employee/{employeeId}/leave")]
     [ProducesResponseType(typeof(List<LeaveRequestDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetLeaveRequests(Guid employeeId, CancellationToken cancellationToken)
     {
-        // Employees can only view their own requests; HR/Admin/Managers can view their team
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to view leave requests for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var query = new GetLeaveRequestsQuery(employeeId);
         var result = await _getRequestsHandler.HandleAsync(query, cancellationToken);
 
@@ -119,16 +101,17 @@ public class LeaveController : ControllerBase
     /// Get pending leave approvals for current user (manager/approver)
     /// </summary>
     [HttpGet("pending-approvals")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.LeaveApprove)]
     [ProducesResponseType(typeof(List<LeaveRequestDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingApprovals(CancellationToken cancellationToken)
     {
-        if (!_currentUserService.EmployeeId.HasValue)
+        var employeeId = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
+        if (employeeId == null)
         {
-            return BadRequest(new { message = "Employee ID not found in token" });
+            return BadRequest(new { message = "Employee profile not found" });
         }
 
-        var query = new GetPendingApprovalsQuery(_currentUserService.EmployeeId.Value);
+        var query = new GetPendingApprovalsQuery(employeeId.Value);
         var result = await _getPendingApprovalsHandler.HandleAsync(query, cancellationToken);
 
         return Ok(result.PendingApprovals);
@@ -171,6 +154,7 @@ public class LeaveController : ControllerBase
     /// <response code="400">Invalid data, insufficient balance, or overlapping requests</response>
     /// <response code="403">User is not authorized to submit leave request for this employee</response>
     [HttpPost("requests/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.LeaveCreate, ResourcePathTemplate = "employee/{employeeId}/leave")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -179,14 +163,6 @@ public class LeaveController : ControllerBase
         [FromBody] SubmitLeaveRequestDto submitDto,
         CancellationToken cancellationToken)
     {
-        // Employees can only submit for themselves
-        if (_currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to submit leave request for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var command = new SubmitLeaveRequestCommand(employeeId, submitDto);
         var result = await _submitRequestHandler.HandleAsync(command, cancellationToken);
 
@@ -232,7 +208,7 @@ public class LeaveController : ControllerBase
     /// <response code="400">Invalid data or leave request not in pending status</response>
     /// <response code="403">User is not authorized to approve/reject this request</response>
     [HttpPut("requests/{leaveRequestId:guid}/decision")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.LeaveApprove)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -241,14 +217,15 @@ public class LeaveController : ControllerBase
         [FromBody] ApproveRejectLeaveDto decisionDto,
         CancellationToken cancellationToken)
     {
-        if (!_currentUserService.EmployeeId.HasValue)
+        var approverId = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
+        if (approverId == null)
         {
-            return BadRequest(new { message = "Employee ID not found in token" });
+            return BadRequest(new { message = "Approver employee profile not found" });
         }
 
         var command = new ApproveRejectLeaveCommand(
             leaveRequestId,
-            _currentUserService.EmployeeId.Value,
+            approverId.Value,
             decisionDto);
 
         var result = await _approveRejectHandler.HandleAsync(command, cancellationToken);
@@ -259,8 +236,8 @@ public class LeaveController : ControllerBase
         }
 
         var action = decisionDto.IsApproved ? "approved" : "rejected";
-        _logger.LogInformation("Leave request {LeaveRequestId} {Action} by {ApproverId}",
-            leaveRequestId, action, _currentUserService.EmployeeId.Value);
+        _logger.LogInformation("Leave request {LeaveRequestId} {Action} by principal {PrincipalId}",
+            leaveRequestId, action, _currentUserService.PrincipalId);
 
         return Ok(new { message = $"Leave request {action} successfully" });
     }
@@ -269,6 +246,7 @@ public class LeaveController : ControllerBase
     /// Cancel a leave request
     /// </summary>
     [HttpPut("requests/{leaveRequestId:guid}/cancel")]
+    [RequirePermission(EmployeePermissions.LeaveCancel)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -277,14 +255,15 @@ public class LeaveController : ControllerBase
         [FromBody] CancelLeaveRequestDto cancelDto,
         CancellationToken cancellationToken)
     {
-        if (!_currentUserService.EmployeeId.HasValue)
+        var employeeId = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
+        if (employeeId == null)
         {
-            return BadRequest(new { message = "Employee ID not found in token" });
+            return BadRequest(new { message = "Employee profile not found" });
         }
 
         var command = new CancelLeaveRequestCommand(
             leaveRequestId,
-            _currentUserService.EmployeeId.Value,
+            employeeId.Value,
             cancelDto);
 
         var result = await _cancelRequestHandler.HandleAsync(command, cancellationToken);
@@ -294,8 +273,8 @@ public class LeaveController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        _logger.LogInformation("Leave request {LeaveRequestId} cancelled by employee {EmployeeId}",
-            leaveRequestId, _currentUserService.EmployeeId.Value);
+        _logger.LogInformation("Leave request {LeaveRequestId} cancelled by employee principal {PrincipalId}",
+            leaveRequestId, _currentUserService.PrincipalId);
 
         return Ok(new { message = "Leave request cancelled successfully" });
     }
