@@ -25,6 +25,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee1" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp001@company.com" },
@@ -71,6 +72,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee2" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp002@company.com" },
@@ -116,6 +118,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee3" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp003@company.com" },
@@ -173,6 +176,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP004",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee4" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp004@company.com" },
@@ -252,6 +256,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee5" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp005@company.com" },
@@ -300,6 +305,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP006",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee6" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp006@company.com" },
@@ -360,6 +366,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP007",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee7" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp007@company.com" },
@@ -386,6 +393,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP008",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee8" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp008@company.com" },
@@ -412,6 +420,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee1 = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP009",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee9" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp009@company.com" },
@@ -423,6 +432,7 @@ public class CompensationRepositoryIntegrationTests : PostgreSqlIntegrationTestB
         var employee2 = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP010",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee10" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp010@company.com" },

@@ -1,6 +1,9 @@
-using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -32,16 +35,22 @@ public class CreatePerformanceReviewCommandHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
 
     public CreatePerformanceReviewCommandHandler(
         IPerformanceReviewRepository performanceReviewRepository,
         IEmployeeRepository employeeRepository,
         IUnitOfWork unitOfWork,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService)
     {
         _performanceReviewRepository = performanceReviewRepository;
         _employeeRepository = employeeRepository;
         _unitOfWork = unitOfWork;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
     }
 
@@ -49,6 +58,13 @@ public class CreatePerformanceReviewCommandHandler
         CreatePerformanceReviewCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have PerformanceCreate permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.PerformanceCreate, $"employee/{command.EmployeeId}", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create a performance review for this employee");
+        }
         // Validate employee exists
         var employee = await _employeeRepository.GetByIdAsync(command.EmployeeId, cancellationToken);
         if (employee == null)
@@ -148,7 +164,7 @@ public class CreatePerformanceReviewCommandHandler
             ReviewPeriodEnd = command.ReviewPeriodEnd,
             Status = "Draft",
             SelfAssessment = command.SelfAssessment,
-            CreatedBy = _currentUserService.EmployeeId,
+            CreatedBy = _currentUserService.PrincipalId,
             CreatedDate = DateTime.UtcNow
         };
 

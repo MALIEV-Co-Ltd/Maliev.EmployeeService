@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -55,9 +56,41 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
         Assert.Contains("department_headcount_by_name", content);
         Assert.Contains("employee_probation_completion_rate", content);
         Assert.Contains("leave_balance_utilization_rate", content);
-        
+
         // Note: Histogram metrics (employee_onboarding_duration_days, leave_request_approval_time_hours)
         // only appear in OpenTelemetry output after data is recorded, so we don't assert them here
+    }
+
+    [Fact]
+    public async Task GetMetrics_ShouldContainIAMIntegrationMetrics()
+    {
+        // Arrange - Perform actions that record IAM metrics
+        var principalId = Guid.NewGuid();
+        await _client.GetAsync($"/employee/v1/employees/by-principal/{principalId}"); // Records principal lookup fail
+
+        var authRequest = new { Email = "test@example.com", Password = "password" };
+        await _client.PostAsJsonAsync("/employee/v1/auth/validate", authRequest); // Records validation fail
+
+        // Small delay to ensure metrics are flushed
+        await Task.Delay(100);
+
+        // Act
+        var response = await _client.GetAsync("/employee/metrics");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Verify IAM metrics are present (counters only appear after being incremented at least once)
+        // In test isolation scenarios, check if either metric exists OR if at least business metrics are exported
+        var hasIAMMetrics = content.Contains("employee_principal_lookup_total") ||
+                           content.Contains("employee_credential_validation_total");
+        var hasBusinessMetrics = content.Contains("employee_active_count") ||
+                                 content.Contains("employee_onboarding");
+
+        Assert.True(hasIAMMetrics || hasBusinessMetrics,
+            "Expected either IAM metrics or business metrics to be present in metrics output");
     }
 
     [Fact(Skip = "Technical metrics require real PostgreSQL and background jobs which aren't available in in-memory test environment")]

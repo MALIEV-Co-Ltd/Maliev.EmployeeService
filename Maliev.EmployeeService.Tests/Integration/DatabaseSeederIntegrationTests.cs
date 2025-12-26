@@ -29,6 +29,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
             var employee = new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:D3}",
                 LegalName = new LegalName
                 {
@@ -146,7 +147,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
         Assert.Contains(teams, t => t.TeamType == "QA");
         Assert.Contains(teams, t => t.TeamType == "Design");
 
-        Assert.All(teams, t  => Assert.True(t.IsActive == true,
+        Assert.All(teams, t => Assert.True(t.IsActive == true,
             "All seeded teams should be active"));
     }
 
@@ -179,6 +180,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
             var employee = new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:D3}",
                 LegalName = new LegalName
                 {

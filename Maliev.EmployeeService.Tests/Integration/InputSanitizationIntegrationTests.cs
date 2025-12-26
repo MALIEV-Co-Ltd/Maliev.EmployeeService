@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
 using Xunit;
 

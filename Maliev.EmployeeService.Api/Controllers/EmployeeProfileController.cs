@@ -1,11 +1,12 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -66,23 +67,13 @@ public class EmployeeProfileController : ControllerBase
     /// <response code="200">Returns the employee profile with emergency contacts</response>
     /// <response code="403">User is not authorized to view this profile</response>
     /// <response code="404">Employee profile not found</response>
-    [HttpGet("{employeeId:guid}/profile")]
+    [HttpGet("{employeeId:guid}/profile", Name = "GetEmployeeProfile")]
+    [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(EmployeeProfileDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProfile(Guid employeeId, CancellationToken cancellationToken)
     {
-        // Authorization: Employees can only view their own profile
-        // HR and Admins can view any profile
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to access employee profile {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var query = new GetEmployeeProfileQuery(employeeId);
         var result = await _getProfileHandler.HandleAsync(query, cancellationToken);
 
@@ -123,6 +114,7 @@ public class EmployeeProfileController : ControllerBase
     /// <response code="403">User is not authorized to update this profile</response>
     /// <response code="404">Employee profile not found</response>
     [HttpPut("{employeeId:guid}/profile")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -132,14 +124,6 @@ public class EmployeeProfileController : ControllerBase
         [FromBody] UpdateEmployeeProfileDto updateDto,
         CancellationToken cancellationToken)
     {
-        // Authorization: Employees can only update their own profile
-        if (_currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to update employee profile {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var command = new UpdateEmployeeProfileCommand(employeeId, updateDto);
         var result = await _updateProfileHandler.HandleAsync(command, cancellationToken);
 
@@ -181,6 +165,7 @@ public class EmployeeProfileController : ControllerBase
     /// <response code="400">Invalid data provided or validation failed</response>
     /// <response code="403">User is not authorized to create emergency contact for this employee</response>
     [HttpPost("{employeeId:guid}/emergency-contacts")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -189,14 +174,6 @@ public class EmployeeProfileController : ControllerBase
         [FromBody] CreateEmergencyContactDto createDto,
         CancellationToken cancellationToken)
     {
-        // Authorization: Employees can only create contacts for themselves
-        if (_currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to create emergency contact for employee {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var command = new CreateEmergencyContactCommand(employeeId, createDto);
         var result = await _createContactHandler.HandleAsync(command, cancellationToken);
 
@@ -245,6 +222,7 @@ public class EmployeeProfileController : ControllerBase
     /// <response code="403">User is not authorized to update this emergency contact</response>
     /// <response code="404">Emergency contact not found</response>
     [HttpPut("{employeeId:guid}/emergency-contacts/{contactId:guid}")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -255,14 +233,6 @@ public class EmployeeProfileController : ControllerBase
         [FromBody] UpdateEmergencyContactDto updateDto,
         CancellationToken cancellationToken)
     {
-        // Authorization: Employees can only update their own contacts
-        if (_currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to update emergency contact for employee {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var command = new UpdateEmergencyContactCommand(contactId, updateDto);
         var result = await _updateContactHandler.HandleAsync(command, cancellationToken);
 
@@ -297,6 +267,7 @@ public class EmployeeProfileController : ControllerBase
     /// <response code="403">User is not authorized to delete this emergency contact</response>
     /// <response code="404">Emergency contact not found</response>
     [HttpDelete("{employeeId:guid}/emergency-contacts/{contactId:guid}")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -305,14 +276,6 @@ public class EmployeeProfileController : ControllerBase
         Guid contactId,
         CancellationToken cancellationToken)
     {
-        // Authorization: Employees can only delete their own contacts
-        if (_currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to delete emergency contact for employee {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var command = new DeleteEmergencyContactCommand(contactId);
         var result = await _deleteContactHandler.HandleAsync(command, cancellationToken);
 

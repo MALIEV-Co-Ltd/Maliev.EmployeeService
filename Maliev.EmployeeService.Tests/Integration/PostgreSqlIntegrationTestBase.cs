@@ -187,13 +187,11 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 
     private class DummyCurrentUserService : ICurrentUserService
     {
-        public bool IsAuthenticated => true;
-        public string? UserId => "test-user-id";
-        public Guid? EmployeeId => Guid.NewGuid();
-        public string? Email => "test@example.com";
-        public IEnumerable<string> Roles => new[] { "Employee" };
+        public Guid? PrincipalId => null;
+        public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(null);
+        public string? Email => null;
+        public IEnumerable<string> Roles => Enumerable.Empty<string>();
         public Role PrimaryRole => Role.Employee;
-        public bool IsInRole(string role) => true;
-        public IEnumerable<System.Security.Claims.Claim> Claims => Enumerable.Empty<System.Security.Claims.Claim>();
+        public bool IsAuthenticated => false;
     }
 }

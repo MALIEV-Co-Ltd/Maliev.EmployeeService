@@ -1,12 +1,12 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Attributes;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -17,7 +17,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("employee/v{version:apiVersion}/employees/{employeeId:guid}")]
-[RequireCompensationAccess("HR Compensation and Benefits Administration")]
+[RequirePermission(EmployeePermissions.CompensationRead, ResourcePathTemplate = "employee/{employeeId}", IsCritical = true, AuditPurpose = "Compensation Administration")]
 public class CompensationController : ControllerBase
 {
     private readonly GetCompensationDetailsQueryHandler _getDetailsHandler;
@@ -64,7 +64,7 @@ public class CompensationController : ControllerBase
         {
             _logger.LogInformation(
                 "User {UserId} accessing compensation details for employee {EmployeeId}",
-                _currentUserService.EmployeeId,
+                _currentUserService.PrincipalId,
                 employeeId);
 
             var query = new GetCompensationDetailsQuery(employeeId);
@@ -81,7 +81,7 @@ public class CompensationController : ControllerBase
         {
             _logger.LogWarning(
                 "Unauthorized access attempt by {UserId} to compensation for employee {EmployeeId}: {Message}",
-                _currentUserService.EmployeeId,
+                _currentUserService.PrincipalId,
                 employeeId,
                 ex.Message);
             return Forbid();
@@ -96,6 +96,7 @@ public class CompensationController : ControllerBase
     /// <param name="compensationDto">Compensation change details</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("compensation")]
+    [RequirePermission(EmployeePermissions.CompensationUpdate, ResourcePathTemplate = "employee/{employeeId}", IsCritical = true, AuditPurpose = "Compensation Change")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -116,7 +117,7 @@ public class CompensationController : ControllerBase
             "Compensation record {CompensationRecordId} created for employee {EmployeeId} by {UserId}",
             result.CompensationRecordId,
             employeeId,
-            _currentUserService.EmployeeId);
+            _currentUserService.PrincipalId);
 
         return CreatedAtAction(
             nameof(GetCompensationDetails),
@@ -141,7 +142,7 @@ public class CompensationController : ControllerBase
         {
             _logger.LogInformation(
                 "User {UserId} accessing compensation history for employee {EmployeeId}",
-                _currentUserService.EmployeeId,
+                _currentUserService.PrincipalId,
                 employeeId);
 
             var query = new GetCompensationHistoryQuery(employeeId);
@@ -153,7 +154,7 @@ public class CompensationController : ControllerBase
         {
             _logger.LogWarning(
                 "Unauthorized access attempt by {UserId} to compensation history for employee {EmployeeId}: {Message}",
-                _currentUserService.EmployeeId,
+                _currentUserService.PrincipalId,
                 employeeId,
                 ex.Message);
             return Forbid();
@@ -176,7 +177,7 @@ public class CompensationController : ControllerBase
     {
         _logger.LogInformation(
             "User {UserId} accessing benefits enrollment for employee {EmployeeId}",
-            _currentUserService.EmployeeId,
+            _currentUserService.PrincipalId,
             employeeId);
 
         // TODO: Implement GetBenefitsEnrollmentQuery
@@ -192,6 +193,7 @@ public class CompensationController : ControllerBase
     /// <param name="benefitsDto">Benefits enrollment details</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("benefits")]
+    [RequirePermission(EmployeePermissions.CompensationUpdate, ResourcePathTemplate = "employee/{employeeId}", IsCritical = true, AuditPurpose = "Benefits Enrollment Update")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -211,7 +213,7 @@ public class CompensationController : ControllerBase
         _logger.LogInformation(
             "Benefits enrollment updated for employee {EmployeeId} by {UserId}",
             employeeId,
-            _currentUserService.EmployeeId);
+            _currentUserService.PrincipalId);
 
         return Ok(new { id = result.EnrollmentId, message = "Benefits enrollment updated successfully" });
     }

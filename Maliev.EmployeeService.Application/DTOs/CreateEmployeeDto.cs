@@ -109,7 +109,7 @@ public class CreateEmployeeDto
     /// <summary>
     /// Reference to Career Service work location catalog.
     /// </summary>
-    public int? WorkLocationId { get; set; } 
+    public int? WorkLocationId { get; set; }
 
     /// <summary>
     /// The end date of the employee's probation period.

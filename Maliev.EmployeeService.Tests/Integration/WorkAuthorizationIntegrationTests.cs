@@ -5,6 +5,10 @@ using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -23,6 +27,7 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new LegalName("John", "Doe"),
             ContactInformation = new ContactInformation { WorkEmail = "john.doe@company.com" },
@@ -85,6 +90,7 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             LegalName = new LegalName("Jane", "Smith"),
             ContactInformation = new ContactInformation { WorkEmail = "jane.smith@company.com" },
@@ -418,7 +424,18 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var workAuthRepository = new WorkAuthorizationRepository(Context);
-        var handler = new GetWorkAuthorizationComplianceReportQueryHandler(workAuthRepository);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var handler = new GetWorkAuthorizationComplianceReportQueryHandler(
+            workAuthRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var query = new GetWorkAuthorizationComplianceReportQuery
         {
@@ -459,6 +476,7 @@ public class WorkAuthorizationIntegrationTests : PostgreSqlIntegrationTestBase
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             LegalName = new LegalName(firstName, lastName),
             ContactInformation = new ContactInformation

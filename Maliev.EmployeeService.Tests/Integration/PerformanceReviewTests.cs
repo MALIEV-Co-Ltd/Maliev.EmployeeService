@@ -7,6 +7,9 @@ using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
@@ -28,6 +31,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-3),
@@ -38,6 +42,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             ManagerId = managerId, // Direct report to manager
             EmploymentStatus = EmploymentStatus.Active,
@@ -49,12 +54,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(managerId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(managerId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(managerId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new CreatePerformanceReviewCommandHandler(
             performanceReviewRepository,
             employeeRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var command = new CreatePerformanceReviewCommand(
@@ -97,6 +110,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-2),
@@ -107,6 +121,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             ManagerId = managerId,
             EmploymentStatus = EmploymentStatus.Active,
@@ -118,12 +133,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(managerId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(managerId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(managerId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new CreatePerformanceReviewCommandHandler(
             performanceReviewRepository,
             employeeRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var command = new CreatePerformanceReviewCommand(
@@ -157,6 +180,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-2),
@@ -167,6 +191,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             ManagerId = managerId,
             EmploymentStatus = EmploymentStatus.Active,
@@ -178,12 +203,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(managerId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(managerId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(managerId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new CreatePerformanceReviewCommandHandler(
             performanceReviewRepository,
             employeeRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var command = new CreatePerformanceReviewCommand(
@@ -217,6 +250,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-3),
@@ -227,6 +261,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP004",
             ManagerId = managerId,
             EmploymentStatus = EmploymentStatus.Terminated,
@@ -239,12 +274,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(managerId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(managerId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(managerId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new CreatePerformanceReviewCommandHandler(
             performanceReviewRepository,
             employeeRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var command = new CreatePerformanceReviewCommand(
@@ -275,6 +318,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-3),
@@ -285,6 +329,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             ManagerId = managerId,
             EmploymentStatus = EmploymentStatus.Active,
@@ -296,12 +341,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(managerId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(managerId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(managerId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new CreatePerformanceReviewCommandHandler(
             performanceReviewRepository,
             employeeRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act - Create three quarterly reviews
@@ -344,6 +397,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR006",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-2),
@@ -354,6 +408,7 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP006",
             ManagerId = managerId,
             EmploymentStatus = EmploymentStatus.Active,
@@ -365,12 +420,20 @@ public class PerformanceReviewTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(managerId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(managerId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(managerId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new CreatePerformanceReviewCommandHandler(
             performanceReviewRepository,
             employeeRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var command = new CreatePerformanceReviewCommand(

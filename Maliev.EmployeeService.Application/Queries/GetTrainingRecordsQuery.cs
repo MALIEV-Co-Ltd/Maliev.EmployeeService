@@ -1,5 +1,8 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -35,18 +38,36 @@ public class TrainingRecordDto
 public class GetTrainingRecordsQueryHandler
 {
     private readonly ITrainingRepository _trainingRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<GetTrainingRecordsQueryHandler> _logger;
 
     public GetTrainingRecordsQueryHandler(
         ITrainingRepository trainingRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ILogger<GetTrainingRecordsQueryHandler> logger)
     {
         _trainingRepository = trainingRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
     public async Task<List<TrainingRecordDto>> HandleAsync(GetTrainingRecordsQuery query, CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have TrainingRead permission for this employee
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/{query.EmployeeId}/training";
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TrainingRead, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view training records for this employee");
+        }
+
         _logger.LogInformation("Getting training records for employee {EmployeeId}", query.EmployeeId);
 
         var trainingRecords = query.FilterByType.HasValue

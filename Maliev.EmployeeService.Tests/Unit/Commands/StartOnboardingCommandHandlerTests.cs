@@ -5,8 +5,11 @@ using Maliev.EmployeeService.Application.Services;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
+using Moq;
 
 namespace Maliev.EmployeeService.Tests.Unit.Commands;
 
@@ -21,6 +24,9 @@ public class StartOnboardingCommandHandlerTests
     private readonly OnboardingTemplateService _templateService;
     private readonly Mock<IEventPublisher> _eventPublisherMock;
     private readonly Mock<ILogger<StartOnboardingCommandHandler>> _loggerMock;
+    private readonly Mock<IIamServiceClient> _iamClientMock;
+    private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly StartOnboardingCommandHandler _handler;
 
     public StartOnboardingCommandHandlerTests()
@@ -30,12 +36,22 @@ public class StartOnboardingCommandHandlerTests
         _templateService = new OnboardingTemplateService();
         _eventPublisherMock = new Mock<IEventPublisher>();
         _loggerMock = new Mock<ILogger<StartOnboardingCommandHandler>>();
+        _iamClientMock = new Mock<IIamServiceClient>();
+        _configurationMock = new Mock<IConfiguration>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
+
+        _currentUserServiceMock.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _iamClientMock.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new StartOnboardingCommandHandler(
             _employeeRepositoryMock.Object,
             _onboardingRepositoryMock.Object,
             _templateService,
             _eventPublisherMock.Object,
+            _iamClientMock.Object,
+            _configurationMock.Object,
+            _currentUserServiceMock.Object,
             _loggerMock.Object);
     }
 

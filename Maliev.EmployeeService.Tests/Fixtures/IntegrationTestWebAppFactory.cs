@@ -101,6 +101,15 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     {
         builder.UseEnvironment("Testing");
 
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Service:Name"] = "EmployeeService",
+                ["Service:Version"] = "1.0.0-test"
+            });
+        });
+
         builder.ConfigureTestServices(services =>
         {
             // Remove existing DbContext registration
@@ -112,6 +121,18 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             {
                 options.UseNpgsql(_postgresContainer.GetConnectionString());
             });
+
+            // Add permission-based authorization infrastructure for tests
+            services.AddHttpContextAccessor();
+#pragma warning disable ASPDEPR006
+            services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.IActionContextAccessor,
+                                  Microsoft.AspNetCore.Mvc.Infrastructure.ActionContextAccessor>();
+#pragma warning restore ASPDEPR006
+            services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider,
+                                  Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationPolicyProvider>();
+            services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+                               Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationHandler>();
+            services.AddAuthorizationBuilder();
 
             // PostConfigure JWT Bearer options to use our test RSA key
             services.PostConfigureAll<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(options =>
@@ -148,7 +169,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         };
 
         // Add roles
-        roles ??= new[] { "Employee" };
+        roles ??= new[] { "roles.employee.employee" };
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
@@ -175,6 +196,56 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public HttpClient CreateAuthenticatedClientWithAllPermissions(string userId = "test-user")
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId),
+            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, "roles.employee.admin")
+        };
+
+        // Add all employee permissions
+        var allPermissions = new[]
+        {
+            "employee.profiles.create", "employee.profiles.read", "employee.profiles.update", "employee.profiles.delete",
+            "employee.compensation.read", "employee.compensation.update",
+            "employee.departments.manage",
+            "employee.documents.create", "employee.documents.read", "employee.documents.update", "employee.documents.delete",
+            "employee.leave.create", "employee.leave.read", "employee.leave.approve", "employee.leave.cancel",
+            "employee.performance.create", "employee.performance.read", "employee.performance.update",
+            "employee.training.create", "employee.training.read", "employee.training.assign",
+            "employee.teams.read", "employee.teams.manage",
+            "employee.employees.search",
+            "employee.onboarding.manage", "employee.workauth.manage",
+            "employee.reports.view", "employee.reports.generate",
+            "employee.admin.backgroundjobs", "employee.admin.systemconfig",
+            "employee.system.admin"
+        };
+
+        foreach (var permission in allPermissions)
+        {
+            claims.Add(new Claim("permission", permission));
+        }
+
+        var credentials = new SigningCredentials(
+            new RsaSecurityKey(_testRsa),
+            SecurityAlgorithms.RsaSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: TestIssuer,
+            audience: TestAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials);
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenString}");
+        return client;
     }
 }
 

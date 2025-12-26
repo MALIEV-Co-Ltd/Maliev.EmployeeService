@@ -1,6 +1,9 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -13,6 +16,9 @@ public class GetOrgChartQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICacheService? _cacheService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<GetOrgChartQueryHandler> _logger;
 
     // Cache configuration - longer expiration for org charts since they change less frequently
@@ -22,10 +28,16 @@ public class GetOrgChartQueryHandler
     public GetOrgChartQueryHandler(
         IEmployeeRepository employeeRepository,
         ILogger<GetOrgChartQueryHandler> logger,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ICacheService? cacheService = null)
     {
         _employeeRepository = employeeRepository;
         _logger = logger;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _cacheService = cacheService;
     }
 
@@ -33,6 +45,15 @@ public class GetOrgChartQueryHandler
         GetOrgChartQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have ProfilesRead permission for this manager's org chart
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/{query.ManagerId}/orgchart";
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view this organization chart");
+        }
+
         // Try to get from cache first
         var cacheKey = $"{CacheKeyPrefix}{query.ManagerId}:depth{query.MaxDepth}";
 

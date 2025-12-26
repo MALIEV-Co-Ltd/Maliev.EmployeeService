@@ -76,6 +76,7 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(), // Generate unique PrincipalId to avoid constraint violations
             EmployeeNumber = employeeNumber,
             LegalName = new Domain.ValueObjects.LegalName(firstName, lastName),
             ContactInformation = new Domain.ValueObjects.ContactInformation
@@ -99,11 +100,32 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
     }
     protected void AuthenticateAs(Guid employeeId, string[]? roles = null)
     {
+        // Lookup the employee's PrincipalId
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
+        var employee = context.Employees.Find(employeeId);
+
+        if (employee == null)
+        {
+            // If employee not found, authenticate with the ID directly (for role-only tests)
+            AuthenticateAsPrincipal(employeeId, roles);
+            return;
+        }
+
         var additionalClaims = new Dictionary<string, string>
         {
             { "employee_id", employeeId.ToString() }
         };
-        var token = _factory.CreateTestJwtToken(employeeId.ToString(), roles, additionalClaims);
+
+        // Use the employee's PrincipalId as the subject (for GetEmployeeIdAsync lookup)
+        var token = _factory.CreateTestJwtToken(employee.PrincipalId.ToString(), roles, additionalClaims);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    protected void AuthenticateAsPrincipal(Guid principalId, string[]? roles = null)
+    {
+        var additionalClaims = new Dictionary<string, string>();
+        var token = _factory.CreateTestJwtToken(principalId.ToString(), roles, additionalClaims);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 }
@@ -118,6 +140,47 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
         // Force initialization of metrics (same as Program.cs line 295)
         System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(
             typeof(Maliev.EmployeeService.Application.Services.BusinessMetricsService).TypeHandle);
+    }
+
+    protected override void ConfigureEnvironmentVariables()
+    {
+        // Disable IAM registration in tests - uses the service's built-in degraded mode
+        Environment.SetEnvironmentVariable("Features__PermissionBasedAuthEnabled", "false");
+    }
+
+    protected override void ConfigureAdditionalServices(IServiceCollection services)
+    {
+        // Remove any existing IIamServiceClient registration from Program.cs
+        var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(Maliev.Aspire.ServiceDefaults.IAM.IIamServiceClient));
+        if (descriptor != null)
+        {
+            services.Remove(descriptor);
+        }
+
+        // Register mock IIamServiceClient for tests where IAM integration is disabled
+        var mockIamClient = new Mock<Maliev.Aspire.ServiceDefaults.IAM.IIamServiceClient>();
+
+        // Mock GetUserPermissionsAsync to return empty permissions
+        mockIamClient.Setup(x => x.GetUserPermissionsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Mock CheckPermissionAsync to return true (allow all in tests)
+        mockIamClient.Setup(x => x.CheckPermissionAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Mock CheckPermissionsAsync to return all true
+        mockIamClient.Setup(x => x.CheckPermissionsAsync(
+            It.IsAny<string>(),
+            It.IsAny<IEnumerable<Maliev.Aspire.ServiceDefaults.IAM.PermissionCheckRequest>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string principalId, IEnumerable<Maliev.Aspire.ServiceDefaults.IAM.PermissionCheckRequest> requests, CancellationToken ct) =>
+                requests.ToDictionary(r => r.PermissionId, r => true));
+
+        services.AddSingleton<Maliev.Aspire.ServiceDefaults.IAM.IIamServiceClient>(mockIamClient.Object);
     }
 
     /// <summary>

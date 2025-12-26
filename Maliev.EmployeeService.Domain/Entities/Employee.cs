@@ -10,6 +10,7 @@ namespace Maliev.EmployeeService.Domain.Entities;
 /// </summary>
 public class Employee : Entity
 {
+    public Guid PrincipalId { get; set; }
     public string EmployeeNumber { get; set; } = string.Empty;
 
     // Basic Information - Using Value Objects

@@ -36,11 +36,12 @@ public class OnboardingTemplateServiceTests
         Assert.DoesNotContain(checklist, item => item.ItemDescription.Contains("leadership"));
 
         // Verify all items have correct employee ID and dates
-        Assert.All(checklist, item  => { 
+        Assert.All(checklist, item =>
+        {
             Assert.Equal(employeeId, item.EmployeeId);
             // Pre-onboarding tasks can have due dates before start date
             Assert.NotEqual(default, item.DueDate);
-         });
+        });
     }
 
     [Fact]
@@ -127,11 +128,12 @@ public class OnboardingTemplateServiceTests
         var checklist = _service.GenerateChecklist(employeeId, jobTitle, startDate);
 
         // Assert
-        Assert.All(checklist, item  => { 
+        Assert.All(checklist, item =>
+        {
             Assert.NotEqual(Guid.Empty, item.Id);
             Assert.Equal(employeeId, item.EmployeeId);
             Assert.False(string.IsNullOrWhiteSpace(item.ItemDescription));
-            Assert.Contains(item.ResponsibleParty, new[] { 
+            Assert.Contains(item.ResponsibleParty, new[] {
                 Maliev.EmployeeService.Domain.Enums.ResponsibleParty.HR,
                 Maliev.EmployeeService.Domain.Enums.ResponsibleParty.IT,
                 Maliev.EmployeeService.Domain.Enums.ResponsibleParty.Facilities,
@@ -140,7 +142,7 @@ public class OnboardingTemplateServiceTests
             Assert.False(item.CompletionStatus); // Should start incomplete
             Assert.True(item.DisplayOrder > 0);
             Assert.True(Math.Abs((item.CreatedDate - DateTime.UtcNow).TotalSeconds) <= 5);
-         });
+        });
     }
 
     [Fact]

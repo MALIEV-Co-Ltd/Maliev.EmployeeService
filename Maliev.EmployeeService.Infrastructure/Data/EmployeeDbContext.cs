@@ -34,7 +34,6 @@ public class EmployeeDbContext : DbContext
     }
 
     // Authentication & Authorization
-    public DbSet<User> Users => Set<User>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     // Core Entities
@@ -113,22 +112,6 @@ public class EmployeeDbContext : DbContext
         // Configure schema
         modelBuilder.HasDefaultSchema("employee");
 
-        // Configure User entity
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Username).IsUnique();
-            entity.HasIndex(e => e.EmployeeId);
-
-            entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Role).HasConversion<string>().HasMaxLength(50);
-
-            entity.HasOne(e => e.Employee)
-                .WithMany()
-                .HasForeignKey(e => e.EmployeeId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
         // Configure AuditLog entity (immutable)
         modelBuilder.Entity<AuditLog>(entity =>
         {
@@ -148,8 +131,8 @@ public class EmployeeDbContext : DbContext
         // Configure Employee entity (User Story 1)
         modelBuilder.Entity<Employee>(entity =>
         {
-            entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.EmployeeNumber).IsUnique();
+            entity.HasIndex(e => e.PrincipalId).IsUnique();
             entity.HasIndex(e => e.EmploymentStatus);
             entity.HasIndex(e => e.DepartmentId);
             entity.HasIndex(e => e.ManagerId);
@@ -158,6 +141,7 @@ public class EmployeeDbContext : DbContext
             entity.HasIndex(e => e.TerminationDate); // Phase 16 - T387: For GetEmployeesByTerminationDateAsync
             entity.HasIndex(e => new { e.DepartmentId, e.EmploymentStatus }); // Phase 16 - T387: Composite for GetCountByDepartmentAsync
 
+            entity.Property(e => e.PrincipalId).IsRequired();
             entity.Property(e => e.EmployeeNumber).HasMaxLength(50).IsRequired();
             entity.Property(e => e.PreferredName).HasMaxLength(100);
             entity.Property(e => e.Nationality).HasMaxLength(50);

@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -7,6 +7,7 @@ using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -59,6 +60,7 @@ public class DocumentsController : ControllerBase
     /// <param name="includeArchived">Include archived documents</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("employees/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.DocumentsRead, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(IEnumerable<DocumentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<DocumentDto>>> GetEmployeeDocuments(
@@ -76,9 +78,12 @@ public class DocumentsController : ControllerBase
 
         var documents = await _getDocumentsHandler.HandleAsync(query, cancellationToken);
 
-        // Filter documents based on user's access permissions
-        var currentUserId = _currentUserService.EmployeeId ?? Guid.Empty;
-        var currentUserRole = _currentUserService.PrimaryRole;
+        // Filter documents based on user's access permissions via IAM
+        var principalId = _currentUserService.PrincipalId;
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
 
         var accessibleDocuments = new List<DocumentDto>();
         foreach (var doc in documents)
@@ -87,9 +92,8 @@ public class DocumentsController : ControllerBase
             if (document != null)
             {
                 var canView = await _authorizationService.CanViewDocumentAsync(
-                    currentUserId,
+                    principalId.Value,
                     document,
-                    currentUserRole,
                     cancellationToken);
 
                 if (canView)
@@ -110,6 +114,7 @@ public class DocumentsController : ControllerBase
     /// <param name="file">File to upload</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("employees/{employeeId:guid}")]
+    [RequirePermission(EmployeePermissions.DocumentsCreate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(UploadDocumentResultDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -132,15 +137,20 @@ public class DocumentsController : ControllerBase
             return BadRequest($"File size exceeds maximum allowed size of {maxFileSize / 1024 / 1024}MB");
         }
 
-        var currentUserId = _currentUserService.EmployeeId ?? Guid.Empty;
-        var currentUserRole = _currentUserService.PrimaryRole;
+        var principalId = _currentUserService.PrincipalId;
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
 
         // Check authorization
         await _authorizationService.ValidateCanUploadDocumentAsync(
-            currentUserId,
+            principalId.Value,
             employeeId,
-            currentUserRole,
             cancellationToken);
+
+        // Get EmployeeId for auditing (DB expects HR ID)
+        var employeeIdAudit = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
 
         // Create command
         var command = new UploadDocumentCommand
@@ -153,7 +163,7 @@ public class DocumentsController : ControllerBase
             ContentType = file.ContentType,
             Description = dto.Description,
             ExpirationDate = dto.ExpirationDate,
-            UploadedBy = currentUserId
+            UploadedBy = employeeIdAudit ?? Guid.Empty
         };
 
         var result = await _uploadDocumentHandler.HandleAsync(command, cancellationToken);
@@ -202,15 +212,20 @@ public class DocumentsController : ControllerBase
             return NotFound($"Document {documentId} not found");
         }
 
-        var currentUserId = _currentUserService.EmployeeId ?? Guid.Empty;
-        var currentUserRole = _currentUserService.PrimaryRole;
+        var principalId = _currentUserService.PrincipalId;
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
 
         // Check authorization (same as upload)
         await _authorizationService.ValidateCanUploadDocumentAsync(
-            currentUserId,
+            principalId.Value,
             document.EmployeeId,
-            currentUserRole,
             cancellationToken);
+
+        // Get EmployeeId for auditing
+        var employeeIdAudit = await _currentUserService.GetEmployeeIdAsync(cancellationToken);
 
         // Create command
         var command = new UploadDocumentVersionCommand
@@ -220,7 +235,7 @@ public class DocumentsController : ControllerBase
             FileStream = file.OpenReadStream(),
             ContentType = file.ContentType,
             ChangeDescription = changeDescription,
-            UploadedBy = currentUserId
+            UploadedBy = employeeIdAudit ?? Guid.Empty
         };
 
         var result = await _uploadVersionHandler.HandleAsync(command, cancellationToken);
@@ -251,14 +266,16 @@ public class DocumentsController : ControllerBase
             return NotFound($"Document {documentId} not found");
         }
 
-        var currentUserId = _currentUserService.EmployeeId ?? Guid.Empty;
-        var currentUserRole = _currentUserService.PrimaryRole;
+        var principalId = _currentUserService.PrincipalId;
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
 
         // Check authorization
         await _authorizationService.ValidateCanViewDocumentAsync(
-            currentUserId,
+            principalId.Value,
             document,
-            currentUserRole,
             cancellationToken);
 
         // Get versions
@@ -302,14 +319,16 @@ public class DocumentsController : ControllerBase
             return NotFound($"Document {documentId} not found");
         }
 
-        var currentUserId = _currentUserService.EmployeeId ?? Guid.Empty;
-        var currentUserRole = _currentUserService.PrimaryRole;
+        var principalId = _currentUserService.PrincipalId;
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
 
         // Check authorization
         await _authorizationService.ValidateCanViewDocumentAsync(
-            currentUserId,
+            principalId.Value,
             document,
-            currentUserRole,
             cancellationToken);
 
         // Download document
@@ -330,7 +349,7 @@ public class DocumentsController : ControllerBase
     /// <param name="documentId">Document ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpDelete("{documentId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.DocumentsDelete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -344,14 +363,16 @@ public class DocumentsController : ControllerBase
             return NotFound($"Document {documentId} not found");
         }
 
-        var currentUserId = _currentUserService.EmployeeId ?? Guid.Empty;
-        var currentUserRole = _currentUserService.PrimaryRole;
+        var principalId = _currentUserService.PrincipalId;
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
 
         // Check authorization
         await _authorizationService.ValidateCanDeleteDocumentAsync(
-            currentUserId,
+            principalId.Value,
             document,
-            currentUserRole,
             cancellationToken);
 
         await _documentRepository.ArchiveAsync(documentId, cancellationToken);
@@ -365,7 +386,7 @@ public class DocumentsController : ControllerBase
     /// <param name="documentId">Document ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost("{documentId:guid}/restore")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.DocumentsDelete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -390,7 +411,7 @@ public class DocumentsController : ControllerBase
     /// <param name="daysUntilExpiration">Number of days until expiration</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("expiring")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(IEnumerable<DocumentDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<DocumentDto>>> GetExpiringDocuments(
         [FromQuery] int daysUntilExpiration = 90,

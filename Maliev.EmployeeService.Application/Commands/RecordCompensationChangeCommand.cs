@@ -1,6 +1,9 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -30,18 +33,24 @@ public class RecordCompensationChangeCommandHandler
     private readonly ICompensationRepository _compensationRepository;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
     private readonly IEventPublisher _eventPublisher;
     private readonly IUnitOfWork _unitOfWork;
 
     public RecordCompensationChangeCommandHandler(
         ICompensationRepository compensationRepository,
         IEmployeeRepository employeeRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService,
         IEventPublisher eventPublisher,
         IUnitOfWork unitOfWork)
     {
         _compensationRepository = compensationRepository;
         _employeeRepository = employeeRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
         _eventPublisher = eventPublisher;
         _unitOfWork = unitOfWork;
@@ -51,6 +60,13 @@ public class RecordCompensationChangeCommandHandler
         RecordCompensationChangeCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have CompensationUpdate permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationUpdate, $"employee/{command.EmployeeId}", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update compensation for this employee");
+        }
         // Verify employee exists
         var employee = await _employeeRepository.GetByIdAsync(command.EmployeeId, cancellationToken);
         if (employee == null)
@@ -90,7 +106,7 @@ public class RecordCompensationChangeCommandHandler
             ChangeReason = command.CompensationDto.ChangeReason,
             BonusStructure = command.CompensationDto.BonusStructure,
             CommissionStructure = command.CompensationDto.CommissionStructure,
-            CreatedBy = _currentUserService.EmployeeId,
+            CreatedBy = _currentUserService.PrincipalId,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -105,7 +121,7 @@ public class RecordCompensationChangeCommandHandler
         //     CompensationRecordId = compensationRecord.Id,
         //     EffectiveDate = compensationRecord.EffectiveDate,
         //     Currency = compensationRecord.Currency,
-        //     ChangedBy = _currentUserService.EmployeeId ?? Guid.Empty,
+        //     ChangedBy = _currentUserService.PrincipalId ?? Guid.Empty,
         //     ChangedDate = DateTime.UtcNow
         // }, cancellationToken);
 

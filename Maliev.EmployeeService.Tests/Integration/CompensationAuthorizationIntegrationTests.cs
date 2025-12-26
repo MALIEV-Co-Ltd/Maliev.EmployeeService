@@ -1,4 +1,5 @@
 using Maliev.EmployeeService.Application.Commands;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
@@ -12,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
@@ -31,14 +33,19 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithCompensation();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(false);
-        mockCurrentUserService.Setup(x => x.IsInRole("HRGeneralist")).Returns(false);
-        mockCurrentUserService.Setup(x => x.IsInRole("SystemAdministrator")).Returns(false);
-        mockCurrentUserService.Setup(x => x.IsInRole("Employee")).Returns(true);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationDetailsQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationDetailsQuery(employee.Id);
@@ -60,14 +67,19 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithCompensation();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("Manager")).Returns(true);
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(false);
-        mockCurrentUserService.Setup(x => x.IsInRole("HRGeneralist")).Returns(false);
-        mockCurrentUserService.Setup(x => x.IsInRole("SystemAdministrator")).Returns(false);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationDetailsQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationDetailsQuery(employee.Id);
@@ -89,12 +101,21 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithCompensation();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(principalId.ToString(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationDetailsQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationDetailsQuery(employee.Id);
@@ -118,12 +139,21 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithCompensation();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRGeneralist")).Returns(true);
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(principalId.ToString(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationDetailsQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationDetailsQuery(employee.Id);
@@ -146,12 +176,21 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithCompensation();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("SystemAdministrator")).Returns(true);
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(principalId.ToString(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationDetailsQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationDetailsQuery(employee.Id);
@@ -174,11 +213,19 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithCompensation();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole(It.IsAny<string>())).Returns(false);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationHistoryQuery(employee.Id);
@@ -200,11 +247,20 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = await CreateTestEmployeeWithMultipleCompensationRecords();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(principalId.ToString(), EmployeePermissions.CompensationRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var handler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationHistoryQuery(employee.Id);
@@ -228,6 +284,7 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP999",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -238,13 +295,22 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid());
 
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(principalId.ToString(), EmployeePermissions.CompensationUpdate, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
         var mockEventPublisher = new Mock<IEventPublisher>();
 
         var handler = new RecordCompensationChangeCommandHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object,
             mockEventPublisher.Object,
             unitOfWork);
@@ -280,6 +346,7 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "TEST001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -314,6 +381,7 @@ public class CompensationAuthorizationIntegrationTests : PostgreSqlIntegrationTe
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "TEST002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-2),

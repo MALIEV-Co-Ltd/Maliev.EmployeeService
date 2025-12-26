@@ -5,8 +5,11 @@ using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
+using Moq;
 
 namespace Maliev.EmployeeService.Tests.Unit.Commands;
 
@@ -20,6 +23,9 @@ public class StartOffboardingCommandHandlerTests
     private readonly Mock<IOffboardingRepository> _offboardingRepositoryMock;
     private readonly Mock<IEventPublisher> _eventPublisherMock;
     private readonly Mock<ILogger<StartOffboardingCommandHandler>> _loggerMock;
+    private readonly Mock<IIamServiceClient> _iamClientMock;
+    private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly StartOffboardingCommandHandler _handler;
 
     public StartOffboardingCommandHandlerTests()
@@ -28,11 +34,21 @@ public class StartOffboardingCommandHandlerTests
         _offboardingRepositoryMock = new Mock<IOffboardingRepository>();
         _eventPublisherMock = new Mock<IEventPublisher>();
         _loggerMock = new Mock<ILogger<StartOffboardingCommandHandler>>();
+        _iamClientMock = new Mock<IIamServiceClient>();
+        _configurationMock = new Mock<IConfiguration>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
+
+        _currentUserServiceMock.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _iamClientMock.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new StartOffboardingCommandHandler(
             _employeeRepositoryMock.Object,
             _offboardingRepositoryMock.Object,
             _eventPublisherMock.Object,
+            _iamClientMock.Object,
+            _configurationMock.Object,
+            _currentUserServiceMock.Object,
             _loggerMock.Object);
     }
 
@@ -198,11 +214,12 @@ public class StartOffboardingCommandHandlerTests
         Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("final paycheck"));
 
         // Verify all items have correct employee ID
-        Assert.All(capturedChecklist, item  => { 
+        Assert.All(capturedChecklist, item =>
+        {
             Assert.Equal(employeeId, item.EmployeeId);
             Assert.False(item.CompletionStatus);
             Assert.True(item.DisplayOrder > 0);
-         });
+        });
 
         // Verify blocking items exist
         var blockingItems = capturedChecklist.Where(item => item.BlocksFinalPaycheck).ToList();

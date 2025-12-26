@@ -8,29 +8,19 @@ namespace Maliev.EmployeeService.Application.Interfaces;
 public interface ICurrentUserService
 {
     /// <summary>
-    /// Gets the current user's employee ID
+    /// Gets the current user's principal ID (IAM)
     /// </summary>
-    Guid? EmployeeId { get; }
+    Guid? PrincipalId { get; }
+
+    /// <summary>
+    /// Gets the current user's employee ID (HR System)
+    /// </summary>
+    Task<Guid?> GetEmployeeIdAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the current user's email
     /// </summary>
     string? Email { get; }
-
-    /// <summary>
-    /// Gets the current user's roles
-    /// </summary>
-    IEnumerable<string> Roles { get; }
-
-    /// <summary>
-    /// Gets the current user's primary role as Role enum
-    /// </summary>
-    Role PrimaryRole { get; }
-
-    /// <summary>
-    /// Checks if the current user has a specific role
-    /// </summary>
-    bool IsInRole(string role);
 
     /// <summary>
     /// Checks if the current user is authenticated

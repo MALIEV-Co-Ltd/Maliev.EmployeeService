@@ -20,14 +20,14 @@ The Employee Service is a comprehensive microservice for managing HR master data
 - Npgsql 9.0.4 (PostgreSQL driver)
 - MediatR (CQRS implementation)
 - MassTransit (RabbitMQ integration)
-- FluentValidation (input validation)
+- Native .NET Validation (DataAnnotations)
 - Serilog 8.0.2 (structured logging)
 
 **Storage**: PostgreSQL 18 with encryption for sensitive fields (AES-256)
 
 **Testing**:
 - xUnit (test framework)
-- FluentAssertions 8.6.0 (test assertions)
+- xUnit Assert (test assertions)
 - Moq 4.20.72 (mocking)
 - Testcontainers or Docker Compose (PostgreSQL integration testing - **IN-MEMORY DATABASES PROHIBITED**)
 

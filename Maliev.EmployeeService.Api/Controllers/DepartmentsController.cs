@@ -1,10 +1,11 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -169,7 +170,7 @@ public class DepartmentsController : ControllerBase
     /// <returns>List of departments needing attention</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("capacity-alerts")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCapacityAlerts(CancellationToken cancellationToken)
     {
@@ -196,7 +197,7 @@ public class DepartmentsController : ControllerBase
     /// <returns>Created department ID</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPost]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.DepartmentsManage)]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -278,7 +279,7 @@ public class DepartmentsController : ControllerBase
     /// <returns>Update result with any warnings</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("{departmentId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.DepartmentsManage)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -313,7 +314,7 @@ public class DepartmentsController : ControllerBase
     /// <returns>Deletion result</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpDelete("{departmentId:guid}")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.DepartmentsManage)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

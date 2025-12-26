@@ -86,7 +86,7 @@ public class AcknowledgePerformanceReviewCommandHandler
         // Acknowledge the review
         performanceReview.AcknowledgedDate = DateTime.UtcNow;
         performanceReview.Status = "Acknowledged";
-        performanceReview.ModifiedBy = _currentUserService.EmployeeId;
+        performanceReview.ModifiedBy = _currentUserService.PrincipalId;
         performanceReview.ModifiedDate = DateTime.UtcNow;
 
         _performanceReviewRepository.Update(performanceReview);

@@ -1,10 +1,11 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -14,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("employee/v{version:apiVersion}/hr")]
-[Authorize(Policy = Policies.RequireHROrAdmin)]
+[RequirePermission(EmployeePermissions.ProfilesCreate)]
 public class HRController : ControllerBase
 {
     private readonly CreateEmployeeCommandHandler _createEmployeeHandler;
@@ -79,6 +80,7 @@ public class HRController : ControllerBase
     /// <returns>Success result</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("employees/{employeeId:guid}/transfer-department")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -126,6 +128,7 @@ public class HRController : ControllerBase
     /// <returns>Success result</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpPut("employees/{employeeId:guid}/dotted-line-manager")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -176,6 +179,7 @@ public class HRController : ControllerBase
     /// <returns>List of dotted-line reports</returns>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("employees/{managerId:guid}/dotted-line-reports")]
+    [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/managers/{managerId}")]
     [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDottedLineReports(

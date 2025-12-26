@@ -2,6 +2,9 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Application.Services;
 using Microsoft.Extensions.Logging;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -23,6 +26,9 @@ public class StartOnboardingCommandHandler
     private readonly IOnboardingRepository _onboardingRepository;
     private readonly OnboardingTemplateService _templateService;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<StartOnboardingCommandHandler> _logger;
 
     public StartOnboardingCommandHandler(
@@ -30,17 +36,31 @@ public class StartOnboardingCommandHandler
         IOnboardingRepository onboardingRepository,
         OnboardingTemplateService templateService,
         IEventPublisher eventPublisher,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ILogger<StartOnboardingCommandHandler> logger)
     {
         _employeeRepository = employeeRepository;
         _onboardingRepository = onboardingRepository;
         _templateService = templateService;
         _eventPublisher = eventPublisher;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
     public async Task<Guid> HandleAsync(StartOnboardingCommand command, CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have OnboardingManage permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.OnboardingManage, "employee/onboarding", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to manage onboarding");
+        }
+
         _logger.LogInformation("Starting onboarding workflow for employee {EmployeeId}", command.EmployeeId);
 
         // Get employee details

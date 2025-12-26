@@ -4,6 +4,8 @@ using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Tests.Unit.Commands;
 
@@ -16,6 +18,8 @@ public class UpdateGoalProgressCommandHandlerTests
     private readonly Mock<IGoalRepository> _mockGoalRepository;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly UpdateGoalProgressCommandHandler _handler;
 
     public UpdateGoalProgressCommandHandlerTests()
@@ -23,12 +27,18 @@ public class UpdateGoalProgressCommandHandlerTests
         _mockGoalRepository = new Mock<IGoalRepository>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new UpdateGoalProgressCommandHandler(
             _mockGoalRepository.Object,
             _mockUnitOfWork.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
             _mockCurrentUserService.Object);
     }
 
@@ -384,7 +394,7 @@ public class UpdateGoalProgressCommandHandlerTests
             CreatedDate = DateTime.UtcNow.AddMonths(-1)
         };
 
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(currentUserId);
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(currentUserId);
 
         var command = new UpdateGoalProgressCommand(
             goalId,

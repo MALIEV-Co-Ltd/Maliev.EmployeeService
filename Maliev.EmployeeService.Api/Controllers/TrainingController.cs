@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -8,6 +8,8 @@ using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -26,6 +28,7 @@ public class TrainingController : ControllerBase
     private readonly RecordTrainingCompletionCommandHandler _recordTrainingHandler;
     private readonly UpdateSkillCommandHandler _updateSkillHandler;
     private readonly ISkillRepository _skillRepository;
+    private readonly IIamServiceClient _iamClient;
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<TrainingController> _logger;
 
@@ -38,6 +41,7 @@ public class TrainingController : ControllerBase
         RecordTrainingCompletionCommandHandler recordTrainingHandler,
         UpdateSkillCommandHandler updateSkillHandler,
         ISkillRepository skillRepository,
+        IIamServiceClient iamClient,
         ICurrentUserService currentUserService,
         ILogger<TrainingController> logger)
     {
@@ -46,6 +50,7 @@ public class TrainingController : ControllerBase
         _recordTrainingHandler = recordTrainingHandler;
         _updateSkillHandler = updateSkillHandler;
         _skillRepository = skillRepository;
+        _iamClient = iamClient;
         _currentUserService = currentUserService;
         _logger = logger;
     }
@@ -58,6 +63,7 @@ public class TrainingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of training records</returns>
     [HttpGet("employees/{employeeId:guid}/training-records")]
+    [RequirePermission(EmployeePermissions.TrainingRead, ResourcePathTemplate = "employee/{employeeId}/training")]
     [ProducesResponseType(typeof(List<TrainingRecordDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetTrainingRecords(
@@ -65,17 +71,6 @@ public class TrainingController : ControllerBase
         [FromQuery] TrainingType? trainingType,
         CancellationToken cancellationToken)
     {
-        // Employees can view their own records; HR/Admin/Managers can view their team
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to view training records for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var query = new GetTrainingRecordsQuery
         {
             EmployeeId = employeeId,
@@ -95,7 +90,7 @@ public class TrainingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created training record</returns>
     [HttpPost("employees/{employeeId:guid}/training-records")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.TrainingAssign, ResourcePathTemplate = "employee/{employeeId}/training")]
     [ProducesResponseType(typeof(TrainingRecordDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -150,7 +145,7 @@ public class TrainingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Training compliance report</returns>
     [HttpGet("compliance-report")]
-    [Authorize(Policy = Policies.RequireHRRole)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(TrainingComplianceReportDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetTrainingComplianceReport(
@@ -182,6 +177,7 @@ public class TrainingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created skill record</returns>
     [HttpPost("employees/{employeeId:guid}/skills")]
+    [RequirePermission(EmployeePermissions.TrainingRead, ResourcePathTemplate = "employee/{employeeId}/training")]
     [ProducesResponseType(typeof(EmployeeSkillDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -190,16 +186,6 @@ public class TrainingController : ControllerBase
         [FromBody] CreateSkillDto skillDto,
         CancellationToken cancellationToken)
     {
-        // Employees can create skills for themselves; Managers can create for their team; HR can create for anyone
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to create skill for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var skill = new Skill
         {
             Id = Guid.NewGuid(),
@@ -252,23 +238,32 @@ public class TrainingController : ControllerBase
         [FromBody] UpdateSkillDto updateDto,
         CancellationToken cancellationToken)
     {
-        // Check authorization - employees can update their own skills; HR/Managers can update anyone's
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Manager))
+        var existingSkill = await _skillRepository.GetByIdAsync(skillId, cancellationToken);
+        if (existingSkill == null)
         {
-            // Check if the skill belongs to the current user
-            var existingSkill = await _skillRepository.GetByIdAsync(skillId, cancellationToken);
-            if (existingSkill == null)
-            {
-                return NotFound(new { message = "Skill not found" });
-            }
+            return NotFound(new { message = "Skill not found" });
+        }
 
-            if (existingSkill.EmployeeId != _currentUserService.EmployeeId)
-            {
-                _logger.LogWarning("User {EmployeeId} attempted to update skill {SkillId} belonging to {OwnerId}",
-                    _currentUserService.EmployeeId, skillId, existingSkill.EmployeeId);
-                return Forbid();
-            }
+        // Check authorization via IAM - employees can update their own skills; HR/Managers can update anyone's
+        // This is handled by checking permission against the specific employee resource path
+        var principalId = _currentUserService.PrincipalId;
+
+        if (principalId == null)
+        {
+            return Unauthorized();
+        }
+
+        var hasPermission = await _iamClient.CheckPermissionAsync(
+            principalId.Value.ToString(),
+            EmployeePermissions.TrainingRead,
+            $"employee/{existingSkill.EmployeeId}/training",
+            cancellationToken);
+
+        if (!hasPermission)
+        {
+            _logger.LogWarning("User {PrincipalId} attempted to update skill {SkillId} belonging to {OwnerId} without permission",
+                principalId, skillId, existingSkill.EmployeeId);
+            return Forbid();
         }
 
         try
@@ -283,8 +278,8 @@ public class TrainingController : ControllerBase
 
             var updatedSkill = await _updateSkillHandler.HandleAsync(command, cancellationToken);
 
-            _logger.LogInformation("Skill {SkillId} updated by user {UserId}",
-                skillId, _currentUserService.EmployeeId);
+            _logger.LogInformation("Skill {SkillId} updated by user {PrincipalId}",
+                skillId, _currentUserService.PrincipalId);
 
             return Ok(new { message = "Skill updated successfully" });
         }
@@ -305,23 +300,13 @@ public class TrainingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of skills</returns>
     [HttpGet("employees/{employeeId:guid}/skills")]
+    [RequirePermission(EmployeePermissions.TrainingRead, ResourcePathTemplate = "employee/{employeeId}/training")]
     [ProducesResponseType(typeof(List<EmployeeSkillDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetSkills(
         Guid employeeId,
         CancellationToken cancellationToken)
     {
-        // Employees can view their own skills; HR/Admin/Managers can view their team
-        if (!_currentUserService.IsInRole(Roles.HR) &&
-            !_currentUserService.IsInRole(Roles.Admin) &&
-            !_currentUserService.IsInRole(Roles.Manager) &&
-            _currentUserService.EmployeeId != employeeId)
-        {
-            _logger.LogWarning("User {EmployeeId} attempted to view skills for {TargetEmployeeId}",
-                _currentUserService.EmployeeId, employeeId);
-            return Forbid();
-        }
-
         var skills = await _skillRepository.GetByEmployeeIdAsync(employeeId, cancellationToken);
 
         var skillDtos = skills.Select(s => new EmployeeSkillDto

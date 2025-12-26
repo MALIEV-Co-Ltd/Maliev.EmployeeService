@@ -1,6 +1,5 @@
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Api.HealthChecks;
-using Maliev.EmployeeService.Api.Middleware;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Infrastructure.Authentication;
 using Maliev.EmployeeService.Infrastructure.Data;
@@ -8,7 +7,10 @@ using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 using Maliev.EmployeeService.Infrastructure.ExternalServices;
 using Maliev.EmployeeService.Infrastructure.Messaging;
 using Maliev.EmployeeService.Infrastructure.Security;
+using Maliev.EmployeeService.Infrastructure.IAM;
+using Maliev.EmployeeService.Infrastructure.Scripts;
 using Microsoft.EntityFrameworkCore;
+using Maliev.Aspire.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,13 +19,18 @@ builder.AddGoogleSecretManagerVolume(); // Load secrets from /mnt/secrets if ava
 
 // --- Infrastructure & Observability ---
 builder.AddServiceDefaults(); // OpenTelemetry, health checks, resilience
+builder.AddStandardMiddleware(options =>
+{
+    options.EnableRequestLogging = true;
+});
 builder.AddServiceMeters("employees-meter"); // Register service meters for OpenTelemetry business metrics
+builder.AddIAMServiceClient(); // IAM service client for permission resolution and resource-scoped authorization
 
 builder.AddRedisDistributedCache(instanceName: "employee:"); // Redis with in-memory fallback
 builder.AddMassTransitWithRabbitMq(); // RabbitMQ message bus (non-blocking startup)
 
 builder.AddPostgresDbContext<EmployeeDbContext>(
-    connectionStringName: "EmployeeDbContext",
+    connectionName: "EmployeeDbContext",
     configureOptions: options =>
     {
         options.ConfigureWarnings(warnings =>
@@ -40,17 +47,9 @@ builder.AddJwtAuthentication(); // JWT Bearer authentication with RSA public key
 // Add OpenAPI (must be in Program.cs for XML comments to work via source generator)
 if (!builder.Environment.IsProduction())
 {
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddOpenApi("v1", options =>
-    {
-        options.AddDocumentTransformer((document, context, cancellationToken) =>
-        {
-            document.Info.Title = "MALIEV Employee Service API";
-            document.Info.Version = "v1";
-            document.Info.Description = "Comprehensive employee management service. Supports self-service profile updates, emergency contacts, leave management with approval workflows, compensation tracking, performance reviews, training records, department and team organization, work authorization, and onboarding/offboarding processes.";
-            return Task.CompletedTask;
-        });
-    });
+    builder.AddStandardOpenApi(
+        title: "MALIEV Employee Service API",
+        description: "Comprehensive employee management service. Supports self-service profile updates, emergency contacts, leave management with approval workflows, compensation tracking, performance reviews, training records, department and team organization, work authorization, and onboarding/offboarding processes.");
 }
 
 // Core Services
@@ -107,9 +106,10 @@ builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompress
 
 // Core application services
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-builder.Services.AddSingleton<AuditLogInterceptor>();
-builder.Services.AddSingleton<DatabaseMetricsInterceptor>();
-builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<AuditLogInterceptor>();
+builder.Services.AddScoped<DatabaseMetricsInterceptor>();
+builder.Services.AddScoped<ICacheService, Maliev.EmployeeService.Infrastructure.Services.RedisCacheService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Repository and Unit of Work
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Maliev.EmployeeService.Infrastructure.Repositories.Repository<>));
@@ -203,6 +203,9 @@ builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.BulkSalar
 // Business Metrics Service
 builder.Services.AddScoped<Maliev.EmployeeService.Application.Services.BusinessMetricsService>();
 
+// Migration Script (US1)
+builder.Services.AddScoped<MigrateEmployeesToPrincipalsScript>();
+
 // Integration Event Publisher
 builder.Services.AddScoped<IntegrationEventPublisher>();
 builder.Services.AddScoped<IEventPublisher, ResilientIntegrationEventPublisher>();
@@ -229,55 +232,31 @@ builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.Backgrou
 builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.BackgroundServices.ExpiredWorkAuthorizationFlaggingService>();
 builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.BackgroundServices.MetricsUpdateBackgroundService>();
 
+// IAM Registration Service
+builder.Services.AddIAMRegistration<Maliev.EmployeeService.Api.Services.EmployeeIAMRegistrationService>();
+
 // HTTP Clients for External Services
-builder.Services.Configure<CareerServiceOptions>(builder.Configuration.GetSection("ExternalServices:CareerService"));
-builder.Services.AddHttpClient<ICareerServiceClient, CareerServiceClient>((sp, client) =>
-{
-    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CareerServiceOptions>>().Value;
-    if (!string.IsNullOrEmpty(options.BaseUrl))
-    {
-        client.BaseAddress = new Uri(options.BaseUrl);
-        client.Timeout = TimeSpan.FromSeconds(options.TimeoutInSeconds);
-    }
-}).AddStandardResilienceHandler();
+builder.AddServiceClient<ICareerServiceClient, CareerServiceClient>("CareerService");
+builder.AddServiceClient<IUploadServiceClient, UploadServiceClient>("UploadService");
+builder.AddServiceClient<IIAMClient, IAMClient>("IAM");
 
-builder.Services.Configure<UploadServiceOptions>(builder.Configuration.GetSection("ExternalServices:UploadService"));
-builder.Services.AddHttpClient<IUploadServiceClient, UploadServiceClient>((sp, client) =>
-{
-    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<UploadServiceOptions>>().Value;
-    if (!string.IsNullOrEmpty(options.BaseUrl))
-    {
-        client.BaseAddress = new Uri(options.BaseUrl);
-        client.Timeout = TimeSpan.FromSeconds(options.TimeoutInSeconds);
-    }
-}).AddStandardResilienceHandler();
+// Authorization
+builder.Services.AddPermissionAuthorization();
 
-// Authorization Policies
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(Policies.RequireAdminRole, policy =>
-        policy.RequireRole(Roles.Admin));
-
-    options.AddPolicy(Policies.RequireHRRole, policy =>
-        policy.RequireRole(Roles.HR));
-
-    options.AddPolicy(Policies.RequireManagerRole, policy =>
-        policy.RequireRole(Roles.Manager));
-
-    options.AddPolicy(Policies.RequireEmployeeRole, policy =>
-        policy.RequireRole(Roles.Employee));
-
-    options.AddPolicy(Policies.RequireHROrManager, policy =>
-        policy.RequireRole(Roles.HR, Roles.Manager));
-
-    options.AddPolicy(Policies.RequireHROrAdmin, policy =>
-        policy.RequireRole(Roles.HR, Roles.Admin));
-});
-
-// Custom authorization handler
+// Custom authorization handler for resource-based access
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Maliev.EmployeeService.Api.Security.ResourceAuthorizationHandler>();
 
 var app = builder.Build();
+
+// CLI Commands (US1)
+if (args.Contains("--migrate-principals"))
+{
+    using var scope = app.Services.CreateScope();
+    var script = scope.ServiceProvider.GetRequiredService<MigrateEmployeesToPrincipalsScript>();
+    await script.ExecuteAsync();
+    return;
+}
+
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 // Run database migrations on startup
@@ -297,9 +276,7 @@ System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev
 System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
 
 // Middleware Pipeline
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseCorrelationId();
-app.UseSecurityHeaders();
+app.UseStandardMiddleware();
 
 if (app.Environment.IsProduction())
 {

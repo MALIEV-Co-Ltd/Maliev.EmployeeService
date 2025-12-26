@@ -27,6 +27,7 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"MGR{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {
@@ -48,6 +49,7 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {
@@ -193,6 +195,7 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"MGR{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {
@@ -214,6 +217,7 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {
@@ -330,6 +334,7 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"MGR{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {
@@ -351,6 +356,7 @@ public class LeaveRequestWorkflowE2ETests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {

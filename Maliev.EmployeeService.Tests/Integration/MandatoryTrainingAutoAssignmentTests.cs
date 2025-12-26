@@ -6,6 +6,7 @@ using Maliev.EmployeeService.Domain.ValueObjects;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -58,18 +59,25 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var fakeEventPublisher = new FakeEventPublisher();
 
         // Initialize AssignMandatoryTrainingCommandHandler first
-        var mockLogger2 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
+        var mockLogger2 = new Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
         var assignTrainingHandler = new AssignMandatoryTrainingCommandHandler(
             employeeRepository,
             mandatoryTrainingRepository,
             mockLogger2.Object);
 
         // Initialize CreateEmployeeCommandHandler with AssignMandatoryTrainingCommandHandler
-        var mockLogger1 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockLogger1 = new Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockIAMClient = new Mock<Maliev.EmployeeService.Application.Interfaces.IIAMClient>();
+        mockIAMClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        var mockConfig = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+
         var createEmployeeHandler = new CreateEmployeeCommandHandler(
             employeeRepository,
             departmentRepository,
             fakeCareerServiceClient,
+            mockIAMClient.Object,
+            mockConfig.Object,
             unitOfWork,
             fakeCurrentUserService,
             fakeEventPublisher,
@@ -148,18 +156,25 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var fakeEventPublisher = new FakeEventPublisher();
 
         // Initialize AssignMandatoryTrainingCommandHandler first
-        var mockLogger2 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
+        var mockLogger2 = new Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
         var assignTrainingHandler = new AssignMandatoryTrainingCommandHandler(
             employeeRepository,
             mandatoryTrainingRepository,
             mockLogger2.Object);
 
         // Initialize CreateEmployeeCommandHandler with AssignMandatoryTrainingCommandHandler
-        var mockLogger1 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockLogger1 = new Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockIAMClient = new Mock<Maliev.EmployeeService.Application.Interfaces.IIAMClient>();
+        mockIAMClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        var mockConfig = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+
         var createEmployeeHandler = new CreateEmployeeCommandHandler(
             employeeRepository,
             departmentRepository,
             fakeCareerServiceClient,
+            mockIAMClient.Object,
+            mockConfig.Object,
             unitOfWork,
             fakeCurrentUserService,
             fakeEventPublisher,
@@ -247,18 +262,25 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var fakeEventPublisher = new FakeEventPublisher();
 
         // Initialize AssignMandatoryTrainingCommandHandler first
-        var mockLogger2 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
+        var mockLogger2 = new Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
         var assignTrainingHandler = new AssignMandatoryTrainingCommandHandler(
             employeeRepository,
             mandatoryTrainingRepository,
             mockLogger2.Object);
 
         // Initialize CreateEmployeeCommandHandler with AssignMandatoryTrainingCommandHandler
-        var mockLogger1 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockLogger1 = new Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockIAMClient = new Mock<Maliev.EmployeeService.Application.Interfaces.IIAMClient>();
+        mockIAMClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        var mockConfig = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+
         var createEmployeeHandler = new CreateEmployeeCommandHandler(
             employeeRepository,
             departmentRepository,
             fakeCareerServiceClient,
+            mockIAMClient.Object,
+            mockConfig.Object,
             unitOfWork,
             fakeCurrentUserService,
             fakeEventPublisher,
@@ -318,18 +340,25 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var fakeEventPublisher = new FakeEventPublisher();
 
         // Initialize AssignMandatoryTrainingCommandHandler first
-        var mockLogger2 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
+        var mockLogger2 = new Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
         var assignTrainingHandler = new AssignMandatoryTrainingCommandHandler(
             employeeRepository,
             mandatoryTrainingRepository,
             mockLogger2.Object);
 
         // Initialize CreateEmployeeCommandHandler with AssignMandatoryTrainingCommandHandler
-        var mockLogger1 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockLogger1 = new Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockIAMClient = new Mock<Maliev.EmployeeService.Application.Interfaces.IIAMClient>();
+        mockIAMClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        var mockConfig = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+
         var createEmployeeHandler = new CreateEmployeeCommandHandler(
             employeeRepository,
             departmentRepository,
             fakeCareerServiceClient,
+            mockIAMClient.Object,
+            mockConfig.Object,
             unitOfWork,
             fakeCurrentUserService,
             fakeEventPublisher,
@@ -414,18 +443,25 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var fakeEventPublisher = new FakeEventPublisher();
 
         // Initialize AssignMandatoryTrainingCommandHandler first
-        var mockLogger2 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
+        var mockLogger2 = new Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
         var assignTrainingHandler = new AssignMandatoryTrainingCommandHandler(
             employeeRepository,
             mandatoryTrainingRepository,
             mockLogger2.Object);
 
         // Initialize CreateEmployeeCommandHandler with AssignMandatoryTrainingCommandHandler
-        var mockLogger1 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockLogger1 = new Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockIAMClient = new Mock<Maliev.EmployeeService.Application.Interfaces.IIAMClient>();
+        mockIAMClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        var mockConfig = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+
         var createEmployeeHandler = new CreateEmployeeCommandHandler(
             employeeRepository,
             departmentRepository,
             fakeCareerServiceClient,
+            mockIAMClient.Object,
+            mockConfig.Object,
             unitOfWork,
             fakeCurrentUserService,
             fakeEventPublisher,
@@ -511,18 +547,25 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
         var fakeEventPublisher = new FakeEventPublisher();
 
         // Initialize AssignMandatoryTrainingCommandHandler first
-        var mockLogger2 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
+        var mockLogger2 = new Mock<Microsoft.Extensions.Logging.ILogger<AssignMandatoryTrainingCommandHandler>>();
         var assignTrainingHandler = new AssignMandatoryTrainingCommandHandler(
             employeeRepository,
             mandatoryTrainingRepository,
             mockLogger2.Object);
 
         // Initialize CreateEmployeeCommandHandler with AssignMandatoryTrainingCommandHandler
-        var mockLogger1 = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockLogger1 = new Mock<Microsoft.Extensions.Logging.ILogger<CreateEmployeeCommandHandler>>();
+        var mockIAMClient = new Mock<Maliev.EmployeeService.Application.Interfaces.IIAMClient>();
+        mockIAMClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        var mockConfig = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+
         var createEmployeeHandler = new CreateEmployeeCommandHandler(
             employeeRepository,
             departmentRepository,
             fakeCareerServiceClient,
+            mockIAMClient.Object,
+            mockConfig.Object,
             unitOfWork,
             fakeCurrentUserService,
             fakeEventPublisher,
@@ -560,6 +603,8 @@ public class MandatoryTrainingAutoAssignmentTests : PostgreSqlIntegrationTestBas
 // Fake implementations for testing
 internal class FakeCurrentUserService : Maliev.EmployeeService.Application.Interfaces.ICurrentUserService
 {
+    public Guid? PrincipalId => Guid.NewGuid();
+    public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(Guid.NewGuid());
     public Guid? EmployeeId => Guid.NewGuid();
     public string? Email => "test@example.com";
     public IEnumerable<string> Roles => new[] { "HR" };

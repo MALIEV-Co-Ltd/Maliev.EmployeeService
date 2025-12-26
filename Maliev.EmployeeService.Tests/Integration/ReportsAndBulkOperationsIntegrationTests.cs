@@ -7,12 +7,16 @@ using Maliev.EmployeeService.Infrastructure.Data;
 using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
 /// <summary>
-/// Integration tests for Reports & Bulk Operations (User Story 12)
+/// Integration tests for Reports and Bulk Operations (User Story 12)
 /// T375-T379: Headcount reports, turnover analysis, bulk salary increase, employee search
 /// </summary>
 public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTestBase
@@ -46,6 +50,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -59,6 +64,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -71,6 +77,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP003",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -83,6 +90,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP004",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.Contractor,
@@ -102,7 +110,18 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
 
         // Act
         var employeeRepository = new EmployeeRepository(Context);
-        var handler = new GetHeadcountReportQueryHandler(employeeRepository);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var handler = new GetHeadcountReportQueryHandler(
+            employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var result = await handler.HandleAsync(new GetHeadcountReportQuery
         {
@@ -159,6 +178,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -170,6 +190,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -181,6 +202,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP003",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -193,6 +215,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP004",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 EmploymentType = EmploymentType.FullTime,
@@ -209,7 +232,18 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
 
         // Act
         var employeeRepository = new EmployeeRepository(Context);
-        var handler = new GetTurnoverAnalysisQueryHandler(employeeRepository);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var handler = new GetTurnoverAnalysisQueryHandler(
+            employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var result = await handler.HandleAsync(new GetTurnoverAnalysisQuery
         {
@@ -261,6 +295,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -272,6 +307,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -315,12 +351,21 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         var compensationRepository = new CompensationRepository(Context, EncryptionService);
         var bulkJobRepository = new BulkJobRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
 
         var handler = new BulkSalaryIncreaseCommandHandler(
             employeeRepository,
             compensationRepository,
             bulkJobRepository,
-            unitOfWork);
+            unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var result = await handler.HandleAsync(new BulkSalaryIncreaseCommand
         {
@@ -383,6 +428,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -396,6 +442,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -409,6 +456,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP003",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -426,7 +474,18 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
 
         // Act - Search by department and title
         var employeeRepository = new EmployeeRepository(Context);
-        var handler = new SearchEmployeesQueryHandler(employeeRepository);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var handler = new SearchEmployeesQueryHandler(
+            employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var result = await handler.HandleAsync(new SearchEmployeesQuery
         {
@@ -462,6 +521,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
         var employees = Enumerable.Range(1, 25).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{i:000}",
             EmploymentStatus = EmploymentStatus.Active,
             EmploymentType = EmploymentType.FullTime,
@@ -476,7 +536,18 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
 
         // Act - Get page 2 with page size 10
         var employeeRepository = new EmployeeRepository(Context);
-        var handler = new SearchEmployeesQueryHandler(employeeRepository);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var handler = new SearchEmployeesQueryHandler(
+            employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var result = await handler.HandleAsync(new SearchEmployeesQuery
         {
@@ -520,6 +591,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -532,6 +604,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -544,6 +617,7 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "EMP003",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 EmploymentType = EmploymentType.FullTime,
@@ -560,7 +634,18 @@ public class ReportsAndBulkOperationsIntegrationTests : PostgreSqlIntegrationTes
 
         // Act
         var employeeRepository = new EmployeeRepository(Context);
-        var handler = new GetHeadcountReportQueryHandler(employeeRepository);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var handler = new GetHeadcountReportQueryHandler(
+            employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
 
         var result = await handler.HandleAsync(new GetHeadcountReportQuery
         {

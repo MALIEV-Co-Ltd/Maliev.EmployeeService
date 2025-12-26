@@ -1,10 +1,11 @@
 using Asp.Versioning;
 
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -52,7 +53,7 @@ public class OnboardingOffboardingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Success result</returns>
     [HttpPost("employees/{employeeId:guid}/onboarding/start")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.OnboardingManage)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -93,7 +94,7 @@ public class OnboardingOffboardingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Onboarding status with checklist</returns>
     [HttpGet("employees/{employeeId:guid}/onboarding/status")]
-    [Authorize]
+    [RequirePermission(EmployeePermissions.OnboardingManage, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetOnboardingStatus(
@@ -165,7 +166,7 @@ public class OnboardingOffboardingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Success result</returns>
     [HttpPost("employees/{employeeId:guid}/offboarding/start")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.OnboardingManage)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -224,7 +225,7 @@ public class OnboardingOffboardingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Offboarding status with checklist and paycheck release status</returns>
     [HttpGet("employees/{employeeId:guid}/offboarding/status")]
-    [Authorize]
+    [RequirePermission(EmployeePermissions.OnboardingManage, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetOffboardingStatus(

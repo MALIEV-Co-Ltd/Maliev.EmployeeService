@@ -1,6 +1,9 @@
-using Maliev.EmployeeService.Application.DTOs;
-using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Application.DTOs;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -23,16 +26,22 @@ public class CreateDepartmentCommandHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
 
     public CreateDepartmentCommandHandler(
         IDepartmentRepository departmentRepository,
         IEmployeeRepository employeeRepository,
         IUnitOfWork unitOfWork,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService)
     {
         _departmentRepository = departmentRepository;
         _employeeRepository = employeeRepository;
         _unitOfWork = unitOfWork;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
     }
 
@@ -40,6 +49,14 @@ public class CreateDepartmentCommandHandler
         CreateDepartmentCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have DepartmentsManage permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.DepartmentsManage, "employee/departments", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to manage departments");
+        }
+
         var dto = command.DepartmentData;
 
         // Validate parent department exists if provided
@@ -104,7 +121,7 @@ public class CreateDepartmentCommandHandler
             CostCenter = dto.CostCenter,
             HeadcountLimit = dto.HeadcountLimit,
             IsActive = true,
-            CreatedBy = _currentUserService.EmployeeId,
+            CreatedBy = _currentUserService.PrincipalId,
             CreatedDate = DateTime.UtcNow
         };
 

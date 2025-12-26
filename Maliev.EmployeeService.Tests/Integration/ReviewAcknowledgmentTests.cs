@@ -29,6 +29,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Manager", LastName = "User" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "manager@company.com" },
@@ -41,6 +42,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "test@company.com" },
@@ -73,7 +75,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(employeeId);
 
         var handler = new AcknowledgePerformanceReviewCommandHandler(
             performanceReviewRepository,
@@ -109,7 +111,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var nonExistentReviewId = Guid.NewGuid();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(employeeId);
 
         var handler = new AcknowledgePerformanceReviewCommandHandler(
             performanceReviewRepository,
@@ -140,6 +142,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Manager", LastName = "User" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "manager2@company.com" },
@@ -152,6 +155,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeA,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMPA",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "EmployeeA" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "testA@company.com" },
@@ -184,7 +188,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeB);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(employeeB);
 
         var handler = new AcknowledgePerformanceReviewCommandHandler(
             performanceReviewRepository,
@@ -219,6 +223,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR003",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Manager", LastName = "User" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "manager3@company.com" },
@@ -231,6 +236,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee2" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "test2@company.com" },
@@ -264,7 +270,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(employeeId);
 
         var handler = new AcknowledgePerformanceReviewCommandHandler(
             performanceReviewRepository,
@@ -298,6 +304,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR004",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Manager", LastName = "User" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "manager4@company.com" },
@@ -310,6 +317,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee3" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "test3@company.com" },
@@ -339,7 +347,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(employeeId);
 
         var handler = new AcknowledgePerformanceReviewCommandHandler(
             performanceReviewRepository,
@@ -370,6 +378,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR005",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Manager", LastName = "User" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "manager5@company.com" },
@@ -382,6 +391,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var employee1 = new Employee
         {
             Id = employee1Id,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee1" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "test1@company.com" },
@@ -394,6 +404,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         var employee2 = new Employee
         {
             Id = employee2Id,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee2" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "test2b@company.com" },
@@ -441,7 +452,7 @@ public class ReviewAcknowledgmentTests : PostgreSqlIntegrationTestBase
         Context.ChangeTracker.Clear();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employee1Id);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(employee1Id);
 
         var handler = new AcknowledgePerformanceReviewCommandHandler(
             performanceReviewRepository,

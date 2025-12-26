@@ -1,9 +1,10 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Api.Authorization;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -54,7 +55,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Headcount report</returns>
     [HttpGet("headcount")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(HeadcountReportDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<HeadcountReportDto>> GetHeadcountReport(
         [FromQuery] DateTime? asOfDate,
@@ -80,7 +81,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Turnover analysis report</returns>
     [HttpGet("turnover")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(TurnoverAnalysisDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TurnoverAnalysisDto>> GetTurnoverAnalysis(
@@ -126,7 +127,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paginated search results</returns>
     [HttpGet("employees/search")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(EmployeeSearchResultDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<EmployeeSearchResultDto>> SearchEmployees(
         [FromQuery] string? name,
@@ -169,7 +170,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Diversity metrics report</returns>
     [HttpGet("diversity")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(DiversityMetricsDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<DiversityMetricsDto>> GetDiversityMetrics(
         [FromQuery] DateTime? asOfDate,
@@ -196,7 +197,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Compensation analysis report</returns>
     [HttpGet("compensation")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.CompensationRead, IsCritical = true, AuditPurpose = "Compensation Reporting")]
     [ProducesResponseType(typeof(CompensationAnalysisDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<CompensationAnalysisDto>> GetCompensationAnalysis(
         [FromQuery] DateTime? asOfDate,
@@ -223,7 +224,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Span of control report</returns>
     [HttpGet("span-of-control")]
-    [Authorize(Policy = Policies.RequireHROrAdmin)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(SpanOfControlReportDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<SpanOfControlReportDto>> GetSpanOfControlReport(
         [FromQuery] Guid? departmentId,
@@ -248,7 +249,7 @@ public class ReportsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Leave utilization report</returns>
     [HttpGet("leave-utilization")]
-    [Authorize(Policy = Policies.RequireHROrManager)]
+    [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(LeaveUtilizationReportDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<LeaveUtilizationReportDto>> GetLeaveUtilizationReport(
         [FromQuery] int? year,

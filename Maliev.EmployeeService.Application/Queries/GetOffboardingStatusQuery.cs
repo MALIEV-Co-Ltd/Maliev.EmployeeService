@@ -1,4 +1,7 @@
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -19,15 +22,24 @@ public class GetOffboardingStatusQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IOffboardingRepository _offboardingRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<GetOffboardingStatusQueryHandler> _logger;
 
     public GetOffboardingStatusQueryHandler(
         IEmployeeRepository employeeRepository,
         IOffboardingRepository offboardingRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ILogger<GetOffboardingStatusQueryHandler> logger)
     {
         _employeeRepository = employeeRepository;
         _offboardingRepository = offboardingRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
@@ -35,6 +47,15 @@ public class GetOffboardingStatusQueryHandler
         GetOffboardingStatusQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have OnboardingManage permission for this employee
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/{query.EmployeeId}/offboarding";
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.OnboardingManage, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view offboarding status for this employee");
+        }
+
         var employee = await _employeeRepository.GetByIdAsync(query.EmployeeId, cancellationToken);
         if (employee == null)
         {

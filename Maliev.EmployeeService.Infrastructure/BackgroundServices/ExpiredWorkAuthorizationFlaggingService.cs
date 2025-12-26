@@ -8,7 +8,7 @@ namespace Maliev.EmployeeService.Infrastructure.BackgroundServices;
 /// <summary>
 /// Background service that flags employees with expired work authorizations
 /// Runs daily at 1:00 AM to identify and log employees requiring urgent attention
-/// User Story 11 - Work Authorization & Visa Tracking
+/// User Story 11 - Work Authorization and Visa Tracking
 /// </summary>
 public class ExpiredWorkAuthorizationFlaggingService : BackgroundService
 {

@@ -46,7 +46,7 @@ public class AuditLogInterceptor : SaveChangesInterceptor
         if (context == null) return;
 
         var auditEntries = new List<AuditLog>();
-        var userId = _currentUserService.EmployeeId;
+        var userId = _currentUserService.PrincipalId; // Use PrincipalId instead of EmployeeId (US1)
         var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
         var purpose = GetAuditPurpose();
 

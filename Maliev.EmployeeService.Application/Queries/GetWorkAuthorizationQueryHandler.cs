@@ -1,5 +1,8 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -9,10 +12,20 @@ namespace Maliev.EmployeeService.Application.Queries;
 public class GetWorkAuthorizationQueryHandler
 {
     private readonly IWorkAuthorizationRepository _workAuthorizationRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetWorkAuthorizationQueryHandler(IWorkAuthorizationRepository workAuthorizationRepository)
+    public GetWorkAuthorizationQueryHandler(
+        IWorkAuthorizationRepository workAuthorizationRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _workAuthorizationRepository = workAuthorizationRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -22,6 +35,15 @@ public class GetWorkAuthorizationQueryHandler
         GetWorkAuthorizationQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have WorkAuthManage permission for this employee
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/{query.EmployeeId}/work-auth";
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.WorkAuthManage, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view work authorizations for this employee");
+        }
+
         var authorizations = await _workAuthorizationRepository.GetByEmployeeIdAsync(
             query.EmployeeId,
             query.IncludeInactive,

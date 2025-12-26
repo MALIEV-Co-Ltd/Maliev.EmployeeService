@@ -45,6 +45,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -55,6 +56,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -65,6 +67,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E003",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.PartTime,
@@ -75,6 +78,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E004",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 EmploymentType = EmploymentType.FullTime,
@@ -125,6 +129,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E001",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -136,6 +141,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E002",
                 EmploymentStatus = EmploymentStatus.Active,
                 EmploymentType = EmploymentType.FullTime,
@@ -148,6 +154,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E003",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 EmploymentType = EmploymentType.FullTime,
@@ -160,6 +167,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E004",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 EmploymentType = EmploymentType.FullTime,
@@ -201,6 +209,7 @@ public class BusinessMetricsServiceTests
             new Employee // Terminated employee should not count
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E007",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 Department = dept1,
@@ -237,6 +246,7 @@ public class BusinessMetricsServiceTests
             new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = "E003",
                 EmploymentStatus = EmploymentStatus.Terminated,
                 Department = department,
@@ -374,6 +384,7 @@ public class BusinessMetricsServiceTests
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             EmploymentStatus = EmploymentStatus.Active,
             EmploymentType = EmploymentType.FullTime,

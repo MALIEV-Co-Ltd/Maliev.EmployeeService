@@ -1,6 +1,9 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -13,18 +16,30 @@ public class GetLeaveUtilizationReportQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ILeaveBalanceRepository _leaveBalanceRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
     ///<summary>
     /// Initializes a new instance of the <see cref="GetLeaveUtilizationReportQueryHandler"/> class.
     /// </summary>
     /// <param name="employeeRepository">The employee repository.</param>
     /// <param name="leaveBalanceRepository">The leave balance repository.</param>
+    /// <param name="iamClient">The IAM service client for authorization checks.</param>
+    /// <param name="configuration">The configuration provider.</param>
+    /// <param name="currentUserService">The service to access information about the current user.</param>
     public GetLeaveUtilizationReportQueryHandler(
         IEmployeeRepository employeeRepository,
-        ILeaveBalanceRepository leaveBalanceRepository)
+        ILeaveBalanceRepository leaveBalanceRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _employeeRepository = employeeRepository;
         _leaveBalanceRepository = leaveBalanceRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     ///<summary>
@@ -37,6 +52,14 @@ public class GetLeaveUtilizationReportQueryHandler
         GetLeaveUtilizationReportQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have ReportsView permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) ||
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/leave-utilization", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view leave utilization reports");
+        }
+
         var year = query.Year ?? DateTime.UtcNow.Year;
 
         // Get all leave balances for the specified year

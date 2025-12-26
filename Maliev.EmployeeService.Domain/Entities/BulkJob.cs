@@ -3,8 +3,8 @@ using Maliev.EmployeeService.Domain.Common;
 namespace Maliev.EmployeeService.Domain.Entities;
 
 /// <summary>
-/// Entity for tracking status of bulk/async operations
-/// User Story 12 - Reporting, Analytics & Bulk Operations
+/// Entity for tracking status of bulk and asynchronous operations.
+/// Related to User Story 12 - Reporting, Analytics and Bulk Operations.
 /// </summary>
 public class BulkJob : Entity
 {

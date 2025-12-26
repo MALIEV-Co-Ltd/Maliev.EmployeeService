@@ -2,6 +2,9 @@ using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
 using Moq;
 using Xunit;
 
@@ -17,6 +20,8 @@ public class CreatePerformanceReviewCommandHandlerTests
     private readonly Mock<IEmployeeRepository> _mockEmployeeRepository;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly CreatePerformanceReviewCommandHandler _handler;
 
     public CreatePerformanceReviewCommandHandlerTests()
@@ -25,13 +30,19 @@ public class CreatePerformanceReviewCommandHandlerTests
         _mockEmployeeRepository = new Mock<IEmployeeRepository>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new CreatePerformanceReviewCommandHandler(
             _mockPerformanceReviewRepository.Object,
             _mockEmployeeRepository.Object,
             _mockUnitOfWork.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
             _mockCurrentUserService.Object);
     }
 
@@ -382,7 +393,7 @@ public class CreatePerformanceReviewCommandHandlerTests
             CreatedDate = DateTime.UtcNow.AddYears(-2)
         };
 
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(currentUserId);
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(currentUserId);
 
         var command = new CreatePerformanceReviewCommand(
             employeeId,

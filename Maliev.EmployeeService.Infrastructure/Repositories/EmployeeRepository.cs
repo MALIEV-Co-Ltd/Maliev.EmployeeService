@@ -23,6 +23,13 @@ public class EmployeeRepository : Repository<Employee>, IEmployeeRepository
     }
 
     /// <inheritdoc/>
+    public async Task<Employee?> GetByPrincipalIdAsync(Guid principalId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(e => e.PrincipalId == principalId, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Employee?> GetWithEmergencyContactsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet

@@ -1,5 +1,7 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Services;
+using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Infrastructure.Data;
@@ -26,11 +28,19 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        // Default IAM to false, let specific tests override if needed
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -61,13 +71,13 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
 
         // Act
         var canAccessAsEmployee = await authorizationService.CanViewDocumentAsync(
-            otherUser, document, Role.Employee);
+            otherUser, document);
 
         var canAccessAsManager = await authorizationService.CanViewDocumentAsync(
-            otherUser, document, Role.Manager);
+            otherUser, document);
 
         var canAccessAsHR = await authorizationService.CanViewDocumentAsync(
-            otherUser, document, Role.HRGeneralist);
+            otherUser, document);
 
         // Assert
         Assert.True(canAccessAsEmployee); // public documents should be accessible by all employees
@@ -82,12 +92,16 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         // Arrange
         var documentOwner = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -97,6 +111,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var otherEmployee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -123,12 +138,18 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         Context.Documents.Add(document);
         await Context.SaveChangesAsync();
 
+        // Mock IAM: Owner has permission, Other doesn't
+        mockIamClient.Setup(x => x.CheckPermissionAsync(documentOwner.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(otherEmployee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         // Act
         var ownerCanAccess = await authorizationService.CanViewDocumentAsync(
-            documentOwner.Id, document, Role.Employee);
+            documentOwner.Id, document);
 
         var otherEmployeeCanAccess = await authorizationService.CanViewDocumentAsync(
-            otherEmployee.Id, document, Role.Employee);
+            otherEmployee.Id, document);
 
         // Assert
         Assert.True(ownerCanAccess); // document owner should be able to access their own document
@@ -142,12 +163,16 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         // Arrange
         var manager = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -157,6 +182,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP004",
             ManagerId = manager.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -167,6 +193,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var otherEmployee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -193,15 +220,23 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         Context.Documents.Add(document);
         await Context.SaveChangesAsync();
 
+        // Mock IAM: Owner and Manager have permission, Other doesn't
+        mockIamClient.Setup(x => x.CheckPermissionAsync(employee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(manager.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(otherEmployee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         // Act
         var employeeCanAccess = await authorizationService.CanViewDocumentAsync(
-            employee.Id, document, Role.Employee);
+            employee.Id, document);
 
         var managerCanAccess = await authorizationService.CanViewDocumentAsync(
-            manager.Id, document, Role.Manager);
+            manager.Id, document);
 
         var otherEmployeeCanAccess = await authorizationService.CanViewDocumentAsync(
-            otherEmployee.Id, document, Role.Employee);
+            otherEmployee.Id, document);
 
         // Assert
         Assert.True(employeeCanAccess); // employee should access their own manager-level document
@@ -216,12 +251,16 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         // Arrange
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP006",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -231,6 +270,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var hrGeneralist = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -240,6 +280,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var hrSpecialist = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -266,15 +307,23 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         Context.Documents.Add(document);
         await Context.SaveChangesAsync();
 
+        // Mock IAM: HR have permission, Regular doesn't
+        mockIamClient.Setup(x => x.CheckPermissionAsync(hrGeneralist.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(hrSpecialist.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(employee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         // Act
         var employeeCanAccess = await authorizationService.CanViewDocumentAsync(
-            employee.Id, document, Role.Employee);
+            employee.Id, document);
 
         var hrGeneralistCanAccess = await authorizationService.CanViewDocumentAsync(
-            hrGeneralist.Id, document, Role.HRGeneralist);
+            hrGeneralist.Id, document);
 
         var hrSpecialistCanAccess = await authorizationService.CanViewDocumentAsync(
-            hrSpecialist.Id, document, Role.HRSpecialist);
+            hrSpecialist.Id, document);
 
         // Assert
         Assert.False(employeeCanAccess); // regular employees should not access HR-only documents
@@ -289,12 +338,16 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         // Arrange
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP007",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -304,6 +357,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var hrGeneralist = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -313,6 +367,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var hrSpecialist = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -339,15 +394,23 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         Context.Documents.Add(document);
         await Context.SaveChangesAsync();
 
+        // Mock IAM: ONLY HR Specialist has permission
+        mockIamClient.Setup(x => x.CheckPermissionAsync(hrSpecialist.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(hrGeneralist.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(employee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         // Act
         var employeeCanAccess = await authorizationService.CanViewDocumentAsync(
-            employee.Id, document, Role.Employee);
+            employee.Id, document);
 
         var hrGeneralistCanAccess = await authorizationService.CanViewDocumentAsync(
-            hrGeneralist.Id, document, Role.HRGeneralist);
+            hrGeneralist.Id, document);
 
         var hrSpecialistCanAccess = await authorizationService.CanViewDocumentAsync(
-            hrSpecialist.Id, document, Role.HRSpecialist);
+            hrSpecialist.Id, document);
 
         // Assert
         Assert.False(employeeCanAccess); // regular employees should not access HR specialist-only documents
@@ -362,12 +425,16 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         // Arrange
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP008",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -377,6 +444,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var admin = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "ADMIN001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -421,11 +489,15 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         Context.Documents.AddRange(documents);
         await Context.SaveChangesAsync();
 
+        // Mock IAM: Admin has permission for all documents
+        mockIamClient.Setup(x => x.CheckPermissionAsync(admin.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
         // Act & Assert - System administrator should access all documents
         foreach (var document in documents)
         {
             var canAccess = await authorizationService.CanViewDocumentAsync(
-                admin.Id, document, Role.SystemAdministrator);
+                admin.Id, document);
 
             Assert.True(canAccess, $"system administrator should access document with {document.AccessLevel} access level");
         }
@@ -438,12 +510,16 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
-        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockLogger.Object);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var authorizationService = new DocumentAuthorizationService(employeeRepository, mockIamClient.Object, mockConfiguration.Object, mockLogger.Object);
 
         // Arrange
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP009",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -453,6 +529,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var otherEmployee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP010",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -479,12 +556,18 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         Context.Documents.Add(archivedDocument);
         await Context.SaveChangesAsync();
 
+        // Mock IAM: Owner has permission, Other doesn't
+        mockIamClient.Setup(x => x.CheckPermissionAsync(employee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionAsync(otherEmployee.Id.ToString(), EmployeePermissions.DocumentsRead, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
         // Act
         var ownerCanAccess = await authorizationService.CanViewDocumentAsync(
-            employee.Id, archivedDocument, Role.Employee);
+            employee.Id, archivedDocument);
 
         var otherEmployeeCanAccess = await authorizationService.CanViewDocumentAsync(
-            otherEmployee.Id, archivedDocument, Role.Employee);
+            otherEmployee.Id, archivedDocument);
 
         // Assert
         Assert.True(ownerCanAccess); // document owner should access their archived documents
