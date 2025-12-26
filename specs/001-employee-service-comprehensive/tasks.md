@@ -38,7 +38,7 @@
 - [X] T001 [SETUP] Create solution structure with 5 projects: `.Api`, `.Application`, `.Domain`, `.Infrastructure`, `.Tests` following CLAUDE.md template in `Maliev.EmployeeService/`
 - [X] T002 [P] [SETUP] Configure `.Api` project with ASP.NET Core 9.0 and required package references (Microsoft.AspNetCore.OpenApi 9.0.0, AspNetCore.HealthChecks.UI.Client 9.0.0, Microsoft.AspNetCore.Authentication.JwtBearer 9.0.8) in `Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj`
 - [X] T003 [P] [SETUP] Configure `.Infrastructure` project with Entity Framework Core 9.0.9 and Npgsql.EntityFrameworkCore.PostgreSQL 9.0.2 in `Maliev.EmployeeService.Infrastructure/Maliev.EmployeeService.Infrastructure.csproj`
-- [X] T004 [P] [SETUP] Configure `.Tests` project with xUnit, FluentAssertions 8.6.0, Moq 4.20.72 in `Maliev.EmployeeService.Tests/Maliev.EmployeeService.Tests.csproj`
+- [X] T004 [P] [SETUP] Configure `.Tests` project with xUnit, xUnit Assert, Moq 4.20.72 in `Maliev.EmployeeService.Tests/Maliev.EmployeeService.Tests.csproj`
 - [X] T005 [P] [SETUP] Setup Serilog configuration (console-only logging) in `Maliev.EmployeeService.Api/appsettings.json` and `appsettings.Development.json`
 - [X] T006 [P] [SETUP] Create `.gitignore` for .NET projects (exclude .vs/, bin/, obj/, *.user files)
 - [X] T007 [P] [SETUP] Create CI/CD workflow for develop branch in `.github/workflows/ci-develop.yml` following CLAUDE.md template
@@ -78,7 +78,7 @@
 - [X] T022 [FOUND] Implement `UnitOfWork` class coordinating repositories and SaveChanges in `Maliev.EmployeeService.Infrastructure/Data/UnitOfWork.cs`
 - [X] T023 [P] [FOUND] Create audit logging interceptor for EF Core to capture all data changes in `Maliev.EmployeeService.Infrastructure/Data/AuditLogInterceptor.cs`
 - [X] T024 [P] [FOUND] Implement global exception handling middleware in `Maliev.EmployeeService.Api/Middleware/ExceptionHandlingMiddleware.cs`
-- [X] T025 [P] [FOUND] Configure FluentValidation for request validation in `Maliev.EmployeeService.Api/Program.cs`
+- [X] T025 [P] [FOUND] Configure native .NET validation (DataAnnotations) for request validation in `Maliev.EmployeeService.Api/Program.cs`
 - [X] T026 [P] [FOUND] Setup health checks (liveness and readiness) in `Maliev.EmployeeService.Api/Program.cs` with `/employees/liveness` and `/employees/readiness` endpoints
 
 ### Career Service Integration (External Dependencies)
@@ -144,7 +144,7 @@
 - [x] T048 [P] [US1] Create `GetEmployeeProfileQuery` with handler returning full employee profile DTO in `Maliev.EmployeeService.Application/Queries/GetEmployeeProfileQuery.cs`
 - [x] T049 [P] [US1] Create `UpdateEmergencyContactCommand` with handler and validation in `Maliev.EmployeeService.Application/Commands/UpdateEmergencyContactCommand.cs`
 - [x] T050 [US1] Create `EmployeeProfileDto` with nested DTOs (ContactInformationDto, EmploymentDetailsDto, CompensationSummaryDto) in `Maliev.EmployeeService.Application/DTOs/EmployeeProfileDto.cs`
-- [x] T051 [P] [US1] Create FluentValidation validator for `UpdateEmergencyContactCommand` (phone or email required, international phone format) in `Maliev.EmployeeService.Application/Validators/UpdateEmergencyContactValidator.cs`
+- [x] T051 [P] [US1] Create native .NET validation (DataAnnotations) for `UpdateEmergencyContactCommand` (phone or email required, international phone format) in `Maliev.EmployeeService.Application/Validators/UpdateEmergencyContactValidator.cs`
 
 ### API Endpoints for US1
 
@@ -188,8 +188,8 @@
 - [x] T070 [P] [US2] Create `UpdateEmployeeCommand` with handler, optimistic concurrency handling, and field restrictions in `Maliev.EmployeeService.Application/Commands/UpdateEmployeeCommand.cs`
 - [x] T071 [P] [US2] Create `TransferDepartmentCommand` with handler that updates department, triggers access control update event in `Maliev.EmployeeService.Application/Commands/TransferDepartmentCommand.cs`
 - [x] T072 [P] [US2] Create `CreateDepartmentCommand` with handler and validation (prevent circular hierarchy) in `Maliev.EmployeeService.Application/Commands/CreateDepartmentCommand.cs`
-- [x] T073 [P] [US2] Create FluentValidation validator for `CreateEmployeeCommand` (required fields, date validations, manager exists, no circular relationship) in `Maliev.EmployeeService.Application/Validators/CreateEmployeeValidator.cs`
-- [x] T074 [P] [US2] Create FluentValidation validator for `UpdateEmployeeCommand` in `Maliev.EmployeeService.Application/Validators/UpdateEmployeeValidator.cs`
+- [x] T073 [P] [US2] Create native .NET validation (DataAnnotations) for `CreateEmployeeCommand` (required fields, date validations, manager exists, no circular relationship) in `Maliev.EmployeeService.Application/Validators/CreateEmployeeValidator.cs`
+- [x] T074 [P] [US2] Create native .NET validation (DataAnnotations) for `UpdateEmployeeCommand` in `Maliev.EmployeeService.Application/Validators/UpdateEmployeeValidator.cs`
 
 ### API Endpoints for US2
 
@@ -294,7 +294,7 @@
 - [x] T117 [P] [US4] Create `DenyLeaveRequestCommand` with handler releasing pending balance (Pending -= TotalDays) in `Maliev.EmployeeService.Application/Commands/DenyLeaveRequestCommand.cs`
 - [x] T118 [P] [US4] Create `GetLeaveBalanceQuery` with handler returning all balances for employee (AnnualLeave, SickLeave, ParentalLeave) per FR-034 in `Maliev.EmployeeService.Application/Queries/GetLeaveBalanceQuery.cs`
 - [x] T119a [US4] Implement `LeaveAccrualService` with tenure-based accrual calculation matching test expectations (T131) in `Maliev.EmployeeService.Application/Services/LeaveAccrualService.cs`
-- [x] T120 [P] [US4] Create FluentValidation validator for `SubmitLeaveRequestCommand` (StartDate < EndDate, balance >= TotalDays, not in blackout period, notice >= 30 days) in `Maliev.EmployeeService.Application/Validators/SubmitLeaveRequestValidator.cs`
+- [x] T120 [P] [US4] Create native .NET validation (DataAnnotations) for `SubmitLeaveRequestCommand` (StartDate < EndDate, balance >= TotalDays, not in blackout period, notice >= 30 days) in `Maliev.EmployeeService.Application/Validators/SubmitLeaveRequestValidator.cs`
 
 ### Background Jobs for US4 (Native .NET BackgroundService)
 
@@ -920,7 +920,7 @@
 # Launch all setup tasks in parallel (different files, no dependencies):
 Task: "Configure .Api project with ASP.NET Core 9.0 packages"
 Task: "Configure .Infrastructure project with EF Core packages"
-Task: "Configure .Tests project with xUnit and FluentAssertions"
+Task: "Configure .Tests project with xUnit and standard xUnit Assert"
 Task: "Setup Serilog configuration"
 Task: "Create .gitignore"
 Task: "Create CI/CD workflow for develop"

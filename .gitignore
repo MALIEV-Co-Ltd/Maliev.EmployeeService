@@ -118,9 +118,15 @@ Migrations/backup/
 
 # Don't ignore these directories (they are part of spec workflow)
 !.claude/
+!.gemini/
 !.specify/
 !.github/
 !specs/
+
+# Ignore local tool settings
+.claude/settings.local.json
+.gemini/settings.local.json
+.specify/settings.local.json
 
 # Temporary/debug files
 *.bak
@@ -139,3 +145,8 @@ docker-compose.dev.yml
 *SUMMARY*.md
 *AUDIT*.md
 *.Improvements.md
+
+# Test Outputs
+*test-output.txt
+*_error.txt
+

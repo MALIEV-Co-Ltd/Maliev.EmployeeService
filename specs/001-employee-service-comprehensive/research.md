@@ -386,7 +386,7 @@ public async Task<EmployeeProfileDto> GetEmployeeProfileAsync(Guid id)
 - **ASP.NET Core 9.0**: Latest LTS, high performance, built-in DI, middleware pipeline
 - **Entity Framework Core 9.0**: ORM with migrations, LINQ support, change tracking
 - **MediatR**: CQRS implementation, request/response pipeline
-- **FluentValidation**: Command/query input validation
+- **Native .NET Validation**: Standard DataAnnotations validation
 
 ### Database
 - **PostgreSQL 16**: ACID compliance, JSON support, full-text search, robust indexing
@@ -407,7 +407,7 @@ public async Task<EmployeeProfileDto> GetEmployeeProfileAsync(Guid id)
 
 ### Testing
 - **xUnit**: Unit testing framework
-- **FluentAssertions**: Readable test assertions
+- **Native .NET Assertions**: standard xUnit Assertions
 - **Moq**: Mocking framework for dependencies
 - **Testcontainers**: Integration testing with real PostgreSQL and RabbitMQ
 

@@ -579,7 +579,7 @@ Base manifests located in `maliev-gitops/3-apps/employee-service/`:
 
 ### Input Validation
 
-- FluentValidation for all DTOs
+- Standard .NET DataAnnotations for all DTOs
 - Global input sanitization filter (XSS prevention)
 - SQL injection prevention via parameterized queries (EF Core)
 
