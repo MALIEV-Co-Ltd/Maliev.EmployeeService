@@ -50,7 +50,7 @@ public class GetDiversityMetricsQueryHandler
     {
         // Authorization check: User must have ReportsView permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/diversity", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view diversity metrics reports");

@@ -60,7 +60,7 @@ public class CreatePerformanceReviewCommandHandler
     {
         // Authorization check: User must have PerformanceCreate permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.PerformanceCreate, $"employee/{command.EmployeeId}", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to create a performance review for this employee");

@@ -41,7 +41,7 @@ public class GetBulkJobStatusQueryHandler
         // Authorization check: User must have AdminBackgroundJobs permission
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/bulk-jobs/{query.JobId}";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.AdminBackgroundJobs, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view bulk job status");

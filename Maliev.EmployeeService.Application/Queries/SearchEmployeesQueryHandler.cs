@@ -51,7 +51,7 @@ public class SearchEmployeesQueryHandler
     {
         // Authorization check: User must have EmployeeSearch permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.EmployeeSearch, "employee/search", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to search employees");

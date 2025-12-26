@@ -24,7 +24,7 @@ public class EmployeeAuthController : ControllerBase
     /// Initializes a new instance of the <see cref="EmployeeAuthController"/> class
     /// </summary>
     public EmployeeAuthController(
-        EmployeeDbContext context, 
+        EmployeeDbContext context,
         BusinessMetricsService metricsService,
         ILogger<EmployeeAuthController> logger)
     {

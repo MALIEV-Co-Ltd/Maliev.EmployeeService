@@ -60,7 +60,7 @@ public class CurrentUserService : ICurrentUserService
         }
 
         var cacheKey = $"principal_mapping:{principalId}";
-        
+
         // Try get from cache
         var cachedEmployeeId = await _cacheService.GetAsync<EmployeeIdCacheWrapper>(cacheKey, cancellationToken);
         if (cachedEmployeeId != null)
@@ -71,7 +71,7 @@ public class CurrentUserService : ICurrentUserService
         // Lookup in DB via resolved repository
         using var scope = _serviceProvider.CreateScope();
         var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
-        
+
         var employee = await employeeRepository.GetByPrincipalIdAsync(principalId.Value, cancellationToken);
         if (employee != null)
         {

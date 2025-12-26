@@ -37,7 +37,7 @@ public class RecordCompensationChangeCommandHandlerTests
         _mockEventPublisher = new Mock<IEventPublisher>();
 
         _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
-        
+
         // Grant permission by default for non-authorization tests
         _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);

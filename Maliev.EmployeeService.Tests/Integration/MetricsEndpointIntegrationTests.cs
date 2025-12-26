@@ -56,7 +56,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
         Assert.Contains("department_headcount_by_name", content);
         Assert.Contains("employee_probation_completion_rate", content);
         Assert.Contains("leave_balance_utilization_rate", content);
-        
+
         // Note: Histogram metrics (employee_onboarding_duration_days, leave_request_approval_time_hours)
         // only appear in OpenTelemetry output after data is recorded, so we don't assert them here
     }

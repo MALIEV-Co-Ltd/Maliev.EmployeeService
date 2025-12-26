@@ -21,7 +21,7 @@ public class CredentialValidationTests : WebApplicationTestBase
         var department = await CreateTestDepartmentAsync("HR");
         var principalId = Guid.NewGuid();
         var email = "migrated@example.com";
-        
+
         using (var scope = _factory.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<Infrastructure.Data.EmployeeDbContext>();

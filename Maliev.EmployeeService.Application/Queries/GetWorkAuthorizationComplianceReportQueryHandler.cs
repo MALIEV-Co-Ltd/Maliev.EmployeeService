@@ -37,7 +37,7 @@ public class GetWorkAuthorizationComplianceReportQueryHandler
     {
         // Authorization check: User must have WorkAuthManage permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.WorkAuthManage, "employee/work-auth/compliance", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view work authorization compliance reports");

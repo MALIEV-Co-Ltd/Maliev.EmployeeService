@@ -41,9 +41,9 @@ public class DocumentAuthorizationService : IDocumentAuthorizationService
 
         // Check if user has read permission on this specific document
         var hasPermission = await _iamClient.CheckPermissionAsync(
-            principalId.ToString(), 
-            EmployeePermissions.DocumentsRead, 
-            resourcePath, 
+            principalId.ToString(),
+            EmployeePermissions.DocumentsRead,
+            resourcePath,
             cancellationToken);
 
         if (hasPermission)

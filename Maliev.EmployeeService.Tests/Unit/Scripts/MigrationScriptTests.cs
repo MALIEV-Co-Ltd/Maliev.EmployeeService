@@ -33,7 +33,7 @@ public class MigrationScriptTests : PostgreSqlIntegrationTestBase
     {
         // Arrange
         await InitializeTestAsync();
-        
+
         var emp1 = new Employee
         {
             Id = Guid.NewGuid(),
@@ -42,7 +42,7 @@ public class MigrationScriptTests : PostgreSqlIntegrationTestBase
             ContactInformation = new ContactInformation { WorkEmail = "emp1@example.com" },
             PrincipalId = Guid.Empty // Explicitly set to Empty for migration
         };
-        
+
         Context.Employees.Add(emp1);
         await Context.SaveChangesAsync();
 
@@ -64,7 +64,7 @@ public class MigrationScriptTests : PostgreSqlIntegrationTestBase
     {
         // Arrange
         await InitializeTestAsync();
-        
+
         var empFail = new Employee
         {
             Id = Guid.NewGuid(),
@@ -73,13 +73,13 @@ public class MigrationScriptTests : PostgreSqlIntegrationTestBase
             ContactInformation = new ContactInformation { WorkEmail = "fail@example.com" },
             PrincipalId = Guid.Empty
         };
-        
+
         Context.Employees.Add(empFail);
         await Context.SaveChangesAsync();
 
         _iamClientMock.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("IAM Error"));
-        
+
         // Act
         await _script.ExecuteAsync();
 

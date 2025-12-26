@@ -48,7 +48,7 @@ public class GetEmployeeProfileQueryHandler
         // Authorization check: User must have ProfilesRead permission for this employee
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.EmployeeId}";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view this employee profile");

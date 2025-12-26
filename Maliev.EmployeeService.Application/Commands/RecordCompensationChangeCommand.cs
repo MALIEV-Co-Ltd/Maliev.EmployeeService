@@ -62,7 +62,7 @@ public class RecordCompensationChangeCommandHandler
     {
         // Authorization check: User must have CompensationUpdate permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationUpdate, $"employee/{command.EmployeeId}", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to update compensation for this employee");

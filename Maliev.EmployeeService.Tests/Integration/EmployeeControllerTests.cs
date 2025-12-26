@@ -20,7 +20,7 @@ public class EmployeeControllerTests : WebApplicationTestBase
         // Arrange
         var department = await CreateTestDepartmentAsync("Engineering");
         var principalId = Guid.NewGuid();
-        
+
         using (var scope = _factory.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<Infrastructure.Data.EmployeeDbContext>();

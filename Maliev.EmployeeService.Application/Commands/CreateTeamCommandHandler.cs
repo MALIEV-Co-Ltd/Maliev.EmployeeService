@@ -45,7 +45,7 @@ public class CreateTeamCommandHandler
     {
         // Authorization check: User must have TeamsManage permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TeamsManage, "employee/teams", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to manage teams");

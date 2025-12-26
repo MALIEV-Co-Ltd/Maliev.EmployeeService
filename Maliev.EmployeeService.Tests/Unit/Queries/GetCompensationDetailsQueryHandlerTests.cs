@@ -38,7 +38,7 @@ public class GetCompensationDetailsQueryHandlerTests
             _mockIamClient.Object,
             _mockConfiguration.Object,
             _mockCurrentUserService.Object);
-            
+
         _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
     }
 

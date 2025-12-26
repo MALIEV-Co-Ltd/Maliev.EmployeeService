@@ -175,7 +175,7 @@ public class GetEmployeeDocumentsQueryHandlerTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count());
-        Assert.All(result, d  => Assert.True(d.DocumentType == DocumentType.Certificate));
+        Assert.All(result, d => Assert.True(d.DocumentType == DocumentType.Certificate));
 
         _mockDocumentRepository.Verify(x => x.GetByEmployeeIdAndTypeAsync(
             employeeId,

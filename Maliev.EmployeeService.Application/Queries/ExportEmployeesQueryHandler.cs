@@ -44,20 +44,20 @@ public class ExportEmployeesQueryHandler
     {
         // Authorization check: User must have ReportsGenerate permission for export
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsGenerate, "employee/export", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to export employee data");
         }
 
         // Additional checks for sensitive data flags
-        if (query.IncludePersonalData && 
+        if (query.IncludePersonalData &&
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, "employee/export/personal", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to include personal data in exports");
         }
 
-        if (query.IncludeSalaryData && 
+        if (query.IncludeSalaryData &&
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, "employee/export/salary", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to include salary data in exports");

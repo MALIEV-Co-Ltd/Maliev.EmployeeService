@@ -35,7 +35,7 @@ public class GetPendingApprovalsQueryHandler
         // Authorization check: User must have LeaveRead permission for these approvals
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.ApproverId}/approvals";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.LeaveRead, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view these pending approvals");

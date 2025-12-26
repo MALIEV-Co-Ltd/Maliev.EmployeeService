@@ -42,7 +42,7 @@ public class GetEmployeeDocumentsQueryHandler
         // Authorization check: User must have DocumentsView permission for this employee
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.EmployeeId}/documents";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.DocumentsRead, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view documents for this employee");

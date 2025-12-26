@@ -214,11 +214,12 @@ public class StartOffboardingCommandHandlerTests
         Assert.Contains(capturedChecklist, item => item.ItemDescription.Contains("final paycheck"));
 
         // Verify all items have correct employee ID
-        Assert.All(capturedChecklist, item  => { 
+        Assert.All(capturedChecklist, item =>
+        {
             Assert.Equal(employeeId, item.EmployeeId);
             Assert.False(item.CompletionStatus);
             Assert.True(item.DisplayOrder > 0);
-         });
+        });
 
         // Verify blocking items exist
         var blockingItems = capturedChecklist.Where(item => item.BlocksFinalPaycheck).ToList();

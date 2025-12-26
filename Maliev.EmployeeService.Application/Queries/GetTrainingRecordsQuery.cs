@@ -62,7 +62,7 @@ public class GetTrainingRecordsQueryHandler
         // Authorization check: User must have TrainingRead permission for this employee
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.EmployeeId}/training";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TrainingRead, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view training records for this employee");

@@ -426,7 +426,7 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
 
         // Assert
         Assert.NotEmpty(blockingItems);
-        Assert.All(blockingItems, item  => Assert.True(item.BlocksFinalPaycheck == true,
+        Assert.All(blockingItems, item => Assert.True(item.BlocksFinalPaycheck == true,
             "Should only return items that block paycheck"));
 
         // Verify specific blocking items

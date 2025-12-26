@@ -13,7 +13,7 @@ public class EmployeeDbContextFactory : IDesignTimeDbContextFactory<EmployeeDbCo
     public EmployeeDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<EmployeeDbContext>();
-        
+
         // Use a dummy connection string for migration generation
         optionsBuilder.UseNpgsql("Host=localhost;Database=employee;Username=postgres;Password=postgres");
 

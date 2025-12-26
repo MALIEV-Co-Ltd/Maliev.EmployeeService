@@ -74,7 +74,7 @@ public class BusinessMetricsService
             _leaveUtilizationRates.Select(kvp => new Measurement<double>(kvp.Value,
                 new KeyValuePair<string, object?>("leave_type", kvp.Key))),
             description: "Leave utilization rate (used / accrued)");
-            
+
         // Initialize default values
         _activeEmployeeCounts.TryAdd(("Unknown", "FullTime"), 0);
         _turnoverRates.TryAdd("total", 0);

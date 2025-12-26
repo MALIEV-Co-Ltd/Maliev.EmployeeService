@@ -40,7 +40,7 @@ public class GetSpanOfControlReportQueryHandler
     {
         // Authorization check: User must have ReportsView permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/span-of-control", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view span of control reports");

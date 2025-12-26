@@ -38,7 +38,7 @@ public class GetWorkAuthorizationQueryHandler
         // Authorization check: User must have WorkAuthManage permission for this employee
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.EmployeeId}/work-auth";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.WorkAuthManage, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view work authorizations for this employee");

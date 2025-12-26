@@ -73,8 +73,8 @@ public class BulkOperationsController : ControllerBase
         {
             var iamClient = HttpContext.RequestServices.GetRequiredService<IIamServiceClient>();
             var principalId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            if (string.IsNullOrEmpty(principalId) || 
+
+            if (string.IsNullOrEmpty(principalId) ||
                 !await iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, cancellationToken: cancellationToken))
             {
                 return Forbid("Salary data export requires CompensationRead permission");

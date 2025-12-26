@@ -53,7 +53,7 @@ public class UpdateGoalProgressCommandHandler
     {
         // Authorization check: User must have PerformanceUpdate permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.PerformanceUpdate, $"employee/{command.EmployeeId}/performance", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to update goals for this employee");

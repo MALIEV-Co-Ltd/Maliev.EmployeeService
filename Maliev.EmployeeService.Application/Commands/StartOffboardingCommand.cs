@@ -56,7 +56,7 @@ public class StartOffboardingCommandHandler
     {
         // Authorization check: User must have OnboardingManage permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.OnboardingManage, "employee/onboarding", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to manage offboarding");

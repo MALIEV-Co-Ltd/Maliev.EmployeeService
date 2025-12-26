@@ -27,7 +27,7 @@ public class EmployeeCreationTests : WebApplicationTestBase
     {
         // Arrange
         var department = await CreateTestDepartmentAsync("Engineering");
-        
+
         var dto = new CreateEmployeeDto
         {
             EmployeeNumber = "EMP-IAM-001",
@@ -51,7 +51,7 @@ public class EmployeeCreationTests : WebApplicationTestBase
             builder.ConfigureTestServices(services =>
             {
                 services.AddScoped(_ => _iamClientMock.Object);
-                
+
                 var mockEncryptionService = new Mock<IEncryptionService>();
                 mockEncryptionService.Setup(x => x.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
                 mockEncryptionService.Setup(x => x.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
@@ -97,7 +97,7 @@ public class EmployeeCreationTests : WebApplicationTestBase
         var employee = await _factory.GetDbContext().Employees.FindAsync(employeeId);
         Assert.NotNull(employee);
         Assert.Equal(principalId, employee!.PrincipalId);
-        
+
         _iamClientMock.Verify(x => x.CreatePrincipalAsync(
             It.Is<CreatePrincipalRequest>(r => r.Email == dto.WorkEmail && r.LinkedService == "EmployeeService"),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -164,7 +164,7 @@ public class EmployeeCreationTests : WebApplicationTestBase
         var response = await client.PostAsJsonAsync("/employee/v1/hr/employees", dto);
 
         // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode); 
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         var message = result.GetProperty("message").GetString();
         Assert.Contains("Failed to create employee identity in IAM", message);

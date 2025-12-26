@@ -54,7 +54,7 @@ public class GetCompensationAnalysisQueryHandler
     {
         // Authorization check: User must have ReportsView permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/compensation", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view compensation analysis reports");

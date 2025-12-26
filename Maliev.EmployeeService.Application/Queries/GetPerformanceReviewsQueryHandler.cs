@@ -35,7 +35,7 @@ public class GetPerformanceReviewsQueryHandler
         // Authorization check: User must have PerformanceRead permission for this employee
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.EmployeeId}/performance";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.PerformanceRead, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view performance reviews for this employee");

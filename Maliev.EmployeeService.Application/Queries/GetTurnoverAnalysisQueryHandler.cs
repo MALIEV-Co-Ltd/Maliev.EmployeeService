@@ -51,7 +51,7 @@ public class GetTurnoverAnalysisQueryHandler
     {
         // Authorization check: User must have ReportsView permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view turnover analysis reports");

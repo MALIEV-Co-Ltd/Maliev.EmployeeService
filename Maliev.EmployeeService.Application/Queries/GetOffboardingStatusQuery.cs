@@ -50,7 +50,7 @@ public class GetOffboardingStatusQueryHandler
         // Authorization check: User must have OnboardingManage permission for this employee
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/{query.EmployeeId}/offboarding";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.OnboardingManage, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view offboarding status for this employee");

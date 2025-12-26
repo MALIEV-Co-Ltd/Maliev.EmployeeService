@@ -395,7 +395,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         Assert.True(resultList.Count >= 2);
         Assert.Contains(resultList, d => d.Id == expiredDocuments[0].Id);
         Assert.Contains(resultList, d => d.Id == expiredDocuments[1].Id);
-        Assert.All(resultList, d  => Assert.True(d.ExpirationDate.HasValue && d.ExpirationDate.Value < DateTime.UtcNow));
+        Assert.All(resultList, d => Assert.True(d.ExpirationDate.HasValue && d.ExpirationDate.Value < DateTime.UtcNow));
     }
 
     [Fact]

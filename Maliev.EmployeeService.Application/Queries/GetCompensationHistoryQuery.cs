@@ -44,7 +44,7 @@ public class GetCompensationHistoryQueryHandler
     {
         // Authorization check: User must have CompensationRead permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, $"employee/{query.EmployeeId}", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to access compensation history for this employee");

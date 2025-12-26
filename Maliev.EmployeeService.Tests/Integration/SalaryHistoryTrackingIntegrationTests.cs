@@ -276,8 +276,8 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         Assert.Equal(4, history1List.Count()); // Employee 1 should have 4 records
         Assert.Equal(2, history2List.Count()); // Employee 2 should have 2 records
 
-        Assert.All(history1List, h  => Assert.True(h.Currency == "THB"));
-        Assert.All(history2List, h  => Assert.True(h.Currency == "USD"));
+        Assert.All(history1List, h => Assert.True(h.Currency == "THB"));
+        Assert.All(history2List, h => Assert.True(h.Currency == "USD"));
 
         Assert.Equal(85000m, history1List.First().SalaryAmount);
         Assert.Equal(110000m, history2List.First().SalaryAmount);
@@ -407,7 +407,7 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
             .ReturnsAsync(true);
         var mockConfiguration = new Mock<IConfiguration>();
         var employee = await CreateEmployeeWithSalaryHistory();
-        
+
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,

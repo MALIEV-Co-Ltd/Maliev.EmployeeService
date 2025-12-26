@@ -56,7 +56,7 @@ public class TransferDepartmentCommandHandler
     {
         // Authorization check: User must have DepartmentsManage permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.DepartmentsManage, "employee/departments", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to manage departments");

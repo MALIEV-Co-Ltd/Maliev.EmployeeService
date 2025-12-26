@@ -66,7 +66,7 @@ public class CurrentUserServiceTests
         var principalId = Guid.NewGuid();
         var employeeId = Guid.NewGuid();
         SetupUserWithClaims(new Claim("sub", principalId.ToString()));
-        
+
         _cacheServiceMock.Setup(x => x.GetAsync<CurrentUserService.EmployeeIdCacheWrapper>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CurrentUserService.EmployeeIdCacheWrapper(employeeId));
 
@@ -85,13 +85,13 @@ public class CurrentUserServiceTests
         var principalId = Guid.NewGuid();
         var employeeId = Guid.NewGuid();
         SetupUserWithClaims(new Claim("sub", principalId.ToString()));
-        
+
         _cacheServiceMock.Setup(x => x.GetAsync<CurrentUserService.EmployeeIdCacheWrapper>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((CurrentUserService.EmployeeIdCacheWrapper?)null);
 
         var serviceScopeMock = new Mock<IServiceScope>();
         var serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
-        
+
         serviceScopeMock.Setup(x => x.ServiceProvider).Returns(_serviceProviderMock.Object);
         _serviceProviderMock.Setup(x => x.GetService(typeof(IServiceScopeFactory))).Returns(serviceScopeFactoryMock.Object);
         serviceScopeFactoryMock.Setup(x => x.CreateScope()).Returns(serviceScopeMock.Object);
@@ -106,10 +106,10 @@ public class CurrentUserServiceTests
         // Assert
         Assert.Equal(employeeId, result);
         _cacheServiceMock.Verify(x => x.SetAsync(
-            $"principal_mapping:{principalId}", 
-            It.Is<CurrentUserService.EmployeeIdCacheWrapper>(w => w.Id == employeeId), 
-            It.Is<TimeSpan?>(t => t == TimeSpan.FromHours(24)), 
-            null, 
+            $"principal_mapping:{principalId}",
+            It.Is<CurrentUserService.EmployeeIdCacheWrapper>(w => w.Id == employeeId),
+            It.Is<TimeSpan?>(t => t == TimeSpan.FromHours(24)),
+            null,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 }

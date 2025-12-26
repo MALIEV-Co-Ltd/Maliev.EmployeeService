@@ -72,7 +72,7 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         Assert.Equal(0, report.EmployeesWithExpiringCertifications);
         Assert.Equal(100m, report.ComplianceRate);
         Assert.Equal(2, report.EmployeeDetails.Count());
-        Assert.All(report.EmployeeDetails, e  => Assert.True(e.IsCompliant));
+        Assert.All(report.EmployeeDetails, e => Assert.True(e.IsCompliant));
     }
 
     [Fact]

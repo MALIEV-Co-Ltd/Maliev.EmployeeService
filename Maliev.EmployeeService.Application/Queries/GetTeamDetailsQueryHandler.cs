@@ -36,7 +36,7 @@ public class GetTeamDetailsQueryHandler
         // Authorization check: User must have TeamsRead permission for this team
         var principalId = _currentUserService.PrincipalId?.ToString();
         var resourcePath = $"employee/teams/{query.TeamId}";
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TeamsRead, resourcePath, cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view this team's details");

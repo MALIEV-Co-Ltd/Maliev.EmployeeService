@@ -29,9 +29,9 @@ public class DocumentAuthorizationServiceTests
         _mockIamClient = new Mock<IIamServiceClient>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockLogger = new Mock<ILogger<DocumentAuthorizationService>>();
-        
+
         _service = new DocumentAuthorizationService(
-            _mockEmployeeRepository.Object, 
+            _mockEmployeeRepository.Object,
             _mockIamClient.Object,
             _mockConfiguration.Object,
             _mockLogger.Object);

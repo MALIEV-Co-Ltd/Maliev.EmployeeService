@@ -247,7 +247,7 @@ public class TrainingController : ControllerBase
         // Check authorization via IAM - employees can update their own skills; HR/Managers can update anyone's
         // This is handled by checking permission against the specific employee resource path
         var principalId = _currentUserService.PrincipalId;
-        
+
         if (principalId == null)
         {
             return Unauthorized();

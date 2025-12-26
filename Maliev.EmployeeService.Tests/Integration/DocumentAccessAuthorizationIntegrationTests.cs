@@ -30,7 +30,7 @@ public class DocumentAccessAuthorizationIntegrationTests : PostgreSqlIntegration
         var mockLogger = new Mock<Microsoft.Extensions.Logging.ILogger<DocumentAuthorizationService>>();
         var mockIamClient = new Mock<IIamServiceClient>();
         var mockConfiguration = new Mock<IConfiguration>();
-        
+
         // Default IAM to false, let specific tests override if needed
         mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);

@@ -61,7 +61,7 @@ public class MigrateEmployeesToPrincipalsScript
 
                 employee.PrincipalId = response.PrincipalId;
                 _context.Employees.Update(employee);
-                
+
                 successCount++;
                 _migratedCounter.Add(1);
 

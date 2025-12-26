@@ -36,7 +36,7 @@ public static class BackgroundJobMetrics
             _lastExecutionTimestamps.Select(kvp => new Measurement<long>(kvp.Value,
                 new KeyValuePair<string, object?>("job_name", kvp.Key))),
             description: "Unix timestamp of the last execution of a background job");
-            
+
         // Initialize with default values if needed, though OTEL doesn't strictly require "init" labels like prometheus-net sometimes did for visibility
     }
 
@@ -47,7 +47,7 @@ public static class BackgroundJobMetrics
     /// <param name="durationSeconds">Duration of execution in seconds</param>
     public static void RecordSuccess(string jobName, double durationSeconds)
     {
-        ExecutionDuration.Record(durationSeconds, 
+        ExecutionDuration.Record(durationSeconds,
             new KeyValuePair<string, object?>("job_name", jobName),
             new KeyValuePair<string, object?>("status", "success"));
 

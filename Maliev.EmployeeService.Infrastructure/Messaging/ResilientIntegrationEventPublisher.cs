@@ -88,7 +88,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
                 _logger.LogError(
                     "Circuit breaker OPENED for RabbitMQ publishing. Will remain open for {BreakDuration}s",
                     breakDuration.TotalSeconds);
-                
+
                 var tags = new TagList(_defaultTags.Length + 1);
                 foreach (var tag in _defaultTags) tags.Add(tag);
                 tags.Add("state", "open");
@@ -98,7 +98,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
             OnClosed = args =>
             {
                 _logger.LogInformation("Circuit breaker CLOSED for RabbitMQ publishing. Normal operation resumed.");
-                
+
                 var tags = new TagList(_defaultTags.Length + 1);
                 foreach (var tag in _defaultTags) tags.Add(tag);
                 tags.Add("state", "closed");
@@ -108,7 +108,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
             OnHalfOpened = args =>
             {
                 _logger.LogInformation("Circuit breaker HALF-OPEN for RabbitMQ publishing. Testing connection...");
-                
+
                 var tags = new TagList(_defaultTags.Length + 1);
                 foreach (var tag in _defaultTags) tags.Add(tag);
                 tags.Add("state", "half-open");

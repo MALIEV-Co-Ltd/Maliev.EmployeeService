@@ -54,7 +54,7 @@ public class GetLeaveUtilizationReportQueryHandler
     {
         // Authorization check: User must have ReportsView permission
         var principalId = _currentUserService.PrincipalId?.ToString();
-        if (string.IsNullOrEmpty(principalId) || 
+        if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/leave-utilization", cancellationToken))
         {
             throw new UnauthorizedAccessException("You do not have permission to view leave utilization reports");

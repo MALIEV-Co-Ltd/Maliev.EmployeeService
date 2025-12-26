@@ -147,7 +147,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
         Assert.Contains(teams, t => t.TeamType == "QA");
         Assert.Contains(teams, t => t.TeamType == "Design");
 
-        Assert.All(teams, t  => Assert.True(t.IsActive == true,
+        Assert.All(teams, t => Assert.True(t.IsActive == true,
             "All seeded teams should be active"));
     }
 
