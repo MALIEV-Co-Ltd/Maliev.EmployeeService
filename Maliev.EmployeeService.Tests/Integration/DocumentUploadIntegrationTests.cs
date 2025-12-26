@@ -21,6 +21,9 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task UploadDocument_ShouldStoreAndRetrieveFileNameCorrectly()
     {
+        // Ensure clean database state
+        await InitializeTestAsync();
+
         // Arrange
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
@@ -31,6 +34,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -40,6 +44,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -106,6 +111,9 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task UploadDocument_ShouldStoreMetadataCorrectly()
     {
+        // Ensure clean database state
+        await InitializeTestAsync();
+
         // Arrange
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
@@ -116,6 +124,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -125,6 +134,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -193,6 +203,9 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task UploadDocument_ShouldCallUploadServiceClient()
     {
+        // Ensure clean database state
+        await InitializeTestAsync();
+
         // Arrange
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
@@ -203,6 +216,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -212,6 +226,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -269,6 +284,9 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task UploadDocument_WithMultipleDocuments_ShouldStoreBothCorrectly()
     {
+        // Ensure clean database state
+        await InitializeTestAsync();
+
         // Arrange - Same filename for two different documents
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
@@ -279,6 +297,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -288,6 +307,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -372,6 +392,9 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task UploadDocument_ShouldSetUploadDateToUtcNow()
     {
+        // Ensure clean database state
+        await InitializeTestAsync();
+
         // Arrange
         var documentRepository = new DocumentRepository(Context);
         var employeeRepository = new EmployeeRepository(Context);
@@ -382,6 +405,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -391,6 +415,7 @@ public class DocumentUploadIntegrationTests : PostgreSqlIntegrationTestBase
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,

@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
@@ -29,12 +31,16 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var mockIamClient = new Mock<IIamServiceClient>();
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp001@company.com" },
@@ -51,6 +57,8 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var commandHandler = new RecordCompensationChangeCommandHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object,
             mockEventPublisher.Object,
             unitOfWork);
@@ -58,6 +66,8 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act - Record compensation changes over 3 years
@@ -120,13 +130,20 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var compensationRepository = new CompensationRepository(Context, EncryptionService);
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
-        var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
         var employee = await CreateEmployeeWithSalaryHistory();
+
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
 
         var detailsQueryHandler = new GetCompensationDetailsQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act
@@ -146,13 +163,20 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var compensationRepository = new CompensationRepository(Context, EncryptionService);
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
-        var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
         var employee = await CreateEmployeeWithSalaryHistory();
+
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
 
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act
@@ -179,13 +203,18 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var employee1 = await CreateEmployeeWithSalaryHistory();
 
         var employee2 = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee2" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp002@company.com" },
@@ -202,6 +231,8 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var commandHandler = new RecordCompensationChangeCommandHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object,
             mockEventPublisher.Object,
             unitOfWork);
@@ -230,6 +261,8 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act
@@ -258,12 +291,19 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
         var employee = await CreateEmployeeWithSalaryHistory();
+
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
 
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act
@@ -288,10 +328,11 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP999",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee999" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp999@company.com" },
@@ -304,10 +345,16 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         await Context.SaveChangesAsync();
 
         var mockEventPublisher = new Mock<IEventPublisher>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var commandHandler = new RecordCompensationChangeCommandHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object,
             mockEventPublisher.Object,
             unitOfWork);
@@ -330,6 +377,8 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationHistoryQuery(employee.Id);
@@ -352,14 +401,18 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.IsInRole("HRSpecialist")).Returns(true);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
         var employee = await CreateEmployeeWithSalaryHistory();
-
-        // Act - Verify encryption works by testing round-trip through repository
-        // The repository should encrypt on write and decrypt on read
+        
         var queryHandler = new GetCompensationHistoryQueryHandler(
             compensationRepository,
             employeeRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var query = new GetCompensationHistoryQuery(employee.Id);
@@ -391,6 +444,7 @@ public class SalaryHistoryTrackingIntegrationTests : PostgreSqlIntegrationTestBa
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HIST001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "History", LastName = "Test" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "hist001@company.com" },

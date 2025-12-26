@@ -32,7 +32,7 @@ public class AddTeamMemberCommandHandlerTests
         _mockCurrentUserService = new Mock<ICurrentUserService>();
 
         // Setup default current user
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
 
         _handler = new AddTeamMemberCommandHandler(
             _mockTeamRepository.Object,

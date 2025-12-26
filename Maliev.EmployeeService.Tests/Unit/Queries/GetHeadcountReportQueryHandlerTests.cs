@@ -2,8 +2,11 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
-using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
+using Moq;
 
 namespace Maliev.EmployeeService.Tests.Unit.Queries;
 
@@ -14,12 +17,27 @@ namespace Maliev.EmployeeService.Tests.Unit.Queries;
 public class GetHeadcountReportQueryHandlerTests
 {
     private readonly Mock<IEmployeeRepository> _mockEmployeeRepository;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<ICurrentUserService> _mockCurrentUserService;
     private readonly GetHeadcountReportQueryHandler _handler;
 
     public GetHeadcountReportQueryHandlerTests()
     {
         _mockEmployeeRepository = new Mock<IEmployeeRepository>();
-        _handler = new GetHeadcountReportQueryHandler(_mockEmployeeRepository.Object);
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
+        _mockCurrentUserService = new Mock<ICurrentUserService>();
+
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _handler = new GetHeadcountReportQueryHandler(
+            _mockEmployeeRepository.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
+            _mockCurrentUserService.Object);
     }
 
     [Fact]

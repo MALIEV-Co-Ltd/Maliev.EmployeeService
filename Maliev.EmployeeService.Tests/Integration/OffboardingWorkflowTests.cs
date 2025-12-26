@@ -10,6 +10,8 @@ using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -38,16 +40,29 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
 
         // Initialize handlers
         var mockLogger1 = new Mock<ILogger<StartOffboardingCommandHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         _startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             _eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger1.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         _getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -336,6 +351,7 @@ public class OffboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {

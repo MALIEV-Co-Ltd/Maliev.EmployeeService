@@ -5,6 +5,11 @@ using Maliev.EmployeeService.Domain.ValueObjects;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Moq;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -26,7 +31,22 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         _departmentRepository = new DepartmentRepository(Context);
         _employeeRepository = new EmployeeRepository(Context);
         _unitOfWork = new UnitOfWork(Context);
-        _handler = new UpdateDepartmentCommandHandler(_departmentRepository, _employeeRepository, _unitOfWork);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        _handler = new UpdateDepartmentCommandHandler(
+            _departmentRepository,
+            _employeeRepository,
+            _unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
     }
 
     [Fact]
@@ -238,6 +258,7 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             LegalName = new LegalName
             {

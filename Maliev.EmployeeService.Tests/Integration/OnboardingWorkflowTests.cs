@@ -11,6 +11,8 @@ using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -42,16 +44,29 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
 
         // Initialize handlers
         var mockLogger1 = new Mock<ILogger<StartOnboardingCommandHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         _startOnboardingHandler = new StartOnboardingCommandHandler(
             employeeRepository,
             onboardingRepository,
             templateService,
             _eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger1.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOnboardingStatusQueryHandler>>();
         _getStatusHandler = new GetOnboardingStatusQueryHandler(
             onboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOnboardingItemCommandHandler>>();
@@ -270,6 +285,7 @@ public class OnboardingWorkflowTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {

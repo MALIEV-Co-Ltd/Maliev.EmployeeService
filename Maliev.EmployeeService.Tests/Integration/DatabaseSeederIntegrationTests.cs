@@ -29,6 +29,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
             var employee = new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:D3}",
                 LegalName = new LegalName
                 {
@@ -179,6 +180,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
             var employee = new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:D3}",
                 LegalName = new LegalName
                 {

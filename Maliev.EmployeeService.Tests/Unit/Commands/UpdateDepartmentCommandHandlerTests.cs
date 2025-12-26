@@ -1,8 +1,11 @@
-using Maliev.EmployeeService.Application.Commands;
-using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Domain.Entities;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Application.Commands;
 
 namespace Maliev.EmployeeService.Tests.Unit.Commands;
 
@@ -14,6 +17,9 @@ public class UpdateDepartmentCommandHandlerTests
     private readonly Mock<IDepartmentRepository> _departmentRepositoryMock;
     private readonly Mock<IEmployeeRepository> _employeeRepositoryMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+    private readonly Mock<IIamServiceClient> _iamClientMock;
+    private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly UpdateDepartmentCommandHandler _handler;
 
     public UpdateDepartmentCommandHandlerTests()
@@ -21,11 +27,21 @@ public class UpdateDepartmentCommandHandlerTests
         _departmentRepositoryMock = new Mock<IDepartmentRepository>();
         _employeeRepositoryMock = new Mock<IEmployeeRepository>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _iamClientMock = new Mock<IIamServiceClient>();
+        _configurationMock = new Mock<IConfiguration>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
+
+        _currentUserServiceMock.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _iamClientMock.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new UpdateDepartmentCommandHandler(
             _departmentRepositoryMock.Object,
             _employeeRepositoryMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _iamClientMock.Object,
+            _configurationMock.Object,
+            _currentUserServiceMock.Object);
     }
 
     [Fact]

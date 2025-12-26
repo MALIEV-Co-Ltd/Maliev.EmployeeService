@@ -39,6 +39,7 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new LegalName { FirstName = "John", LastName = "Doe" },
             ContactInformation = new ContactInformation { WorkEmail = "john.doe@company.com" },
@@ -288,6 +289,7 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             LegalName = new LegalName
             {

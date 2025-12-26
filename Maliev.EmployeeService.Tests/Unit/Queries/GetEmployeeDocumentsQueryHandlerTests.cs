@@ -5,8 +5,11 @@ using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
+using Moq;
 
 namespace Maliev.EmployeeService.Tests.Unit.Queries;
 
@@ -17,16 +20,29 @@ namespace Maliev.EmployeeService.Tests.Unit.Queries;
 public class GetEmployeeDocumentsQueryHandlerTests
 {
     private readonly Mock<IDocumentRepository> _mockDocumentRepository;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<ICurrentUserService> _mockCurrentUserService;
     private readonly Mock<ILogger<GetEmployeeDocumentsQueryHandler>> _mockLogger;
     private readonly GetEmployeeDocumentsQueryHandler _handler;
 
     public GetEmployeeDocumentsQueryHandlerTests()
     {
         _mockDocumentRepository = new Mock<IDocumentRepository>();
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
+        _mockCurrentUserService = new Mock<ICurrentUserService>();
         _mockLogger = new Mock<ILogger<GetEmployeeDocumentsQueryHandler>>();
+
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new GetEmployeeDocumentsQueryHandler(
             _mockDocumentRepository.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
+            _mockCurrentUserService.Object,
             _mockLogger.Object);
     }
 

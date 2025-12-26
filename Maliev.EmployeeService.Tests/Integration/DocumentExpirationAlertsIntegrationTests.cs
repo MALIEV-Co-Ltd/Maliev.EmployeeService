@@ -30,6 +30,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -39,6 +40,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -104,6 +106,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -113,6 +116,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR002",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -158,6 +162,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -167,6 +172,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -212,6 +218,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -221,6 +228,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -266,6 +274,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -275,6 +284,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -320,6 +330,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP006",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -329,6 +340,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR006",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -395,6 +407,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP007",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -404,6 +417,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR007",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -449,6 +463,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP008",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -458,6 +473,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR008",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -503,6 +519,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP009",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,
@@ -512,6 +529,7 @@ public class DocumentExpirationAlertsIntegrationTests : PostgreSqlIntegrationTes
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR009",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow,

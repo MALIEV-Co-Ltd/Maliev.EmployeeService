@@ -10,6 +10,8 @@ using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -29,18 +31,29 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var mockLogger = new Mock<ILogger<StartOffboardingCommandHandler>>();
 
         var startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         var getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -87,18 +100,29 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var mockLogger = new Mock<ILogger<StartOffboardingCommandHandler>>();
 
         var startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         var getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -173,18 +197,29 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var mockLogger = new Mock<ILogger<StartOffboardingCommandHandler>>();
 
         var startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         var getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -248,18 +283,29 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var mockLogger = new Mock<ILogger<StartOffboardingCommandHandler>>();
 
         var startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         var getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -326,18 +372,29 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var mockLogger = new Mock<ILogger<StartOffboardingCommandHandler>>();
 
         var startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         var getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -387,18 +444,29 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new EmployeeRepository(Context);
         var unitOfWork = new UnitOfWork(Context);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
         var mockLogger = new Mock<ILogger<StartOffboardingCommandHandler>>();
 
         var startOffboardingHandler = new StartOffboardingCommandHandler(
             employeeRepository,
             offboardingRepository,
             eventPublisherMock.Object,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
 
         var mockLogger2 = new Mock<ILogger<GetOffboardingStatusQueryHandler>>();
         var getStatusHandler = new GetOffboardingStatusQueryHandler(
             employeeRepository,
             offboardingRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger2.Object);
 
         var mockLogger3 = new Mock<ILogger<CompleteOffboardingItemCommandHandler>>();
@@ -467,6 +535,7 @@ public class OffboardingFinalizationTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {

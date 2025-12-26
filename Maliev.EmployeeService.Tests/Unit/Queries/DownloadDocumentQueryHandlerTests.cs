@@ -5,6 +5,8 @@ using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Tests.Unit.Queries;
 
@@ -16,6 +18,10 @@ public class DownloadDocumentQueryHandlerTests
 {
     private readonly Mock<IDocumentRepository> _mockDocumentRepository;
     private readonly Mock<IUploadServiceClient> _mockUploadServiceClient;
+    private readonly Mock<IDocumentAuthorizationService> _mockAuthService;
+    private readonly Mock<ICurrentUserService> _mockCurrentUserService;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<ILogger<DownloadDocumentQueryHandler>> _mockLogger;
     private readonly DownloadDocumentQueryHandler _handler;
 
@@ -23,11 +29,25 @@ public class DownloadDocumentQueryHandlerTests
     {
         _mockDocumentRepository = new Mock<IDocumentRepository>();
         _mockUploadServiceClient = new Mock<IUploadServiceClient>();
+        _mockAuthService = new Mock<IDocumentAuthorizationService>();
+        _mockCurrentUserService = new Mock<ICurrentUserService>();
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
         _mockLogger = new Mock<ILogger<DownloadDocumentQueryHandler>>();
+
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _mockAuthService.Setup(x => x.ValidateCanViewDocumentAsync(It.IsAny<Guid>(), It.IsAny<Document>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new DownloadDocumentQueryHandler(
             _mockDocumentRepository.Object,
             _mockUploadServiceClient.Object,
+            _mockAuthService.Object,
+            _mockCurrentUserService.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
             _mockLogger.Object);
     }
 
@@ -90,11 +110,28 @@ public class DownloadDocumentQueryHandlerTests
     {
         // Arrange
         var documentId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
         var versionNumber = 2;
         var fileName = "contract_v2.pdf";
         var storagePath = "documents/contract_v2.pdf";
         var contentType = "application/pdf";
         var fileSizeBytes = 2048L;
+
+        var document = new Document
+        {
+            Id = documentId,
+            EmployeeId = employeeId,
+            FileName = fileName,
+            FileSizeBytes = fileSizeBytes,
+            ContentType = contentType,
+            UploadDate = DateTime.UtcNow,
+            UploadedBy = Guid.NewGuid(),
+            StoragePath = storagePath,
+            DocumentType = DocumentType.EmploymentContract,
+            VersionNumber = versionNumber,
+            AccessLevel = AccessLevel.Employee,
+            IsArchived = false
+        };
 
         var documentVersion = new DocumentVersion
         {
@@ -112,9 +149,10 @@ public class DownloadDocumentQueryHandlerTests
 
         var fileStream = new MemoryStream(new byte[] { 5, 6, 7, 8 });
 
+        _mockDocumentRepository.Setup(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(document);
         _mockDocumentRepository.Setup(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()))
             .ReturnsAsync(documentVersion);
-
         _mockUploadServiceClient.Setup(x => x.DownloadAsync(storagePath, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fileStream);
 
@@ -134,9 +172,9 @@ public class DownloadDocumentQueryHandlerTests
         Assert.Equal(fileSizeBytes, result.FileSizeBytes);
         Assert.Same(fileStream, result.FileStream);
 
+        _mockDocumentRepository.Verify(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()), Times.Once);
         _mockDocumentRepository.Verify(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(storagePath, It.IsAny<CancellationToken>()), Times.Once);
-        _mockDocumentRepository.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -169,8 +207,27 @@ public class DownloadDocumentQueryHandlerTests
     {
         // Arrange
         var documentId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
         var versionNumber = 99;
 
+        var document = new Document
+        {
+            Id = documentId,
+            EmployeeId = employeeId,
+            FileName = "contract.pdf",
+            FileSizeBytes = 1024,
+            ContentType = "application/pdf",
+            UploadDate = DateTime.UtcNow,
+            UploadedBy = Guid.NewGuid(),
+            StoragePath = "documents/contract.pdf",
+            DocumentType = DocumentType.EmploymentContract,
+            VersionNumber = 1,
+            AccessLevel = AccessLevel.Employee,
+            IsArchived = false
+        };
+
+        _mockDocumentRepository.Setup(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(document);
         _mockDocumentRepository.Setup(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()))
             .ReturnsAsync((DocumentVersion?)null);
 
@@ -186,6 +243,7 @@ public class DownloadDocumentQueryHandlerTests
         // Assert
         await Assert.ThrowsAsync<InvalidOperationException>(act);
 
+        _mockDocumentRepository.Verify(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()), Times.Once);
         _mockDocumentRepository.Verify(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()), Times.Once);
         _mockUploadServiceClient.Verify(x => x.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -339,10 +397,27 @@ public class DownloadDocumentQueryHandlerTests
     {
         // Arrange
         var documentId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
         var versionNumber = 3;
         var versionFileName = "document_v3.pdf";
         var versionContentType = "application/pdf";
         var versionFileSizeBytes = 3072L;
+
+        var document = new Document
+        {
+            Id = documentId,
+            EmployeeId = employeeId,
+            FileName = "document.pdf",
+            FileSizeBytes = 1024,
+            ContentType = "application/pdf",
+            UploadDate = DateTime.UtcNow,
+            UploadedBy = Guid.NewGuid(),
+            StoragePath = "documents/document.pdf",
+            DocumentType = DocumentType.EmploymentContract,
+            VersionNumber = 1,
+            AccessLevel = AccessLevel.Employee,
+            IsArchived = false
+        };
 
         var documentVersion = new DocumentVersion
         {
@@ -360,9 +435,10 @@ public class DownloadDocumentQueryHandlerTests
 
         var fileStream = new MemoryStream(new byte[3072]);
 
+        _mockDocumentRepository.Setup(x => x.GetByIdAsync(documentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(document);
         _mockDocumentRepository.Setup(x => x.GetVersionAsync(documentId, versionNumber, It.IsAny<CancellationToken>()))
             .ReturnsAsync(documentVersion);
-
         _mockUploadServiceClient.Setup(x => x.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(fileStream);
 

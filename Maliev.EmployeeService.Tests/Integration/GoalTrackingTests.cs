@@ -7,6 +7,9 @@ using Maliev.EmployeeService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
@@ -29,6 +32,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-1),
@@ -39,7 +43,13 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         // Step 1: Create goal
         var createHandler = new CreateGoalCommandHandler(
@@ -47,6 +57,8 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
             employeeRepository,
             performanceReviewRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var createCommand = new CreateGoalCommand(
@@ -73,6 +85,8 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var updateHandler = new UpdateGoalProgressCommandHandler(
             goalRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var updateCommand1 = new UpdateGoalProgressCommand(
@@ -148,6 +162,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var manager = new Employee
         {
             Id = managerId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "MGR001",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-2),
@@ -157,6 +172,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             ManagerId = managerId,
             EmploymentStatus = EmploymentStatus.Active,
@@ -182,7 +198,13 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         // Act - Create goal linked to performance review
         var createHandler = new CreateGoalCommandHandler(
@@ -190,6 +212,8 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
             employeeRepository,
             performanceReviewRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var createCommand = new CreateGoalCommand(
@@ -221,6 +245,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-1),
@@ -231,18 +256,28 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var createHandler = new CreateGoalCommandHandler(
             goalRepository,
             employeeRepository,
             performanceReviewRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var updateHandler = new UpdateGoalProgressCommandHandler(
             goalRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Act - Create three different goals
@@ -324,6 +359,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP004",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-1),
@@ -334,18 +370,28 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var createHandler = new CreateGoalCommandHandler(
             goalRepository,
             employeeRepository,
             performanceReviewRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var updateHandler = new UpdateGoalProgressCommandHandler(
             goalRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Create goal
@@ -401,6 +447,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-1),
@@ -411,18 +458,28 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var createHandler = new CreateGoalCommandHandler(
             goalRepository,
             employeeRepository,
             performanceReviewRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var updateHandler = new UpdateGoalProgressCommandHandler(
             goalRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Create goal
@@ -499,6 +556,7 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         var employee = new Employee
         {
             Id = employeeId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP006",
             EmploymentStatus = EmploymentStatus.Active,
             StartDate = DateTime.UtcNow.AddYears(-1),
@@ -509,18 +567,28 @@ public class GoalTrackingTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.EmployeeId).Returns(employeeId);
+        mockCurrentUserService.Setup(x => x.GetEmployeeIdAsync(It.IsAny<CancellationToken>())).ReturnsAsync(employeeId);
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var createHandler = new CreateGoalCommandHandler(
             goalRepository,
             employeeRepository,
             performanceReviewRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         var updateHandler = new UpdateGoalProgressCommandHandler(
             goalRepository,
             unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
             mockCurrentUserService.Object);
 
         // Create and complete goal

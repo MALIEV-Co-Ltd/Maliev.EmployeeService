@@ -92,11 +92,11 @@ public class DepartmentTests
             Name = "Department",
             Employees = new List<Employee>
             {
-                new Employee { Id = Guid.NewGuid(), EmployeeNumber = "EMP001", EmploymentStatus = EmploymentStatus.Active },
-                new Employee { Id = Guid.NewGuid(), EmployeeNumber = "EMP002", EmploymentStatus = EmploymentStatus.Active },
-                new Employee { Id = Guid.NewGuid(), EmployeeNumber = "EMP003", EmploymentStatus = EmploymentStatus.Terminated }, // Inactive
-                new Employee { Id = Guid.NewGuid(), EmployeeNumber = "EMP004", EmploymentStatus = EmploymentStatus.Active },
-                new Employee { Id = Guid.NewGuid(), EmployeeNumber = "EMP005", EmploymentStatus = EmploymentStatus.Terminated }  // Inactive
+                new Employee { Id = Guid.NewGuid(), PrincipalId = Guid.NewGuid(), EmployeeNumber = "EMP001", EmploymentStatus = EmploymentStatus.Active },
+                new Employee { Id = Guid.NewGuid(), PrincipalId = Guid.NewGuid(), EmployeeNumber = "EMP002", EmploymentStatus = EmploymentStatus.Active },
+                new Employee { Id = Guid.NewGuid(), PrincipalId = Guid.NewGuid(), EmployeeNumber = "EMP003", EmploymentStatus = EmploymentStatus.Terminated }, // Inactive
+                new Employee { Id = Guid.NewGuid(), PrincipalId = Guid.NewGuid(), EmployeeNumber = "EMP004", EmploymentStatus = EmploymentStatus.Active },
+                new Employee { Id = Guid.NewGuid(), PrincipalId = Guid.NewGuid(), EmployeeNumber = "EMP005", EmploymentStatus = EmploymentStatus.Terminated }  // Inactive
             }
         };
 
@@ -137,6 +137,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 40).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -162,6 +163,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 45).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -186,6 +188,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 39).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -210,6 +213,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 100).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -234,6 +238,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 50).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -258,6 +263,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 51).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -282,6 +288,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 49).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()
@@ -306,6 +313,7 @@ public class DepartmentTests
             Employees = Enumerable.Range(1, 1000).Select(i => new Employee
             {
                 Id = Guid.NewGuid(),
+                PrincipalId = Guid.NewGuid(),
                 EmployeeNumber = $"EMP{i:000}",
                 EmploymentStatus = EmploymentStatus.Active
             }).ToList()

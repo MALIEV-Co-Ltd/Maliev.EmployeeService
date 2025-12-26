@@ -65,6 +65,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             DepartmentId = department.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -145,6 +146,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var employees = Enumerable.Range(1, 5).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{i:000}",
             DepartmentId = department.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -188,6 +190,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var parentEmployees = Enumerable.Range(1, 3).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{i:000}",
             DepartmentId = parent.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -198,6 +201,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var childEmployees = Enumerable.Range(4, 2).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{i:000}",
             DepartmentId = child.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -288,6 +292,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             DepartmentId = department.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -365,6 +370,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var fullEmployees = Enumerable.Range(1, 10).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"FULL{i:00}",
             DepartmentId = fullDepartment.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -376,6 +382,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var nearFullEmployees = Enumerable.Range(1, 8).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"NEAR{i:00}",
             DepartmentId = nearFullDepartment.Id,
             EmploymentStatus = EmploymentStatus.Active,
@@ -387,6 +394,7 @@ public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBas
         var lowEmployees = Enumerable.Range(1, 5).Select(i => new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"LOW{i:00}",
             DepartmentId = lowDepartment.Id,
             EmploymentStatus = EmploymentStatus.Active,

@@ -6,6 +6,10 @@ using Maliev.EmployeeService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
@@ -41,10 +45,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery();
 
@@ -85,10 +99,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery();
 
@@ -129,10 +153,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery();
 
@@ -163,10 +197,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery { DepartmentId = department1.Id };
 
@@ -202,10 +246,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery { TrainingType = TrainingType.Mandatory };
 
@@ -240,10 +294,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery { OnlyOverdue = true };
 
@@ -272,10 +336,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery();
 
@@ -315,10 +389,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery();
 
@@ -341,10 +425,20 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         var employeeRepository = new Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository(Context);
         var departmentRepository = new Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository(Context);
         var mockLogger = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<GetTrainingComplianceReportQueryHandler>>();
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+
         var handler = new GetTrainingComplianceReportQueryHandler(
             employeeRepository,
             trainingRepository,
             departmentRepository,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object,
             mockLogger.Object);
         var query = new GetTrainingComplianceReportQuery();
 
@@ -376,6 +470,7 @@ public class TrainingComplianceReportTests : PostgreSqlIntegrationTestBase
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             LegalName = new LegalName(firstName, lastName, null),
             ContactInformation = new ContactInformation($"{firstName.ToLower()}.{lastName.ToLower()}@example.com", "555-0100"),

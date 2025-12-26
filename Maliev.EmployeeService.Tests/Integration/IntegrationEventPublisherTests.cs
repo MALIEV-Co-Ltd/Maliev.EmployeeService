@@ -137,9 +137,10 @@ public class IntegrationEventPublisherTests
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<IntegrationEventPublisher>>();
             var resilientLogger = scope.ServiceProvider.GetRequiredService<ILogger<ResilientIntegrationEventPublisher>>();
             var meterFactory = scope.ServiceProvider.GetRequiredService<IMeterFactory>();
+            var configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();
 
             var innerPublisher = new IntegrationEventPublisher(publishEndpoint, logger);
-            var resilientPublisher = new ResilientIntegrationEventPublisher(innerPublisher, resilientLogger, meterFactory);
+            var resilientPublisher = new ResilientIntegrationEventPublisher(innerPublisher, resilientLogger, meterFactory, configuration);
 
             var integrationEvent = new EmployeeTerminatedIntegrationEvent
             {

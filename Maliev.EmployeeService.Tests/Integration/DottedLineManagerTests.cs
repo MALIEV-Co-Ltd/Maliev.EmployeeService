@@ -258,6 +258,7 @@ public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             LegalName = new LegalName
             {

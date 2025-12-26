@@ -300,6 +300,7 @@ public class CertificationExpirationReminderTests : PostgreSqlIntegrationTestBas
         return new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = employeeNumber,
             LegalName = new LegalName(firstName, lastName, null),
             ContactInformation = new ContactInformation($"{firstName.ToLower()}.{lastName.ToLower()}@example.com", "555-0100"),

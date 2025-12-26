@@ -59,8 +59,11 @@ public class IntegrationEventTests : IAsyncLifetime
 
         var services = new ServiceCollection();
 
-        // Register interceptor dependencies
-        services.AddSingleton<ICurrentUserService>(new DummyCurrentUserService());
+        // Register IConfiguration (required by command handlers)
+        services.AddSingleton<IConfiguration>(configuration);
+
+        // Register interceptor dependencies with test admin user
+        services.AddSingleton<ICurrentUserService>(new TestAdminUserService());
         services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor, Microsoft.AspNetCore.Http.HttpContextAccessor>();
         services.AddSingleton<AuditLogInterceptor>();
         services.AddSingleton<DatabaseMetricsInterceptor>();
@@ -102,6 +105,21 @@ public class IntegrationEventTests : IAsyncLifetime
         // Add command handlers
         services.AddScoped<StartOnboardingCommandHandler>();
         services.AddScoped<StartOffboardingCommandHandler>();
+
+        // Add mock IIamServiceClient (required by command handlers)
+        var mockIamClient = new Mock<Maliev.Aspire.ServiceDefaults.IAM.IIamServiceClient>();
+        mockIamClient.Setup(x => x.GetUserPermissionsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+        mockIamClient.Setup(x => x.CheckPermissionAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockIamClient.Setup(x => x.CheckPermissionsAsync(
+            It.IsAny<string>(),
+            It.IsAny<IEnumerable<Maliev.Aspire.ServiceDefaults.IAM.PermissionCheckRequest>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string principalId, IEnumerable<Maliev.Aspire.ServiceDefaults.IAM.PermissionCheckRequest> requests, CancellationToken ct) =>
+                requests.ToDictionary(r => r.PermissionId, r => true));
+        services.AddSingleton(mockIamClient.Object);
 
         // Add logging
         services.AddLogging(builder => builder.AddConsole());
@@ -385,6 +403,7 @@ public class IntegrationEventTests : IAsyncLifetime
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             LegalName = new LegalName
             {
@@ -412,13 +431,11 @@ public class IntegrationEventTests : IAsyncLifetime
     }
 
 
-    private class DummyCurrentUserService : ICurrentUserService
+    private class TestAdminUserService : ICurrentUserService
     {
-        public Guid? EmployeeId => Guid.NewGuid();
-        public string? Email => "test.employee@company.com";
-        public IEnumerable<string> Roles => new[] { "Employee" };
+        public Guid? PrincipalId => Guid.Parse("00000000-0000-0000-0000-000000000001"); // Test admin principal ID
+        public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(Guid.Parse("00000000-0000-0000-0000-000000000002"));
+        public string? Email => "test-admin@example.com";
         public bool IsAuthenticated => true;
-        public Role PrimaryRole => Role.Employee;
-        public bool IsInRole(string role) => true;
     }
 }

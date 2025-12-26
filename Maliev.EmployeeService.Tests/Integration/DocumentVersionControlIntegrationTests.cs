@@ -33,6 +33,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp001@company.com" },
@@ -44,6 +45,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR001",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "HR", LastName = "User" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "hr001@company.com" },
@@ -148,6 +150,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee2" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp002@company.com" },
@@ -159,6 +162,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR002",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "HR", LastName = "User2" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "hr002@company.com" },
@@ -266,6 +270,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP003",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee3" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp003@company.com" },
@@ -277,6 +282,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR003",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "HR", LastName = "User3" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "hr003@company.com" },
@@ -389,6 +395,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var uploader = new Employee
         {
             Id = uploaderId,
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR004",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "HR", LastName = "User4" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "hr004@company.com" },
@@ -439,6 +446,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "EMP005",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "Test", LastName = "Employee5" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "emp005@company.com" },
@@ -450,6 +458,7 @@ public class DocumentVersionControlIntegrationTests : PostgreSqlIntegrationTestB
         var uploader = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
             EmployeeNumber = "HR005",
             LegalName = new Domain.ValueObjects.LegalName { FirstName = "HR", LastName = "User5" },
             ContactInformation = new Domain.ValueObjects.ContactInformation { WorkEmail = "hr005@company.com" },

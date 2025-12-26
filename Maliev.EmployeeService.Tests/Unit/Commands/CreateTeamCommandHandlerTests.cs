@@ -6,6 +6,9 @@ using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Moq;
 using Xunit;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
 
 namespace Maliev.EmployeeService.Tests.Unit.Commands;
 
@@ -19,6 +22,8 @@ public class CreateTeamCommandHandlerTests
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IEventPublisher> _mockEventPublisher;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly CreateTeamCommandHandler _handler;
 
     public CreateTeamCommandHandlerTests()
@@ -28,15 +33,21 @@ public class CreateTeamCommandHandlerTests
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockEventPublisher = new Mock<IEventPublisher>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
         // Setup default current user
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new CreateTeamCommandHandler(
             _mockTeamRepository.Object,
             _mockEmployeeRepository.Object,
             _mockUnitOfWork.Object,
             _mockEventPublisher.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
             _mockCurrentUserService.Object);
     }
 

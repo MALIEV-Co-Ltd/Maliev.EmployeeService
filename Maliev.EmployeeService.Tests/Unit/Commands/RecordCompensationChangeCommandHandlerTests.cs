@@ -3,6 +3,9 @@ using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
+using Maliev.EmployeeService.Domain.Authorization;
 using Moq;
 using Xunit;
 
@@ -18,6 +21,8 @@ public class RecordCompensationChangeCommandHandlerTests
     private readonly Mock<IEmployeeRepository> _mockEmployeeRepository;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
+    private readonly Mock<IIamServiceClient> _mockIamClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IEventPublisher> _mockEventPublisher;
     private readonly RecordCompensationChangeCommandHandler _handler;
 
@@ -27,13 +32,21 @@ public class RecordCompensationChangeCommandHandlerTests
         _mockEmployeeRepository = new Mock<IEmployeeRepository>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
+        _mockIamClient = new Mock<IIamServiceClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
         _mockEventPublisher = new Mock<IEventPublisher>();
 
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(Guid.NewGuid());
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        
+        // Grant permission by default for non-authorization tests
+        _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         _handler = new RecordCompensationChangeCommandHandler(
             _mockCompensationRepository.Object,
             _mockEmployeeRepository.Object,
+            _mockIamClient.Object,
+            _mockConfiguration.Object,
             _mockCurrentUserService.Object,
             _mockEventPublisher.Object,
             _mockUnitOfWork.Object);
@@ -280,7 +293,7 @@ public class RecordCompensationChangeCommandHandlerTests
             CreatedDate = DateTime.UtcNow.AddYears(-1)
         };
 
-        _mockCurrentUserService.Setup(x => x.EmployeeId).Returns(currentUserId);
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(currentUserId);
 
         var dto = new RecordCompensationChangeDto
         {
