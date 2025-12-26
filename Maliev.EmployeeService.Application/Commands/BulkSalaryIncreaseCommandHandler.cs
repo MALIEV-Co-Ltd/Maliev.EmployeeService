@@ -3,6 +3,9 @@ using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -17,23 +20,39 @@ public class BulkSalaryIncreaseCommandHandler
     private readonly ICompensationRepository _compensationRepository;
     private readonly IBulkJobRepository _bulkJobRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
     public BulkSalaryIncreaseCommandHandler(
         IEmployeeRepository employeeRepository,
         ICompensationRepository compensationRepository,
         IBulkJobRepository bulkJobRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _employeeRepository = employeeRepository;
         _compensationRepository = compensationRepository;
         _bulkJobRepository = bulkJobRepository;
         _unitOfWork = unitOfWork;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     public async Task<BulkSalaryIncreaseResultDto> HandleAsync(
         BulkSalaryIncreaseCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have CompensationUpdate permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationUpdate, "employee/compensation", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to perform bulk salary increases");
+        }
         // Validate percentage
         if (command.PercentageIncrease <= 0 || command.PercentageIncrease > 100)
         {

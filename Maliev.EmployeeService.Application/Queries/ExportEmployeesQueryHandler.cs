@@ -2,6 +2,9 @@ using System.Text;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -14,13 +17,22 @@ public class ExportEmployeesQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICompensationRepository _compensationRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
     public ExportEmployeesQueryHandler(
         IEmployeeRepository employeeRepository,
-        ICompensationRepository compensationRepository)
+        ICompensationRepository compensationRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _employeeRepository = employeeRepository;
         _compensationRepository = compensationRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -30,6 +42,27 @@ public class ExportEmployeesQueryHandler
         ExportEmployeesQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have ReportsGenerate permission for export
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsGenerate, "employee/export", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to export employee data");
+        }
+
+        // Additional checks for sensitive data flags
+        if (query.IncludePersonalData && 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, "employee/export/personal", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to include personal data in exports");
+        }
+
+        if (query.IncludeSalaryData && 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, "employee/export/salary", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to include salary data in exports");
+        }
+
         // Get all employees
         var allEmployees = await _employeeRepository.GetAllAsync(cancellationToken);
         var employees = allEmployees.ToList();

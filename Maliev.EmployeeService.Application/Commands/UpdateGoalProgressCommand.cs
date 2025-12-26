@@ -1,5 +1,8 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -26,15 +29,21 @@ public class UpdateGoalProgressCommandHandler
 {
     private readonly IGoalRepository _goalRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
     private readonly ICurrentUserService _currentUserService;
 
     public UpdateGoalProgressCommandHandler(
         IGoalRepository goalRepository,
         IUnitOfWork unitOfWork,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService)
     {
         _goalRepository = goalRepository;
         _unitOfWork = unitOfWork;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
     }
 
@@ -42,6 +51,13 @@ public class UpdateGoalProgressCommandHandler
         UpdateGoalProgressCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have PerformanceUpdate permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.PerformanceUpdate, $"employee/{command.EmployeeId}/performance", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update goals for this employee");
+        }
         // Validate goal exists
         var goal = await _goalRepository.GetByIdAsync(command.GoalId, cancellationToken);
         if (goal == null)
@@ -101,7 +117,7 @@ public class UpdateGoalProgressCommandHandler
             }
         }
 
-        goal.ModifiedBy = _currentUserService.EmployeeId;
+        goal.ModifiedBy = _currentUserService.PrincipalId ?? Guid.Empty;
         goal.ModifiedDate = DateTime.UtcNow;
 
         _goalRepository.Update(goal);

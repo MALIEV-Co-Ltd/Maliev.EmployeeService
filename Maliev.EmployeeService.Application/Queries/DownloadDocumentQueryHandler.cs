@@ -1,4 +1,7 @@
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -10,15 +13,27 @@ public class DownloadDocumentQueryHandler
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IUploadServiceClient _uploadServiceClient;
+    private readonly IDocumentAuthorizationService _authorizationService;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DownloadDocumentQueryHandler> _logger;
 
     public DownloadDocumentQueryHandler(
         IDocumentRepository documentRepository,
         IUploadServiceClient uploadServiceClient,
+        IDocumentAuthorizationService authorizationService,
+        ICurrentUserService currentUserService,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ILogger<DownloadDocumentQueryHandler> logger)
     {
         _documentRepository = documentRepository;
         _uploadServiceClient = uploadServiceClient;
+        _authorizationService = authorizationService;
+        _currentUserService = currentUserService;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -31,6 +46,27 @@ public class DownloadDocumentQueryHandler
     {
         _logger.LogInformation("Downloading document {DocumentId}, version: {Version}",
             query.DocumentId, query.VersionNumber?.ToString() ?? "current");
+
+        var principalId = _currentUserService.PrincipalId;
+        if (!principalId.HasValue)
+        {
+            throw new UnauthorizedAccessException("User is not authenticated");
+        }
+
+        // Authorization check: User must have DocumentsRead permission
+        // Path should be employee/{employeeId}/documents/{documentId}
+        // But we need the document first to get the employeeId
+        var document = await _documentRepository.GetByIdAsync(query.DocumentId, cancellationToken);
+        if (document == null)
+        {
+            throw new InvalidOperationException($"Document {query.DocumentId} not found");
+        }
+
+        var resourcePath = $"employee/{document.EmployeeId}/documents/{document.Id}";
+        if (!await _iamClient.CheckPermissionAsync(principalId.Value.ToString(), EmployeePermissions.DocumentsRead, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to download this document");
+        }
 
         string storagePath;
         string fileName;
@@ -51,6 +87,11 @@ public class DownloadDocumentQueryHandler
                     $"Document version {query.VersionNumber} not found for document {query.DocumentId}");
             }
 
+            await _authorizationService.ValidateCanViewDocumentAsync(
+                principalId.Value,
+                document,
+                cancellationToken);
+
             storagePath = version.StoragePath; // Already decrypted by EncryptionInterceptor
             fileName = version.FileName; // Already decrypted by EncryptionInterceptor
             contentType = version.ContentType;
@@ -58,13 +99,11 @@ public class DownloadDocumentQueryHandler
         }
         else
         {
-            // Download current version
-            var document = await _documentRepository.GetByIdAsync(query.DocumentId, cancellationToken);
-
-            if (document == null)
-            {
-                throw new InvalidOperationException($"Document {query.DocumentId} not found");
-            }
+            // Authorization check
+            await _authorizationService.ValidateCanViewDocumentAsync(
+                principalId.Value,
+                document,
+                cancellationToken);
 
             storagePath = document.StoragePath; // Already decrypted by EncryptionInterceptor
             fileName = document.FileName; // Already decrypted by EncryptionInterceptor

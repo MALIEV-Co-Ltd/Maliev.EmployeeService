@@ -1,5 +1,8 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -47,18 +50,36 @@ public class OnboardingChecklistItemDto
 public class GetOnboardingStatusQueryHandler
 {
     private readonly IOnboardingRepository _onboardingRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<GetOnboardingStatusQueryHandler> _logger;
 
     public GetOnboardingStatusQueryHandler(
         IOnboardingRepository onboardingRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ILogger<GetOnboardingStatusQueryHandler> logger)
     {
         _onboardingRepository = onboardingRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
     public async Task<OnboardingStatusDto> HandleAsync(GetOnboardingStatusQuery query, CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have OnboardingManage permission for this employee
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/{query.EmployeeId}/onboarding";
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.OnboardingManage, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view onboarding status for this employee");
+        }
+
         _logger.LogInformation("Getting onboarding status for employee {EmployeeId}", query.EmployeeId);
 
         // Get status summary

@@ -64,7 +64,7 @@ public class UpdateBenefitsEnrollmentCommandHandler
             existingEnrollment.RetirementContribution = command.EnrollmentDto.RetirementContribution;
             existingEnrollment.BeneficiaryInformation = command.EnrollmentDto.BeneficiaryInformation;
             existingEnrollment.EnrollmentDate = command.EnrollmentDto.EnrollmentDate;
-            existingEnrollment.ModifiedBy = _currentUserService.EmployeeId;
+            existingEnrollment.ModifiedBy = _currentUserService.PrincipalId;
             existingEnrollment.ModifiedDate = DateTime.UtcNow;
 
             await _benefitsRepository.UpdateEnrollmentAsync(existingEnrollment, cancellationToken);
@@ -83,7 +83,7 @@ public class UpdateBenefitsEnrollmentCommandHandler
                 RetirementContribution = command.EnrollmentDto.RetirementContribution,
                 BeneficiaryInformation = command.EnrollmentDto.BeneficiaryInformation,
                 EnrollmentDate = command.EnrollmentDto.EnrollmentDate,
-                CreatedBy = _currentUserService.EmployeeId,
+                CreatedBy = _currentUserService.PrincipalId,
                 CreatedDate = DateTime.UtcNow
             };
 

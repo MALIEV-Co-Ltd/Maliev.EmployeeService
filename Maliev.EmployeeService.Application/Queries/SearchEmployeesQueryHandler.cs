@@ -2,6 +2,9 @@ using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Mapping;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -13,14 +16,27 @@ namespace Maliev.EmployeeService.Application.Queries;
 public class SearchEmployeesQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
     ///<summary>
     /// Initializes a new instance of the <see cref="SearchEmployeesQueryHandler"/> class.
     /// </summary>
     /// <param name="employeeRepository">The employee repository.</param>
-    public SearchEmployeesQueryHandler(IEmployeeRepository employeeRepository)
+    /// <param name="iamClient">The IAM service client for authorization checks.</param>
+    /// <param name="configuration">The configuration provider.</param>
+    /// <param name="currentUserService">The service to access information about the current user.</param>
+    public SearchEmployeesQueryHandler(
+        IEmployeeRepository employeeRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _employeeRepository = employeeRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     ///<summary>
@@ -33,6 +49,13 @@ public class SearchEmployeesQueryHandler
         SearchEmployeesQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have EmployeeSearch permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.EmployeeSearch, "employee/search", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to search employees");
+        }
         // Get all employees
         var allEmployees = await _employeeRepository.GetAllAsync(cancellationToken);
         var employeesQuery = allEmployees.AsQueryable();

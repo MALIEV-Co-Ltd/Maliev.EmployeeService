@@ -14,6 +14,11 @@ public interface IEmployeeRepository : IRepository<Employee>
     Task<Employee?> GetByEmployeeNumberAsync(string employeeNumber, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get employee by IAM Principal ID
+    /// </summary>
+    Task<Employee?> GetByPrincipalIdAsync(Guid principalId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get employee with emergency contacts included
     /// </summary>
     Task<Employee?> GetWithEmergencyContactsAsync(Guid id, CancellationToken cancellationToken = default);

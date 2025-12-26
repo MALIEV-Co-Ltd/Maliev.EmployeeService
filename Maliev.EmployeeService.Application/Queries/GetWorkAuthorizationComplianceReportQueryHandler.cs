@@ -1,5 +1,8 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -9,11 +12,20 @@ namespace Maliev.EmployeeService.Application.Queries;
 public class GetWorkAuthorizationComplianceReportQueryHandler
 {
     private readonly IWorkAuthorizationRepository _workAuthorizationRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
     public GetWorkAuthorizationComplianceReportQueryHandler(
-        IWorkAuthorizationRepository workAuthorizationRepository)
+        IWorkAuthorizationRepository workAuthorizationRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _workAuthorizationRepository = workAuthorizationRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -23,6 +35,14 @@ public class GetWorkAuthorizationComplianceReportQueryHandler
         GetWorkAuthorizationComplianceReportQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have WorkAuthManage permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.WorkAuthManage, "employee/work-auth/compliance", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view work authorization compliance reports");
+        }
+
         // Get expiring and expired authorizations
         var expiring = await _workAuthorizationRepository.GetExpiringAsync(
             query.DaysUntilExpiration,

@@ -1,6 +1,9 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -12,10 +15,20 @@ namespace Maliev.EmployeeService.Application.Queries;
 public class GetSpanOfControlReportQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetSpanOfControlReportQueryHandler(IEmployeeRepository employeeRepository)
+    public GetSpanOfControlReportQueryHandler(
+        IEmployeeRepository employeeRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _employeeRepository = employeeRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     ///<summary>
@@ -25,6 +38,14 @@ public class GetSpanOfControlReportQueryHandler
         GetSpanOfControlReportQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have ReportsView permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/span-of-control", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view span of control reports");
+        }
+
         // Get all active employees with their direct reports
         var allEmployees = await _employeeRepository.GetAllAsync(cancellationToken);
         var activeEmployees = allEmployees

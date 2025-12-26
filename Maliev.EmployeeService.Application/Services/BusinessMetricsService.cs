@@ -37,6 +37,17 @@ public class BusinessMetricsService
         "hours",
         "Time from leave request submission to approval/rejection");
 
+    // IAM Integration Metrics (US1, US2, US3)
+    private static readonly Counter<long> _principalLookupCounter = Meter.CreateCounter<long>(
+        "employee_principal_lookup_total",
+        "lookups",
+        "Total number of employee lookups by PrincipalId");
+
+    private static readonly Counter<long> _credentialValidationCounter = Meter.CreateCounter<long>(
+        "employee_credential_validation_total",
+        "validations",
+        "Total number of credential validations");
+
     // Static constructor to initialize metrics
     static BusinessMetricsService()
     {
@@ -282,6 +293,22 @@ public class BusinessMetricsService
         {
             _leaveApprovalTime.Record(durationHours);
         }
+    }
+
+    ///<summary>
+    /// T031b: Record employee lookup by principal ID
+    /// </summary>
+    public void RecordPrincipalLookup(bool success)
+    {
+        _principalLookupCounter.Add(1, new KeyValuePair<string, object?>("status", success ? "success" : "not_found"));
+    }
+
+    ///<summary>
+    /// T031b: Record credential validation result
+    /// </summary>
+    public void RecordCredentialValidation(bool success)
+    {
+        _credentialValidationCounter.Add(1, new KeyValuePair<string, object?>("status", success ? "success" : "failure"));
     }
 
     ///<summary>

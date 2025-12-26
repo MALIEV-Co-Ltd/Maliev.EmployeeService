@@ -1,6 +1,9 @@
 using System.Text.Json;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -12,10 +15,20 @@ namespace Maliev.EmployeeService.Application.Queries;
 public class GetBulkJobStatusQueryHandler
 {
     private readonly IBulkJobRepository _bulkJobRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetBulkJobStatusQueryHandler(IBulkJobRepository bulkJobRepository)
+    public GetBulkJobStatusQueryHandler(
+        IBulkJobRepository bulkJobRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _bulkJobRepository = bulkJobRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -25,6 +38,15 @@ public class GetBulkJobStatusQueryHandler
         GetBulkJobStatusQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have AdminBackgroundJobs permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/bulk-jobs/{query.JobId}";
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.AdminBackgroundJobs, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view bulk job status");
+        }
+
         var job = await _bulkJobRepository.GetByJobIdAsync(query.JobId, cancellationToken);
 
         if (job == null)

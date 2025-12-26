@@ -1,5 +1,8 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Queries;
@@ -50,22 +53,39 @@ public class GetTrainingComplianceReportQueryHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ITrainingRepository _trainingRepository;
     private readonly IDepartmentRepository _departmentRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<GetTrainingComplianceReportQueryHandler> _logger;
 
     public GetTrainingComplianceReportQueryHandler(
         IEmployeeRepository employeeRepository,
         ITrainingRepository trainingRepository,
         IDepartmentRepository departmentRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ILogger<GetTrainingComplianceReportQueryHandler> logger)
     {
         _employeeRepository = employeeRepository;
         _trainingRepository = trainingRepository;
         _departmentRepository = departmentRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
     public async Task<TrainingComplianceReportDto> HandleAsync(GetTrainingComplianceReportQuery query, CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have ReportsView permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/training-compliance", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view training compliance reports");
+        }
+
         _logger.LogInformation("Generating training compliance report");
 
         // Get active employees

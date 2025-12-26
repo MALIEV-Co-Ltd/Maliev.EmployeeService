@@ -82,7 +82,7 @@ public class AddTeamMemberCommandHandler
             EmployeeName = employee.FullName,
             IsPrimary = command.IsPrimary,
             AddedAt = DateTime.UtcNow,
-            AddedBy = _currentUserService.EmployeeId ?? Guid.Empty
+            AddedBy = _currentUserService.PrincipalId ?? Guid.Empty
         };
 
         await _eventPublisher.PublishAsync(teamMemberAddedEvent, cancellationToken);

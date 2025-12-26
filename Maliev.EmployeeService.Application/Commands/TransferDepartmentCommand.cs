@@ -1,4 +1,7 @@
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -26,18 +29,24 @@ public class TransferDepartmentCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
 
     public TransferDepartmentCommandHandler(
         IEmployeeRepository employeeRepository,
         IDepartmentRepository departmentRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         IEventPublisher eventPublisher)
     {
         _employeeRepository = employeeRepository;
         _departmentRepository = departmentRepository;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _eventPublisher = eventPublisher;
     }
 
@@ -45,6 +54,13 @@ public class TransferDepartmentCommandHandler
         TransferDepartmentCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have DepartmentsManage permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.DepartmentsManage, "employee/departments", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to manage departments");
+        }
         // Validate employee exists
         var employee = await _employeeRepository.GetByIdAsync(command.EmployeeId, cancellationToken);
         if (employee == null)
@@ -92,7 +108,7 @@ public class TransferDepartmentCommandHandler
         // Perform the transfer
         var oldDepartmentId = employee.DepartmentId;
         employee.DepartmentId = command.NewDepartmentId;
-        employee.ModifiedBy = _currentUserService.EmployeeId;
+        employee.ModifiedBy = _currentUserService.PrincipalId;
         employee.ModifiedDate = DateTime.UtcNow;
 
         _employeeRepository.Update(employee);

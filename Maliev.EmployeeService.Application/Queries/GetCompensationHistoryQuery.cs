@@ -1,6 +1,9 @@
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -18,14 +21,20 @@ public class GetCompensationHistoryQueryHandler
     private readonly ICompensationRepository _compensationRepository;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
 
     public GetCompensationHistoryQueryHandler(
         ICompensationRepository compensationRepository,
         IEmployeeRepository employeeRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService)
     {
         _compensationRepository = compensationRepository;
         _employeeRepository = employeeRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
     }
 
@@ -33,13 +42,12 @@ public class GetCompensationHistoryQueryHandler
         GetCompensationHistoryQuery query,
         CancellationToken cancellationToken = default)
     {
-        // Authorization check: Only HR Specialist, HR Generalist, System Administrator
-        if (!_currentUserService.IsInRole("HRSpecialist") &&
-            !_currentUserService.IsInRole("HRGeneralist") &&
-            !_currentUserService.IsInRole("SystemAdministrator"))
+        // Authorization check: User must have CompensationRead permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, $"employee/{query.EmployeeId}", cancellationToken))
         {
-            throw new UnauthorizedAccessException(
-                "Only HR personnel and System Administrators can access compensation history");
+            throw new UnauthorizedAccessException("You do not have permission to access compensation history for this employee");
         }
 
         // Verify employee exists

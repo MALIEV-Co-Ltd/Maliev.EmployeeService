@@ -1,6 +1,9 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -31,6 +34,8 @@ public class CreateGoalCommandHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IPerformanceReviewRepository _performanceReviewRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
     private readonly ICurrentUserService _currentUserService;
 
     public CreateGoalCommandHandler(
@@ -38,12 +43,16 @@ public class CreateGoalCommandHandler
         IEmployeeRepository employeeRepository,
         IPerformanceReviewRepository performanceReviewRepository,
         IUnitOfWork unitOfWork,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService)
     {
         _goalRepository = goalRepository;
         _employeeRepository = employeeRepository;
         _performanceReviewRepository = performanceReviewRepository;
         _unitOfWork = unitOfWork;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
     }
 
@@ -51,6 +60,13 @@ public class CreateGoalCommandHandler
         CreateGoalCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have PerformanceUpdate permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.PerformanceUpdate, $"employee/{command.EmployeeId}/performance", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create goals for this employee");
+        }
         // Validate employee exists
         var employee = await _employeeRepository.GetByIdAsync(command.EmployeeId, cancellationToken);
         if (employee == null)
@@ -131,7 +147,7 @@ public class CreateGoalCommandHandler
             SuccessCriteria = command.SuccessCriteria,
             TargetDate = command.TargetDate,
             CompletionStatus = GoalStatus.NotStarted,
-            CreatedBy = _currentUserService.EmployeeId,
+            CreatedBy = _currentUserService.PrincipalId,
             CreatedDate = DateTime.UtcNow
         };
 

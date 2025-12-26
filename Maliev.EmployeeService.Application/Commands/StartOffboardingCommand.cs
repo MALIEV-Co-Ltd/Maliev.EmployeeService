@@ -3,6 +3,9 @@ using Maliev.EmployeeService.Application.IntegrationEvents;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -26,22 +29,39 @@ public class StartOffboardingCommandHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IOffboardingRepository _offboardingRepository;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<StartOffboardingCommandHandler> _logger;
 
     public StartOffboardingCommandHandler(
         IEmployeeRepository employeeRepository,
         IOffboardingRepository offboardingRepository,
         IEventPublisher eventPublisher,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService,
         ILogger<StartOffboardingCommandHandler> logger)
     {
         _employeeRepository = employeeRepository;
         _offboardingRepository = offboardingRepository;
         _eventPublisher = eventPublisher;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
     public async Task<Guid> HandleAsync(StartOffboardingCommand command, CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have OnboardingManage permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.OnboardingManage, "employee/onboarding", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to manage offboarding");
+        }
+
         _logger.LogInformation(
             "Starting offboarding workflow for employee {EmployeeId}, termination date {TerminationDate}",
             command.EmployeeId,

@@ -1,6 +1,9 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -10,16 +13,35 @@ namespace Maliev.EmployeeService.Application.Queries;
 public class GetTeamQueryHandler
 {
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetTeamQueryHandler(IEmployeeRepository employeeRepository)
+    public GetTeamQueryHandler(
+        IEmployeeRepository employeeRepository,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
+        ICurrentUserService currentUserService)
     {
         _employeeRepository = employeeRepository;
+        _iamClient = iamClient;
+        _configuration = configuration;
+        _currentUserService = currentUserService;
     }
 
     public async Task<GetTeamQueryResult> HandleAsync(
         GetTeamQuery query,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have ProfilesRead permission for this manager's team
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        var resourcePath = $"employee/{query.ManagerId}/team";
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, resourcePath, cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view this manager's team");
+        }
+
         // Get all direct reports
         var allDirectReports = await _employeeRepository.GetDirectReportsAsync(
             query.ManagerId,

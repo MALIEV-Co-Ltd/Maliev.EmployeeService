@@ -1,6 +1,9 @@
-using Maliev.EmployeeService.Application.Events;
-using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Application.Events;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -15,18 +18,24 @@ public class CreateTeamCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventPublisher _eventPublisher;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IIamServiceClient _iamClient;
+    private readonly IConfiguration _configuration;
 
     public CreateTeamCommandHandler(
         ITeamRepository teamRepository,
         IEmployeeRepository employeeRepository,
         IUnitOfWork unitOfWork,
         IEventPublisher eventPublisher,
+        IIamServiceClient iamClient,
+        IConfiguration configuration,
         ICurrentUserService currentUserService)
     {
         _teamRepository = teamRepository;
         _employeeRepository = employeeRepository;
         _unitOfWork = unitOfWork;
         _eventPublisher = eventPublisher;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _currentUserService = currentUserService;
     }
 
@@ -34,6 +43,13 @@ public class CreateTeamCommandHandler
         CreateTeamCommand command,
         CancellationToken cancellationToken = default)
     {
+        // Authorization check: User must have TeamsManage permission
+        var principalId = _currentUserService.PrincipalId?.ToString();
+        if (string.IsNullOrEmpty(principalId) || 
+            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TeamsManage, "employee/teams", cancellationToken))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to manage teams");
+        }
         // Validate team lead exists if provided
         if (command.TeamLeadId.HasValue)
         {
@@ -66,7 +82,7 @@ public class CreateTeamCommandHandler
             TeamLeadId = team.TeamLeadId,
             IsActive = team.IsActive,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _currentUserService.EmployeeId ?? Guid.Empty
+            CreatedBy = _currentUserService.PrincipalId ?? Guid.Empty
         };
 
         await _eventPublisher.PublishAsync(teamCreatedEvent, cancellationToken);

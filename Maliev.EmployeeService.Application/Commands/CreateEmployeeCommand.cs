@@ -4,6 +4,7 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Commands;
@@ -26,6 +27,8 @@ public class CreateEmployeeCommandHandler
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IDepartmentRepository _departmentRepository;
     private readonly ICareerServiceClient _careerServiceClient;
+    private readonly IIAMClient _iamClient;
+    private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
     private readonly IEventPublisher _eventPublisher;
@@ -36,6 +39,8 @@ public class CreateEmployeeCommandHandler
         IEmployeeRepository employeeRepository,
         IDepartmentRepository departmentRepository,
         ICareerServiceClient careerServiceClient,
+        IIAMClient iamClient,
+        IConfiguration configuration,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
         IEventPublisher eventPublisher,
@@ -45,6 +50,8 @@ public class CreateEmployeeCommandHandler
         _employeeRepository = employeeRepository;
         _departmentRepository = departmentRepository;
         _careerServiceClient = careerServiceClient;
+        _iamClient = iamClient;
+        _configuration = configuration;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
         _eventPublisher = eventPublisher;
@@ -190,10 +197,36 @@ public class CreateEmployeeCommandHandler
             }
         }
 
+        // Create IAM Principal (US1) - Mandatory after migration cleanup
+        Guid principalId;
+        try
+        {
+            var principalRequest = new CreatePrincipalRequest
+            {
+                Email = dto.WorkEmail,
+                LinkedService = "EmployeeService",
+                LinkedEntityId = null // Will be set after employee creation if needed
+            };
+
+            var principalResponse = await _iamClient.CreatePrincipalAsync(principalRequest, cancellationToken);
+            principalId = principalResponse.PrincipalId;
+
+            _logger.LogInformation("Created IAM principal {PrincipalId} for employee {EmployeeNumber}", principalId, dto.EmployeeNumber);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create principal in IAM for employee {EmployeeNumber}", dto.EmployeeNumber);
+            return new CreateEmployeeCommandResult(
+                false,
+                null,
+                "Failed to create employee identity in IAM. Please ensure identity service is available.");
+        }
+
         // Create the employee entity
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
+            PrincipalId = principalId,
             EmployeeNumber = dto.EmployeeNumber,
             LegalName = new LegalName
             {
@@ -220,12 +253,29 @@ public class CreateEmployeeCommandHandler
             ProbationEndDate = dto.ProbationEndDate,
             NationalId = dto.NationalId, // Will be encrypted by interceptor
             JobApplicationId = dto.JobApplicationId,
-            CreatedBy = _currentUserService.EmployeeId,
+            CreatedBy = _currentUserService.PrincipalId,
             CreatedDate = DateTime.UtcNow
         };
 
         await _employeeRepository.AddAsync(employee, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Employee {EmployeeId} ({EmployeeNumber}) created successfully", employee.Id, employee.EmployeeNumber);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save employee to database. Attempting to delete orphaned IAM principal {PrincipalId}", principalId);
+
+            // Compensation: Delete the IAM principal to avoid orphaned identity
+            await _iamClient.DeletePrincipalAsync(principalId, cancellationToken);
+
+            return new CreateEmployeeCommandResult(
+                false,
+                null,
+                "Failed to create employee due to database error. IAM principal has been cleaned up.");
+        }
 
         // Auto-assign mandatory training based on employment type and job role (T275 - US8)
         if (_assignMandatoryTrainingHandler != null)
