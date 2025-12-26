@@ -150,3 +150,10 @@ docker-compose.dev.yml
 *test-output.txt
 *_error.txt
 
+
+# Extra logs
+*.txt
+# Test Outputs
+*test-output.txt
+*_error.txt
+

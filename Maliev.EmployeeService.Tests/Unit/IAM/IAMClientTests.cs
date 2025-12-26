@@ -2,6 +2,7 @@ using System.Net;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Infrastructure.IAM;
 using Maliev.EmployeeService.Tests.Helpers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Unit.IAM;
@@ -18,7 +19,7 @@ public class IAMClientTests : IDisposable
         {
             BaseAddress = new Uri("http://iam-service")
         };
-        _client = new IAMClient(httpClient);
+        _client = new IAMClient(httpClient, NullLogger<IAMClient>.Instance);
     }
 
     public void Dispose()

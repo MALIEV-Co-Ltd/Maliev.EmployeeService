@@ -89,7 +89,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
                     "Circuit breaker OPENED for RabbitMQ publishing. Will remain open for {BreakDuration}s",
                     breakDuration.TotalSeconds);
 
-                var tags = new TagList(_defaultTags.Length + 1);
+                var tags = new TagList();
                 foreach (var tag in _defaultTags) tags.Add(tag);
                 tags.Add("state", "open");
                 _circuitBreakerStateChanges.Add(1, tags);
@@ -99,7 +99,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
             {
                 _logger.LogInformation("Circuit breaker CLOSED for RabbitMQ publishing. Normal operation resumed.");
 
-                var tags = new TagList(_defaultTags.Length + 1);
+                var tags = new TagList();
                 foreach (var tag in _defaultTags) tags.Add(tag);
                 tags.Add("state", "closed");
                 _circuitBreakerStateChanges.Add(1, tags);
@@ -109,7 +109,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
             {
                 _logger.LogInformation("Circuit breaker HALF-OPEN for RabbitMQ publishing. Testing connection...");
 
-                var tags = new TagList(_defaultTags.Length + 1);
+                var tags = new TagList();
                 foreach (var tag in _defaultTags) tags.Add(tag);
                 tags.Add("state", "half-open");
                 _circuitBreakerStateChanges.Add(1, tags);
@@ -130,9 +130,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
     public async Task PublishAsync<TEvent>(TEvent integrationEvent, string exchange, string routingKey, CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        // Pre-allocate TagList with expected capacity (_defaultTags.Length + 1 for event_type)
-        // This avoids internal array resizing during tag addition
-        var tags = new TagList(_defaultTags.Length + 1);
+        var tags = new TagList();
         foreach (var tag in _defaultTags) tags.Add(tag);
         tags.Add("event_type", typeof(TEvent).Name);
         _publishAttempts.Add(1, tags);
@@ -146,7 +144,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (BrokenCircuitException ex)
         {
-            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            var failTags = new TagList();
             foreach (var tag in _defaultTags) failTags.Add(tag);
             failTags.Add("event_type", typeof(TEvent).Name);
             failTags.Add("reason", "circuit_breaker_open");
@@ -161,7 +159,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (Exception ex)
         {
-            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            var failTags = new TagList();
             foreach (var tag in _defaultTags) failTags.Add(tag);
             failTags.Add("event_type", typeof(TEvent).Name);
             failTags.Add("reason", "exception");
@@ -196,7 +194,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (BrokenCircuitException ex)
         {
-            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            var failTags = new TagList();
             foreach (var tag in _defaultTags) failTags.Add(tag);
             failTags.Add("event_type", typeof(TEvent).Name);
             failTags.Add("reason", "circuit_breaker_open");
@@ -211,7 +209,7 @@ public class ResilientIntegrationEventPublisher : IEventPublisher
         }
         catch (Exception ex)
         {
-            var failTags = new TagList(_defaultTags.Length + 2); // +2 for event_type and reason
+            var failTags = new TagList();
             foreach (var tag in _defaultTags) failTags.Add(tag);
             failTags.Add("event_type", typeof(TEvent).Name);
             failTags.Add("reason", "exception");
