@@ -145,7 +145,6 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
     protected override void ConfigureEnvironmentVariables()
     {
         // Disable IAM registration in tests - uses the service's built-in degraded mode
-        Environment.SetEnvironmentVariable("Features__PermissionBasedAuthEnabled", "false");
     }
 
     protected override void ConfigureAdditionalServices(IServiceCollection services)
