@@ -55,7 +55,6 @@ jobs:
         run: dotnet build Maliev.EmployeeService.sln --no-restore --configuration Release
 
       - name: Run tests
-        continue-on-error: true
         run: dotnet test Maliev.EmployeeService.sln --no-build --configuration Release --verbosity normal
         env:
           ConnectionStrings__EmployeeDbContext: "Server=localhost;Port=5432;Database=employee_service_test_db;User Id=postgres;Password=postgres;"
