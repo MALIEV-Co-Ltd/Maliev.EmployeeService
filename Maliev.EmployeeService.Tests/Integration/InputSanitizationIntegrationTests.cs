@@ -32,8 +32,8 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Authenticate as the employee
-        AuthenticateAs(employee.Id);
+        // Authenticate as the employee with ProfilesUpdate permission
+        AuthenticateAs(employee.Id, permissions: new[] { EmployeePermissions.ProfilesUpdate });
         var request = new HttpRequestMessage(HttpMethod.Post, $"/employee/v1/profile/{employee.Id}/emergency-contacts");
         request.Content = JsonContent.Create(dto);
 
@@ -62,8 +62,8 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Authenticate as the employee
-        AuthenticateAs(employee.Id);
+        // Authenticate as the employee with ProfilesUpdate permission
+        AuthenticateAs(employee.Id, permissions: new[] { EmployeePermissions.ProfilesUpdate });
         var request = new HttpRequestMessage(HttpMethod.Put, $"/employee/v1/profile/{employee.Id}/profile");
         request.Content = JsonContent.Create(dto);
 
@@ -84,8 +84,8 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
             Description = "Test department<a href='data:text/html,<script>alert(1)</script>'>link</a>"
         };
 
-        // Act - Authenticate as HR to create department
-        AuthenticateAs(Guid.NewGuid(), new[] { Roles.HR });
+        // Act - Authenticate as HR to create department with DepartmentsManage permission
+        AuthenticateAs(Guid.NewGuid(), new[] { Roles.HR }, new[] { EmployeePermissions.DepartmentsManage });
         var response = await _client.PostAsJsonAsync("/employee/v1/departments", dto);
 
         // Assert - CreateDepartment returns 201 Created for successful creation
@@ -114,8 +114,8 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Authenticate as the employee
-        AuthenticateAs(employee.Id);
+        // Authenticate as the employee with ProfilesUpdate permission
+        AuthenticateAs(employee.Id, permissions: new[] { EmployeePermissions.ProfilesUpdate });
         var request = new HttpRequestMessage(HttpMethod.Post, $"/employee/v1/profile/{employee.Id}/emergency-contacts");
         request.Content = JsonContent.Create(dto);
 
@@ -136,8 +136,8 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
             Description = "Normal description"
         };
 
-        // Act - Authenticate as HR to create department
-        AuthenticateAs(Guid.NewGuid(), new[] { Roles.HR });
+        // Act - Authenticate as HR to create department with DepartmentsManage permission
+        AuthenticateAs(Guid.NewGuid(), new[] { Roles.HR }, new[] { EmployeePermissions.DepartmentsManage });
         var response = await _client.PostAsJsonAsync("/employee/v1/departments", dto);
 
         // Assert - CreateDepartment returns 201 Created
@@ -162,8 +162,8 @@ public class InputSanitizationIntegrationTests : WebApplicationTestBase
         };
 
         // Act
-        // Authenticate as the employee
-        AuthenticateAs(employee.Id);
+        // Authenticate as the employee with ProfilesUpdate permission
+        AuthenticateAs(employee.Id, permissions: new[] { EmployeePermissions.ProfilesUpdate });
         var request = new HttpRequestMessage(HttpMethod.Put, $"/employee/v1/profile/{employee.Id}/profile");
         request.Content = JsonContent.Create(dto);
 
