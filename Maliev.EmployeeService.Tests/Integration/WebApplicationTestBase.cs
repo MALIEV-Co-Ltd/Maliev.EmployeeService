@@ -98,7 +98,7 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
 
         return employee;
     }
-    protected void AuthenticateAs(Guid employeeId, string[]? roles = null)
+    protected void AuthenticateAs(Guid employeeId, string[]? roles = null, string[]? permissions = null)
     {
         // Lookup the employee's PrincipalId
         using var scope = _factory.Services.CreateScope();
@@ -108,7 +108,7 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
         if (employee == null)
         {
             // If employee not found, authenticate with the ID directly (for role-only tests)
-            AuthenticateAsPrincipal(employeeId, roles);
+            AuthenticateAsPrincipal(employeeId, roles, permissions);
             return;
         }
 
@@ -118,14 +118,14 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
         };
 
         // Use the employee's PrincipalId as the subject (for GetEmployeeIdAsync lookup)
-        var token = _factory.CreateTestJwtToken(employee.PrincipalId.ToString(), roles, additionalClaims);
+        var token = _factory.CreateTestJwtToken(employee.PrincipalId.ToString(), roles, permissions, additionalClaims);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    protected void AuthenticateAsPrincipal(Guid principalId, string[]? roles = null)
+    protected void AuthenticateAsPrincipal(Guid principalId, string[]? roles = null, string[]? permissions = null)
     {
         var additionalClaims = new Dictionary<string, string>();
-        var token = _factory.CreateTestJwtToken(principalId.ToString(), roles, additionalClaims);
+        var token = _factory.CreateTestJwtToken(principalId.ToString(), roles, permissions, additionalClaims);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -30,7 +31,7 @@ public class EmployeeControllerTests : WebApplicationTestBase
             await context.SaveChangesAsync();
         }
 
-        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" });
+        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" }, new[] { EmployeePermissions.ProfilesRead });
 
         // Act
         var response = await _client.GetAsync($"/employee/v1/employees/by-principal/{principalId}");
@@ -47,7 +48,7 @@ public class EmployeeControllerTests : WebApplicationTestBase
     {
         // Arrange
         var principalId = Guid.NewGuid();
-        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" });
+        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" }, new[] { EmployeePermissions.ProfilesRead });
 
         // Act
         var response = await _client.GetAsync($"/employee/v1/employees/by-principal/{principalId}");
