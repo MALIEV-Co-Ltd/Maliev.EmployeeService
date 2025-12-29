@@ -65,7 +65,7 @@ public class CreateTeamCommandHandler
             Name = command.Name,
             Description = command.Description,
             TeamType = command.TeamType,
-            TeamLeadId = command.TeamLeadId,
+            TeamLeadId = command.TeamLeadId ?? Guid.Empty,
             IsActive = command.IsActive
         };
 

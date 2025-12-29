@@ -1,44 +1,44 @@
-using Maliev.EmployeeService.Domain.Common;
+﻿using Maliev.EmployeeService.Domain.Common;
 
 namespace Maliev.EmployeeService.Domain.Entities;
 
 /// <summary>
-/// Emergency contact information for an employee
+/// EmergencyContact entity representing a person to be contacted in case of an emergency for an employee.
 /// </summary>
 public class EmergencyContact : Entity
 {
     /// <summary>
-    /// Employee ID this contact belongs to
+    /// Gets or sets the unique identifier of the employee this contact belongs to.
     /// </summary>
     public Guid EmployeeId { get; set; }
 
     /// <summary>
-    /// Full name of the emergency contact
+    /// Gets or sets the full name of the contact person.
     /// </summary>
     public string ContactName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Relationship to the employee (e.g., Spouse, Parent, Sibling)
+    /// Gets or sets the relationship of the contact person to the employee (e.g., Spouse, Parent).
     /// </summary>
     public string Relationship { get; set; } = string.Empty;
 
     /// <summary>
-    /// Primary phone number
+    /// Gets or sets the primary phone number for the contact person.
     /// </summary>
     public string PhoneNumber { get; set; } = string.Empty;
 
     /// <summary>
-    /// Email address (optional)
+    /// Gets or sets the email address for the contact person.
     /// </summary>
     public string? Email { get; set; }
 
     /// <summary>
-    /// Priority order (1 = primary contact, 2 = secondary, etc.)
+    /// Gets or sets the priority order for contacting this person (e.g., 1 for primary).
     /// </summary>
-    public int PriorityOrder { get; set; } = 1;
+    public int PriorityOrder { get; set; }
 
     /// <summary>
-    /// Navigation property to employee
+    /// Gets or sets the employee entity associated with this emergency contact.
     /// </summary>
     public Employee? Employee { get; set; }
 }

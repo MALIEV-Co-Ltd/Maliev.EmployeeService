@@ -43,24 +43,8 @@ public static class EmployeePredefinedRoles
             EmployeePermissions.ProfilesCreate,
             EmployeePermissions.ProfilesRead,
             EmployeePermissions.ProfilesUpdate,
-            EmployeePermissions.CompensationRead,
-            EmployeePermissions.CompensationUpdate,
             EmployeePermissions.DepartmentsManage,
-            EmployeePermissions.DocumentsCreate,
-            EmployeePermissions.DocumentsRead,
-            EmployeePermissions.DocumentsUpdate,
-            EmployeePermissions.DocumentsDelete,
-            EmployeePermissions.LeaveRead,
-            EmployeePermissions.LeaveApprove,
-            EmployeePermissions.PerformanceCreate,
-            EmployeePermissions.PerformanceRead,
-            EmployeePermissions.PerformanceUpdate,
-            EmployeePermissions.TrainingCreate,
-            EmployeePermissions.TrainingRead,
-            EmployeePermissions.TrainingAssign,
             EmployeePermissions.TeamsManage,
-            EmployeePermissions.OnboardingManage,
-            EmployeePermissions.WorkAuthManage,
             EmployeePermissions.ReportsView,
             EmployeePermissions.ReportsGenerate
         }
@@ -76,17 +60,6 @@ public static class EmployeePredefinedRoles
         {
             EmployeePermissions.ProfilesRead,
             EmployeePermissions.ProfilesUpdate,
-            EmployeePermissions.CompensationRead,
-            EmployeePermissions.DocumentsCreate,
-            EmployeePermissions.DocumentsRead,
-            EmployeePermissions.DocumentsUpdate,
-            EmployeePermissions.LeaveRead,
-            EmployeePermissions.PerformanceRead,
-            EmployeePermissions.TrainingCreate,
-            EmployeePermissions.TrainingRead,
-            EmployeePermissions.TrainingAssign,
-            EmployeePermissions.OnboardingManage,
-            EmployeePermissions.WorkAuthManage,
             EmployeePermissions.ReportsView
         }
     };
@@ -100,13 +73,6 @@ public static class EmployeePredefinedRoles
         Permissions = new[]
         {
             EmployeePermissions.ProfilesRead,
-            EmployeePermissions.DocumentsRead,
-            EmployeePermissions.LeaveRead,
-            EmployeePermissions.LeaveApprove,
-            EmployeePermissions.PerformanceCreate,
-            EmployeePermissions.PerformanceRead,
-            EmployeePermissions.PerformanceUpdate,
-            EmployeePermissions.TrainingRead,
             EmployeePermissions.ReportsView
         }
     };
@@ -120,12 +86,7 @@ public static class EmployeePredefinedRoles
         Permissions = new[]
         {
             EmployeePermissions.ProfilesRead,
-            EmployeePermissions.ProfilesUpdate,  // own profile only
-            EmployeePermissions.DocumentsRead,
-            EmployeePermissions.LeaveCreate,
-            EmployeePermissions.LeaveRead,
-            EmployeePermissions.PerformanceRead,
-            EmployeePermissions.TrainingRead
+            EmployeePermissions.ProfilesUpdate  // own profile only
         }
     };
 

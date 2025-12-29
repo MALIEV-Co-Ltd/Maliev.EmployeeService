@@ -1,45 +1,44 @@
-using Maliev.EmployeeService.Domain.Common;
+﻿using Maliev.EmployeeService.Domain.Common;
 
 namespace Maliev.EmployeeService.Domain.Entities;
 
 /// <summary>
-/// Team entity for matrix organizations
-/// Supports cross-functional teams and project-based structures
+/// Team entity representing a group of employees working together.
 /// </summary>
 public class Team : Entity
 {
     /// <summary>
-    /// Team name
+    /// Gets or sets the name of the team.
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Team description
+    /// Gets or sets the description of the team's purpose or project.
     /// </summary>
     public string? Description { get; set; }
 
     /// <summary>
-    /// Team type (e.g., "Engineering", "Product", "Project")
+    /// Gets or sets the unique identifier of the employee who leads the team.
+    /// </summary>
+    public Guid TeamLeadId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the category or type of the team.
     /// </summary>
     public string TeamType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Team lead employee ID
-    /// </summary>
-    public Guid? TeamLeadId { get; set; }
-
-    /// <summary>
-    /// Whether team is currently active
+    /// Gets or sets a value indicating whether the team is currently active.
     /// </summary>
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Navigation property to team lead
+    /// Gets or sets the employee who is the leader of this team.
     /// </summary>
     public Employee? TeamLead { get; set; }
 
     /// <summary>
-    /// Navigation property to team member assignments
+    /// Gets or sets the collection of member assignments for this team.
     /// </summary>
     public ICollection<EmployeeTeamAssignment> TeamMembers { get; set; } = new List<EmployeeTeamAssignment>();
 }

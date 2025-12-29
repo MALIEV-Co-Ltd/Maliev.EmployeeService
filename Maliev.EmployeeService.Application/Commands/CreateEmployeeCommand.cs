@@ -1,5 +1,6 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.IntegrationEvents;
+using Maliev.EmployeeService.Domain.IntegrationEvents;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -32,7 +33,6 @@ public class CreateEmployeeCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
     private readonly IEventPublisher _eventPublisher;
-    private readonly AssignMandatoryTrainingCommandHandler? _assignMandatoryTrainingHandler;
     private readonly ILogger<CreateEmployeeCommandHandler> _logger;
 
     public CreateEmployeeCommandHandler(
@@ -44,8 +44,7 @@ public class CreateEmployeeCommandHandler
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
         IEventPublisher eventPublisher,
-        ILogger<CreateEmployeeCommandHandler> logger,
-        AssignMandatoryTrainingCommandHandler? assignMandatoryTrainingHandler = null)
+        ILogger<CreateEmployeeCommandHandler> logger)
     {
         _employeeRepository = employeeRepository;
         _departmentRepository = departmentRepository;
@@ -55,7 +54,6 @@ public class CreateEmployeeCommandHandler
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
         _eventPublisher = eventPublisher;
-        _assignMandatoryTrainingHandler = assignMandatoryTrainingHandler;
         _logger = logger;
     }
 
@@ -277,50 +275,19 @@ public class CreateEmployeeCommandHandler
                 "Failed to create employee due to database error. IAM principal has been cleaned up.");
         }
 
-        // Auto-assign mandatory training based on employment type and job role (T275 - US8)
-        if (_assignMandatoryTrainingHandler != null)
-        {
-            try
-            {
-                var assignTrainingCommand = new AssignMandatoryTrainingCommand { EmployeeId = employee.Id };
-                var assignedCourses = await _assignMandatoryTrainingHandler.HandleAsync(assignTrainingCommand, cancellationToken);
-
-                if (assignedCourses.Any())
-                {
-                    _logger.LogInformation(
-                        "Auto-assigned {Count} mandatory training courses to new employee {EmployeeId}",
-                        assignedCourses.Count,
-                        employee.Id);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't fail the request - training assignment is not critical
-                _logger.LogWarning(
-                    ex,
-                    "Failed to auto-assign mandatory training for employee {EmployeeId}",
-                    employee.Id);
-            }
-        }
-
-        // Publish EmployeeCreatedIntegrationEvent (T186 - US10 Integration)
+        // Publish EmployeeCreatedIntegrationEvent (Phase 3 - T125)
         try
         {
-            var department = dto.DepartmentId.HasValue
-                ? await _departmentRepository.GetByIdAsync(dto.DepartmentId.Value, cancellationToken)
-                : null;
-
-            var integrationEvent = new EmployeeCreatedIntegrationEvent
-            {
-                EmployeeId = employee.Id,
-                EmployeeNumber = employee.EmployeeNumber,
-                FullName = $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
-                Email = employee.ContactInformation.WorkEmail,
-                StartDate = employee.StartDate,
-                Department = department?.Name ?? "Unassigned",
-                JobTitle = employee.JobTitle ?? "Employee",
-                EventTimestamp = DateTime.UtcNow
-            };
+            var integrationEvent = new EmployeeCreatedIntegrationEvent(
+                employee.Id,
+                employee.EmployeeNumber,
+                $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
+                employee.ContactInformation.WorkEmail,
+                employee.StartDate,
+                employee.DepartmentId ?? Guid.Empty,
+                employee.ManagerId,
+                employee.JobTitle ?? "Employee"
+            );
 
             await _eventPublisher.PublishAsync(integrationEvent, cancellationToken);
 

@@ -69,7 +69,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 
         // Verify team leads are assigned
         var engineeringTeam = teams.First(t => t.Name == "Engineering Team");
-        Assert.NotNull(engineeringTeam.TeamLeadId);
+        Assert.NotEqual(Guid.Empty, engineeringTeam.TeamLeadId);
         Assert.Equal(employees[0].Id, engineeringTeam.TeamLeadId);
 
         // Verify multiple team memberships (matrix organization)

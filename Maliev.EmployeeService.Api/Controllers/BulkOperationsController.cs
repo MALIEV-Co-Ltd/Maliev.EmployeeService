@@ -26,7 +26,6 @@ public class BulkOperationsController : ControllerBase
     private readonly ExportEmployeesQueryHandler _exportHandler;
     private readonly GetBulkJobStatusQueryHandler _statusHandler;
     private readonly ImportEmployeesCommandHandler _importHandler;
-    private readonly BulkSalaryIncreaseCommandHandler _salaryIncreaseHandler;
     private readonly ICurrentUserService _currentUserService;
 
     /// <summary>
@@ -36,13 +35,11 @@ public class BulkOperationsController : ControllerBase
         ExportEmployeesQueryHandler exportHandler,
         GetBulkJobStatusQueryHandler statusHandler,
         ImportEmployeesCommandHandler importHandler,
-        BulkSalaryIncreaseCommandHandler salaryIncreaseHandler,
         ICurrentUserService currentUserService)
     {
         _exportHandler = exportHandler;
         _statusHandler = statusHandler;
         _importHandler = importHandler;
-        _salaryIncreaseHandler = salaryIncreaseHandler;
         _currentUserService = currentUserService;
     }
 
@@ -52,7 +49,6 @@ public class BulkOperationsController : ControllerBase
     /// <param name="departmentId">Optional department filter</param>
     /// <param name="employmentStatus">Optional employment status filter</param>
     /// <param name="includeTerminated">Include terminated employees (default: false)</param>
-    /// <param name="includeSalaryData">Include salary data (requires HR/Admin role)</param>
     /// <param name="includePersonalData">Include personal contact information</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>CSV file download</returns>
@@ -64,29 +60,15 @@ public class BulkOperationsController : ControllerBase
         [FromQuery] Guid? departmentId,
         [FromQuery] Domain.Enums.EmploymentStatus? employmentStatus,
         [FromQuery] bool includeTerminated = false,
-        [FromQuery] bool includeSalaryData = false,
         [FromQuery] bool includePersonalData = true,
         CancellationToken cancellationToken = default)
     {
-        // Salary data requires CompensationRead permission
-        if (includeSalaryData)
-        {
-            var iamClient = HttpContext.RequestServices.GetRequiredService<IIamServiceClient>();
-            var principalId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrEmpty(principalId) ||
-                !await iamClient.CheckPermissionAsync(principalId, EmployeePermissions.CompensationRead, cancellationToken: cancellationToken))
-            {
-                return Forbid("Salary data export requires CompensationRead permission");
-            }
-        }
-
         var query = new ExportEmployeesQuery
         {
             DepartmentId = departmentId,
             EmploymentStatus = employmentStatus,
             IncludeTerminated = includeTerminated,
-            IncludeSalaryData = includeSalaryData,
+            IncludeSalaryData = false, // Compensation migrated
             IncludePersonalData = includePersonalData
         };
 
@@ -177,39 +159,5 @@ public class BulkOperationsController : ControllerBase
         };
 
         return AcceptedAtAction(nameof(GetJobStatus), new { jobId }, result);
-    }
-
-    /// <summary>
-    /// Apply bulk salary increase (preview or execute)
-    /// </summary>
-    /// <param name="request">Salary increase request</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Salary increase result with preview or execution details</returns>
-    [HttpPost("compensation/salary-increase")]
-    [RequirePermission(EmployeePermissions.CompensationUpdate)]
-    [ProducesResponseType(typeof(BulkSalaryIncreaseResultDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<BulkSalaryIncreaseResultDto>> BulkSalaryIncrease(
-        [FromBody] BulkSalaryIncreaseDto request,
-        CancellationToken cancellationToken = default)
-    {
-        if (request.PercentageIncrease <= 0 || request.PercentageIncrease > 100)
-        {
-            return BadRequest(new { message = "Percentage increase must be between 0 and 100" });
-        }
-
-        var command = new BulkSalaryIncreaseCommand
-        {
-            DepartmentId = request.DepartmentId,
-            PercentageIncrease = request.PercentageIncrease,
-            Reason = request.Reason,
-            EffectiveDate = request.EffectiveDate,
-            PreviewOnly = request.PreviewOnly,
-            InitiatedByUserId = _currentUserService.PrincipalId ?? Guid.Empty
-        };
-
-        var result = await _salaryIncreaseHandler.HandleAsync(command, cancellationToken);
-
-        return Ok(result);
     }
 }
