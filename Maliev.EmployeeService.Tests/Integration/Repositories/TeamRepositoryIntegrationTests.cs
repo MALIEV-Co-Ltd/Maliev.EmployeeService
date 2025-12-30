@@ -11,6 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration.Repositories;
 /// <summary>
 /// Integration tests for TeamRepository using in-memory database (User Story 5)
 /// </summary>
+[Collection("IntegrationTests")]
 public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
 {
 

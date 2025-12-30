@@ -17,6 +17,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// <summary>
 /// Integration tests for department headcount limit warnings and enforcement (User Story 5)
 /// </summary>
+[Collection("IntegrationTests")]
 public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
 {
     private DepartmentRepository _departmentRepository = null!;

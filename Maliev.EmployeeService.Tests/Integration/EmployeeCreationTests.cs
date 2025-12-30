@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.TestHost;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
+[Collection("IntegrationTests")]
 public class EmployeeCreationTests : WebApplicationTestBase
 {
     private readonly Mock<IIAMClient> _iamClientMock = new();

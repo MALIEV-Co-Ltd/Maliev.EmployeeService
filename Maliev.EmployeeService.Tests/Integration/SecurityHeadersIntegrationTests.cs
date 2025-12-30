@@ -7,6 +7,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// Integration tests for security headers middleware
 /// Phase 16 - T384: Security Headers
 /// </summary>
+[Collection("IntegrationTests")]
 public class SecurityHeadersIntegrationTests : WebApplicationTestBase
 {
     public SecurityHeadersIntegrationTests(EmployeeServiceTestFactory factory) : base(factory)

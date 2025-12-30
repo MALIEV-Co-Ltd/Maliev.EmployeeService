@@ -12,6 +12,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// <summary>
 /// Integration tests for DatabaseSeeder
 /// </summary>
+[Collection("IntegrationTests")]
 public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 {
 

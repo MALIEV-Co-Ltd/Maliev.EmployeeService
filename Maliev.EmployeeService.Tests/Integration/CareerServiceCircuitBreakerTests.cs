@@ -11,6 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// Integration tests for Career Service circuit breaker behavior
 /// Tests T026o: Verify circuit breaker opens after 5 consecutive failures and resumes after 30s
 /// </summary>
+[Collection("IntegrationTests")]
 public class CareerServiceCircuitBreakerTests : IDisposable
 {
     private readonly MockHttpMessageHandler _mockHandler;

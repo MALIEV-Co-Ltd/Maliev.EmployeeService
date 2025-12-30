@@ -11,6 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// <summary>
 /// Integration tests for matrix organization team assignments (User Story 5)
 /// </summary>
+[Collection("IntegrationTests")]
 public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
 {
     private TeamRepository _teamRepository = null!;

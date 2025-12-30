@@ -11,6 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// <summary>
 /// Integration tests for dotted-line manager relationships (User Story 5)
 /// </summary>
+[Collection("IntegrationTests")]
 public class DottedLineManagerTests : PostgreSqlIntegrationTestBase
 {
     [Fact]

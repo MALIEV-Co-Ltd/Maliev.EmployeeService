@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
+[Collection("IntegrationTests")]
 public class CredentialValidationTests : WebApplicationTestBase
 {
     public CredentialValidationTests(EmployeeServiceTestFactory factory) : base(factory)

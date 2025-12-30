@@ -21,6 +21,7 @@ using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
+[Collection("IntegrationTests")]
 public class IntegrationEventTests : IAsyncLifetime
 {
     private ITestHarness? _harness;

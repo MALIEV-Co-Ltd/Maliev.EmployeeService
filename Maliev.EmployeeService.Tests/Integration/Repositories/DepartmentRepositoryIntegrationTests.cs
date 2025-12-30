@@ -10,6 +10,7 @@ namespace Maliev.EmployeeService.Tests.Integration.Repositories;
 /// <summary>
 /// Integration tests for DepartmentRepository using in-memory database
 /// </summary>
+[Collection("IntegrationTests")]
 public class DepartmentRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
 {
 

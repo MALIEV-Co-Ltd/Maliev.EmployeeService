@@ -10,6 +10,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// Note: Some tests are skipped because they require infrastructure (PostgreSQL, background jobs)
 /// that isn't available in the in-memory test environment.
 /// </summary>
+[Collection("IntegrationTests")]
 public class MetricsEndpointIntegrationTests : WebApplicationTestBase
 {
     public MetricsEndpointIntegrationTests(EmployeeServiceTestFactory factory) : base(factory)
