@@ -191,15 +191,7 @@ if (args.Contains("--migrate-principals"))
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 // Run database migrations on startup
-try
-{
-    await app.MigrateDatabaseAsync<EmployeeDbContext>();
-}
-catch (Exception ex)
-{
-    Log.MigrationFailed(logger, ex);
-    // Don't throw - allow app to start for debugging
-}
+await app.MigrateDatabaseAsync<EmployeeDbContext>();
 
 // Force initialization of metrics
 System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
