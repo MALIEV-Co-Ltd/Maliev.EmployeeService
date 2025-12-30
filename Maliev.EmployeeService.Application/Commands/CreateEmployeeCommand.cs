@@ -1,6 +1,6 @@
 using Maliev.EmployeeService.Application.DTOs;
-using Maliev.EmployeeService.Application.IntegrationEvents;
-using Maliev.EmployeeService.Domain.IntegrationEvents;
+using Maliev.MessagingContracts.Generated;
+// using Maliev.EmployeeService.Domain.IntegrationEvents; // Removed
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -278,21 +278,25 @@ public class CreateEmployeeCommandHandler
         // Publish EmployeeCreatedIntegrationEvent (Phase 3 - T125)
         try
         {
-            var integrationEvent = new EmployeeCreatedIntegrationEvent(
-                employee.Id,
-                employee.EmployeeNumber,
-                $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
-                employee.ContactInformation.WorkEmail,
-                employee.StartDate,
-                employee.DepartmentId ?? Guid.Empty,
-                employee.ManagerId,
-                employee.JobTitle ?? "Employee"
-            );
+            var integrationEvent = new EmployeeCreatedEvent
+            {
+                Payload = new EmployeeCreatedEventPayload
+                {
+                    EmployeeId = employee.Id,
+                    EmployeeNumber = employee.EmployeeNumber,
+                    FullName = $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
+                    Email = employee.ContactInformation.WorkEmail,
+                    HireDate = employee.StartDate,
+                    DepartmentId = employee.DepartmentId ?? Guid.Empty,
+                    ManagerId = employee.ManagerId,
+                    JobTitle = employee.JobTitle ?? "Employee"
+                }
+            };
 
             await _eventPublisher.PublishAsync(integrationEvent, cancellationToken);
-
+            
             _logger.LogInformation(
-                "Published EmployeeCreatedIntegrationEvent for employee {EmployeeId} ({EmployeeNumber})",
+                "Published EmployeeCreatedEvent for employee {EmployeeId} ({EmployeeNumber})",
                 employee.Id,
                 employee.EmployeeNumber);
         }
@@ -301,7 +305,7 @@ public class CreateEmployeeCommandHandler
             // Log error but don't fail the request - event publishing is not critical
             _logger.LogError(
                 ex,
-                "Failed to publish EmployeeCreatedIntegrationEvent for employee {EmployeeId}",
+                "Failed to publish EmployeeCreatedEvent for employee {EmployeeId}",
                 employee.Id);
         }
 

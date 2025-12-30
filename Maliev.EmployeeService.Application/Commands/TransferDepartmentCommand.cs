@@ -1,5 +1,5 @@
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Domain.IntegrationEvents;
+using Maliev.MessagingContracts.Generated;
 using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -116,12 +116,16 @@ public class TransferDepartmentCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Publish event for access control and email distribution list updates (Phase 3 - T127)
-        await _eventPublisher.PublishAsync(new DepartmentTransferredIntegrationEvent(
-            employee.Id,
-            oldDepartmentId ?? Guid.Empty,
-            command.NewDepartmentId,
-            command.EffectiveDate
-        ), cancellationToken);
+        await _eventPublisher.PublishAsync(new DepartmentTransferredEvent
+        {
+            Payload = new DepartmentTransferredEventPayload
+            {
+                EmployeeId = employee.Id,
+                OldDepartmentId = oldDepartmentId ?? Guid.Empty,
+                NewDepartmentId = command.NewDepartmentId,
+                EffectiveDate = command.EffectiveDate
+            }
+        }, cancellationToken);
 
         return new TransferDepartmentCommandResult(true, null);
     }

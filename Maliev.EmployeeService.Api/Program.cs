@@ -161,7 +161,7 @@ builder.Services.AddSingleton<IBackgroundJobStatusService, Maliev.EmployeeServic
 
 // Background Services
 builder.Services.AddHostedService<Maliev.EmployeeService.Application.BackgroundServices.DataRetentionBackgroundService>();
-builder.Services.AddHostedService<Maliev.EmployeeService.Application.BackgroundServices.SagaRecoveryService>();
+builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.BackgroundServices.SagaRecoveryService>();
 
 // IAM Registration Service
 builder.Services.AddIAMRegistration<Maliev.EmployeeService.Api.Services.EmployeeIAMRegistrationService>();

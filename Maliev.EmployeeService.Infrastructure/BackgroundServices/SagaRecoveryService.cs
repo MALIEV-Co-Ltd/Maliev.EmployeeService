@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Maliev.EmployeeService.Infrastructure.Data;
 
-namespace Maliev.EmployeeService.Application.BackgroundServices;
+namespace Maliev.EmployeeService.Infrastructure.BackgroundServices;
 
 /// <summary>
 /// Background service that monitors for stalled EmployeeTerminationSaga instances
@@ -57,6 +57,7 @@ public class SagaRecoveryService : BackgroundService
         var staleDate = DateTime.UtcNow.Subtract(_staleThreshold);
 
         // Find sagas stuck in Processing state for more than the threshold
+        // Using EmployeeTerminationSagaState which is the MassTransit state machine instance
         var stalledSagas = await context.Set<EmployeeTerminationSagaState>()
             .Where(s => s.CurrentState == "Processing" && (s.UpdatedAt ?? s.CreatedAt) < staleDate)
             .ToListAsync(cancellationToken);

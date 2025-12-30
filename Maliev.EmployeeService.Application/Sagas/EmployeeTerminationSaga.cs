@@ -21,6 +21,8 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
 
         // Handle faults for compensating transactions
         Event(() => LeaveClosureFaulted, x => x.CorrelateById(context => context.Message.Message.EmployeeId));
+        Event(() => CompensationArchivalFaulted, x => x.CorrelateById(context => context.Message.Message.EmployeeId));
+        Event(() => AccessRevocationFaulted, x => x.CorrelateById(context => context.Message.Message.EmployeeId));
 
         Initially(
             When(EmployeeTerminated)
@@ -75,8 +77,25 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
             When(LeaveClosureFaulted)
                 .Then(context =>
                 {
-                    // Log failure and initiate cleanup if needed
+                    // No previous steps to undo if the FIRST step fails
                 })
+                .TransitionTo(Faulted),
+
+            When(CompensationArchivalFaulted)
+                .Then(context =>
+                {
+                    // Undo Step 1 (Leave Balance Closure)
+                })
+                .Publish(context => new UndoCloseLeaveBalanceCommand { EmployeeId = context.Saga.EmployeeId })
+                .TransitionTo(Faulted),
+
+            When(AccessRevocationFaulted)
+                .Then(context =>
+                {
+                    // Undo Step 2 (Compensation Archival) and Step 1
+                })
+                .Publish(context => new UndoArchiveCompensationCommand { EmployeeId = context.Saga.EmployeeId })
+                .Publish(context => new UndoCloseLeaveBalanceCommand { EmployeeId = context.Saga.EmployeeId })
                 .TransitionTo(Faulted)
         );
     }
@@ -88,6 +107,8 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
 
     // Fault events
     public Event<Fault<CloseLeaveBalanceCommand>> LeaveClosureFaulted { get; private set; } = null!;
+    public Event<Fault<ArchiveCompensationCommand>> CompensationArchivalFaulted { get; private set; } = null!;
+    public Event<Fault<RevokeAccessCommand>> AccessRevocationFaulted { get; private set; } = null!;
 
     public State Processing { get; private set; } = null!;
     public State Completed { get; private set; } = null!;
@@ -98,6 +119,10 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
 public class CloseLeaveBalanceCommand { public Guid EmployeeId { get; set; } public DateTime TerminationDate { get; set; } }
 public class ArchiveCompensationCommand { public Guid EmployeeId { get; set; } }
 public class RevokeAccessCommand { public Guid EmployeeId { get; set; } }
+
+public class UndoCloseLeaveBalanceCommand { public Guid EmployeeId { get; set; } }
+public class UndoArchiveCompensationCommand { public Guid EmployeeId { get; set; } }
+public class UndoRevokeAccessCommand { public Guid EmployeeId { get; set; } }
 
 public class LeaveBalanceClosedEvent { public Guid EmployeeId { get; set; } }
 public class CompensationArchivedEvent { public Guid EmployeeId { get; set; } }

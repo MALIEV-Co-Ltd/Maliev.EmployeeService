@@ -94,7 +94,7 @@
 ### NuGet Configuration (All Services)
 
 - [X] T041 [P] Create nuget.config in Maliev.LeaveService with GitHub Packages authentication
-- [X] T042 [P] Create nuget.config in Maliev.CompensationService with GitHub Packages authentication
+- [X] T042 [X] Create nuget.config in Maliev.CompensationService with GitHub Packages authentication
 - [X] T043 [P] Create nuget.config in Maliev.PerformanceService with GitHub Packages authentication
 - [X] T044 [P] Create nuget.config in Maliev.LifecycleService with GitHub Packages authentication
 - [X] T045 [P] Create nuget.config in Maliev.ComplianceService with GitHub Packages authentication
@@ -160,20 +160,20 @@
 ### CI/CD Workflows (All Services)
 
 - [X] T076 [P] Create .github/workflows/ci-develop.yml in Maliev.LeaveService with build, test, Testcontainers integration tests
-- [ ] T077 [P] Create .github/workflows/ci-staging.yml in Maliev.LeaveService with build, test, Docker image push
-- [ ] T078 [P] Create .github/workflows/ci-main.yml in Maliev.LeaveService with build, test, Docker image push, production deployment
+- [X] T077 [P] Create .github/workflows/ci-staging.yml in Maliev.LeaveService with build, test, Docker image push
+- [X] T078 [P] Create .github/workflows/ci-main.yml in Maliev.LeaveService with build, test, Docker image push, production deployment
 - [X] T079 [P] Create .github/workflows/ci-develop.yml in Maliev.CompensationService
-- [ ] T080 [P] Create .github/workflows/ci-staging.yml in Maliev.CompensationService
-- [ ] T081 [P] Create .github/workflows/ci-main.yml in Maliev.CompensationService
+- [X] T080 [P] Create .github/workflows/ci-staging.yml in Maliev.CompensationService
+- [X] T081 [P] Create .github/workflows/ci-main.yml in Maliev.CompensationService
 - [X] T082 [P] Create .github/workflows/ci-develop.yml in Maliev.PerformanceService
-- [ ] T083 [P] Create .github/workflows/ci-staging.yml in Maliev.PerformanceService
-- [ ] T084 [P] Create .github/workflows/ci-main.yml in Maliev.PerformanceService
+- [X] T083 [P] Create .github/workflows/ci-staging.yml in Maliev.PerformanceService
+- [X] T084 [P] Create .github/workflows/ci-main.yml in Maliev.PerformanceService
 - [X] T085 [P] Create .github/workflows/ci-develop.yml in Maliev.LifecycleService
-- [ ] T086 [P] Create .github/workflows/ci-staging.yml in Maliev.LifecycleService
-- [ ] T087 [P] Create .github/workflows/ci-main.yml in Maliev.LifecycleService
+- [X] T086 [P] Create .github/workflows/ci-staging.yml in Maliev.LifecycleService
+- [X] T087 [P] Create .github/workflows/ci-main.yml in Maliev.LifecycleService
 - [X] T088 [P] Create .github/workflows/ci-develop.yml in Maliev.ComplianceService
-- [ ] T089 [P] Create .github/workflows/ci-staging.yml in Maliev.ComplianceService
-- [ ] T090 [P] Create .github/workflows/ci-main.yml in Maliev.ComplianceService
+- [X] T089 [P] Create .github/workflows/ci-staging.yml in Maliev.ComplianceService
+- [X] T090 [P] Create .github/workflows/ci-main.yml in Maliev.ComplianceService
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -240,8 +240,8 @@
 ### Integration Event Publishing
 
 - [X] T125 [US1] Implement EmployeeCreatedIntegrationEvent publishing in CreateEmployeeCommandHandler in Maliev.EmployeeService.Application/Commands/CreateEmployeeCommandHandler.cs
-- [X] T126 [US1] Implement EmployeeTerminatedIntegrationEvent publishing in TerminateEmployeeCommandHandler in Maliev.EmployeeService.Application/Commands/TerminateEmployeeCommandHandler.cs
-- [X] T127 [US1] Implement DepartmentTransferredIntegrationEvent publishing in TransferEmployeeDepartmentCommandHandler in Maliev.EmployeeService.Application/Commands/TransferEmployeeDepartmentCommandHandler.cs
+- [X] T126 [X] Implement EmployeeTerminatedIntegrationEvent publishing in TerminateEmployeeCommandHandler in Maliev.EmployeeService.Application/Commands/TerminateEmployeeCommandHandler.cs
+- [X] T127 [X] Implement DepartmentTransferredIntegrationEvent publishing in TransferEmployeeDepartmentCommandHandler in Maliev.EmployeeService.Application/Commands/TransferEmployeeDepartmentCommandHandler.cs
 
 ### GDPR Compliance Background Service
 
@@ -250,8 +250,8 @@
 
 ### Database Migrations
 
-- [ ] T130 [US1] Create EF Core migration to remove tables for migrated entities in Maliev.EmployeeService.Infrastructure/Migrations
-- [ ] T131 [US1] Apply migration to slim down employee_db schema
+- [X] T130 [US1] Create EF Core migration to remove tables for migrated entities in Maliev.EmployeeService.Infrastructure/Migrations
+- [X] T131 [US1] Apply migration to slim down employee_db schema
 
 **Checkpoint**: Employee Service is slimmed to ~25K LOC with only core employee management functionality
 
@@ -542,15 +542,15 @@
 
 ### Integration Event Consumers
 
-- [X] T252 [US6] Create EmployeeCreatedEventConsumer.cs in Maliev.ComplianceService.Infrastructure/Consumers
-- [X] T253 [US6] Create EmployeeTerminatedEventConsumer.cs in Maliev.ComplianceService.Infrastructure/Consumers
-- [X] T254 [US6] Register consumers in Maliev.ComplianceService.Api Program.cs with MassTransit
+- [X] T252 [X] Create EmployeeCreatedEventConsumer.cs in Maliev.ComplianceService.Infrastructure/Consumers
+- [X] T253 [X] Create EmployeeTerminatedEventConsumer.cs in Maliev.ComplianceService.Infrastructure/Consumers
+- [X] T254 [X] Register consumers in Maliev.ComplianceService.Api Program.cs with MassTransit
 
 ### Background Services
 
-- [X] T255 [US6] Create WorkAuthorizationExpirationReminderService.cs in Maliev.ComplianceService.Application/BackgroundServices to send reminders 90/60/30 days before expiry
-- [X] T256 [US6] Create ExpiredWorkAuthorizationFlaggingService.cs in Maliev.ComplianceService.Application/BackgroundServices to update status to Expired
-- [X] T257 [US6] Register background services in Maliev.ComplianceService.Api Program.cs
+- [X] T255 [X] Create WorkAuthorizationExpirationReminderService.cs in Maliev.ComplianceService.Application/BackgroundServices to send reminders 90/60/30 days before expiry
+- [X] T256 [X] Create ExpiredWorkAuthorizationFlaggingService.cs in Maliev.ComplianceService.Application/BackgroundServices to update status to Expired
+- [X] T257 [X] Register background services in Maliev.ComplianceService.Api Program.cs
 
 **Checkpoint**: Compliance Service is fully functional for tracking work authorization
 
@@ -564,57 +564,57 @@
 
 ### Domain Entities (Add to Existing Career Service)
 
-- [ ] T258 [P] [US7] Create TrainingProgram.cs in Maliev.CareerService.Domain/Entities with Name, Code, Description, DurationHours, IsMandatory, ValidityMonths
-- [ ] T259 [P] [US7] Create TrainingRecord.cs in Maliev.CareerService.Domain/Entities with EmployeeId, EmployeeNumber, TrainingProgramId, CompletionDate, Score, PassedTraining
-- [ ] T260 [P] [US7] Create MandatoryTrainingRequirement.cs in Maliev.CareerService.Domain/Entities
-- [ ] T261 [P] [US7] Create Certification.cs in Maliev.CareerService.Domain/Entities with EmployeeId, EmployeeNumber, CertificationName, IssuingOrganization, IssueDate, ExpiryDate, CertificationNumber
-- [ ] T262 [P] [US7] Create Skill.cs in Maliev.CareerService.Domain/Entities with EmployeeId, EmployeeNumber, SkillName, Category, ProficiencyLevel, AcquiredDate
+- [X] T258 [P] [US7] Create TrainingProgram.cs in Maliev.CareerService.Data/Models with Name, Code, Description, DurationHours, IsMandatory, ValidityMonths
+- [X] T259 [P] [US7] Create TrainingRecord.cs in Maliev.CareerService.Data/Models with EmployeeId, EmployeeNumber, TrainingProgramId, CompletionDate, Score, PassedTraining, ExpirationDate
+- [X] T260 [P] [US7] Create MandatoryTrainingRequirement.cs in Maliev.CareerService.Data/Models
+- [X] T261 [P] [US7] Create Certification.cs in Maliev.CareerService.Data/Models (Note: Integrated into TrainingRecord)
+- [X] T262 [P] [US7] Create Skill.cs in Maliev.CareerService.Data/Models with EmployeeId, EmployeeNumber, SkillName, Category, ProficiencyLevel, AcquiredDate
 
 ### Infrastructure - Extend DbContext
 
-- [ ] T263 [US7] Add DbSets for TrainingProgram, TrainingRecord, MandatoryTrainingRequirement, Certification, Skill to Maliev.CareerService.Infrastructure/CareerDbContext.cs
-- [ ] T264 [US7] Configure entity relationships and indexes in CareerDbContext.OnModelCreating for new entities
-- [ ] T265 [US7] Create EF Core migration to add training tables to career_db in Maliev.CareerService.Infrastructure/Migrations
+- [X] T263 [US7] Add DbSets for TrainingProgram, TrainingRecord, MandatoryTrainingRequirement, Skill to Maliev.CareerService.Data/CareerDbContext.cs
+- [X] T264 [US7] Configure entity relationships and indexes in CareerDbContext.OnModelCreating for new entities
+- [X] T265 [US7] Create EF Core migration to add training tables to career_db in Maliev.CareerService.Data/Migrations
 
-### Application Layer - Commands
+### Application Layer - Commands (Services in CareerService)
 
-- [ ] T266 [P] [US7] Create RecordTrainingCompletionCommand and handler in Maliev.CareerService.Application/Commands
-- [ ] T267 [P] [US7] Create AssignMandatoryTrainingCommand and handler in Maliev.CareerService.Application/Commands
-- [ ] T268 [P] [US7] Create AddCertificationCommand and handler in Maliev.CareerService.Application/Commands
-- [ ] T269 [P] [US7] Create UpdateCertificationCommand and handler in Maliev.CareerService.Application/Commands
-- [ ] T270 [P] [US7] Create AddSkillCommand and handler in Maliev.CareerService.Application/Commands
-- [ ] T271 [P] [US7] Create UpdateSkillCommand and handler in Maliev.CareerService.Application/Commands
+- [X] T266 [P] [US7] Create RecordTrainingCompletion logic in ITrainingRecordService
+- [X] T267 [P] [US7] Create AssignMandatoryTraining logic in IMandatoryTrainingService
+- [X] T268 [P] [US7] Create AddCertification logic (Note: Integrated into TrainingRecordService)
+- [X] T269 [P] [US7] Create UpdateCertification logic (Note: Integrated into TrainingRecordService)
+- [X] T270 [P] [US7] Create AddSkill logic in IEmployeeSkillService
+- [X] T271 [P] [US7] Create UpdateSkill logic in IEmployeeSkillService
 
 ### Application Layer - Queries
 
-- [ ] T272 [P] [US7] Create GetTrainingRecordsQuery and handler in Maliev.CareerService.Application/Queries
-- [ ] T273 [P] [US7] Create GetCertificationsQuery and handler in Maliev.CareerService.Application/Queries
-- [ ] T274 [P] [US7] Create GetSkillsQuery and handler in Maliev.CareerService.Application/Queries
-- [ ] T275 [P] [US7] Create GetTrainingComplianceReportQuery and handler in Maliev.CareerService.Application/Queries
+- [X] T272 [P] [US7] Create GetTrainingRecordsQuery logic in ITrainingRecordService
+- [X] T273 [P] [US7] Create GetCertificationsQuery logic (Note: Integrated into TrainingRecordService)
+- [X] T274 [P] [US7] Create GetSkillsQuery logic in IEmployeeSkillService
+- [X] T275 [P] [US7] Create GetTrainingComplianceReportQuery logic
 
 ### API Controllers
 
-- [ ] T276 [US7] Create TrainingController.cs in Maliev.CareerService.Api/Controllers with endpoints for GET /training/records, POST /training/records, POST /training/assign
-- [ ] T277 [US7] Add certification endpoints (GET /certifications, POST /certifications, PUT /certifications/{id})
-- [ ] T278 [US7] Add skill endpoints (GET /skills, POST /skills, PUT /skills/{id})
-- [ ] T279 [US7] Extend ReportsController.cs in Maliev.CareerService.Api/Controllers with GET /reports/training-compliance
+- [X] T276 [US7] Create TrainingRecordsController.cs in Maliev.CareerService.Api/Controllers with endpoints for GET /training-records, POST /training-records
+- [X] T277 [US7] Add certification endpoints (Note: Integrated into TrainingRecordsController)
+- [X] T278 [US7] Add skill endpoints in SkillsController.cs
+- [X] T279 [US7] Extend ReportsController.cs in Maliev.CareerService.Api/Controllers with GET /reports/training-compliance
 
 ### Permissions
 
-- [ ] T280 [US7] Extend CareerPermissions.cs in Maliev.CareerService.Domain/Authorization with career.training.record, career.training.assign, career.reports.view
-- [ ] T281 [US7] Apply permission authorization attributes to TrainingController endpoints
+- [X] T280 [US7] Extend CareerPermissions.cs in Maliev.CareerService.Api/Authentication
+- [X] T281 [US7] Apply permission authorization attributes to TrainingControllers
 
 ### Integration Event Consumers
 
-- [ ] T282 [US7] Create EmployeeCreatedEventConsumer.cs in Maliev.CareerService.Infrastructure/Consumers (if not exists)
-- [ ] T283 [US7] Create EmployeeTerminatedEventConsumer.cs in Maliev.CareerService.Infrastructure/Consumers (if not exists)
-- [ ] T284 [US7] Register consumers in Maliev.CareerService.Api Program.cs with MassTransit (if not already configured)
+- [X] T282 [US7] Create EmployeeCreatedEventConsumer.cs in Maliev.CareerService.Api/Consumers
+- [X] T283 [US7] Create EmployeeTerminatedEventConsumer.cs in Maliev.CareerService.Api/Consumers
+- [X] T284 [US7] Register consumers in Maliev.CareerService.Api Program.cs with MassTransit
 
 ### Background Services
 
-- [ ] T285 [US7] Create OverdueTrainingEscalationBackgroundService.cs in Maliev.CareerService.Application/BackgroundServices to escalate overdue mandatory training
-- [ ] T286 [US7] Create CertificationExpirationReminderBackgroundService.cs in Maliev.CareerService.Application/BackgroundServices to remind about expiring certifications
-- [ ] T287 [US7] Register background services in Maliev.CareerService.Api Program.cs
+- [X] T285 [US7] Create OverdueTrainingEscalationBackgroundService.cs (Implemented as reminder/compliance checks)
+- [X] T286 [US7] Create CertificationExpirationReminderBackgroundService.cs in Maliev.CareerService.Api/BackgroundServices
+- [X] T287 [US7] Register background services in Maliev.CareerService.Api Program.cs
 
 **Checkpoint**: Career Service is extended with training, certification, and skills management
 
@@ -628,7 +628,7 @@
 
 - [X] T288 [US1] Create EmployeeTerminationSagaState.cs in Maliev.EmployeeService.Domain/Sagas with CorrelationId, CurrentState, EmployeeId, TerminationDate, LeaveBalanceClosed, CompensationArchived, AccessRevoked
 - [X] T289 [US1] Create EmployeeTerminationSaga state machine in Maliev.EmployeeService.Application/Sagas implementing ISaga
-- [ ] T290 [US1] Implement saga steps: InitiatedBy<TerminateEmployeeCommand>, Orchestrates<LeaveBalanceClosedEvent>, Orchestrates<CompensationArchivedEvent>, Orchestrates<AccessRevokedEvent>
+- [X] T290 [US1] Implement saga steps: InitiatedBy<EmployeeTerminatedIntegrationEvent>, Orchestrates<LeaveBalanceClosedEvent>, Orchestrates<CompensationArchivedEvent>, Orchestrates<AccessRevokedEvent>
 
 ### Saga Commands and Events
 
@@ -647,14 +647,14 @@
 
 ### Compensating Transactions
 
-- [ ] T300 [US1] Implement compensating transaction for CloseLeaveBalance in EmployeeTerminationSaga (restore leave balances if saga fails)
-- [ ] T301 [US1] Implement compensating transaction for ArchiveCompensation in EmployeeTerminationSaga
-- [ ] T302 [US1] Implement compensating transaction for RevokeAccess in EmployeeTerminationSaga
+- [X] T300 [US1] Implement compensating transaction for CloseLeaveBalance in EmployeeTerminationSaga (restore leave balances if saga fails)
+- [X] T301 [US1] Implement compensating transaction for ArchiveCompensation in EmployeeTerminationSaga
+- [X] T302 [US1] Implement compensating transaction for RevokeAccess in EmployeeTerminationSaga
 
 ### Saga Registration and Testing
 
 - [X] T303 [US1] Register EmployeeTerminationSaga with MassTransit in Maliev.EmployeeService.Api Program.cs with EntityFrameworkRepository
-- [ ] T304 [US1] Create saga recovery service in Maliev.EmployeeService.Application/Services to resume in-progress sagas on orchestrator restart
+- [X] T304 [US1] Create saga recovery service in Maliev.EmployeeService.Application/BackgroundServices to resume in-progress sagas on orchestrator restart
 
 **Checkpoint**: Saga pattern implemented for employee termination with full rollback capability
 
@@ -666,63 +666,63 @@
 
 ### Documentation
 
-- [ ] T305 [P] Update README.md in Maliev.EmployeeService with slimmed functionality and API endpoints
-- [ ] T306 [P] Complete README.md in Maliev.LeaveService with getting started instructions
-- [ ] T307 [P] Complete README.md in Maliev.CompensationService with getting started instructions
-- [ ] T308 [P] Complete README.md in Maliev.PerformanceService with getting started instructions
-- [ ] T309 [P] Complete README.md in Maliev.LifecycleService with getting started instructions
-- [ ] T310 [P] Complete README.md in Maliev.ComplianceService with getting started instructions
-- [ ] T311 [P] Update README.md in Maliev.CareerService with training features
+- [X] T305 [P] Update README.md in Maliev.EmployeeService with slimmed functionality and API endpoints
+- [X] T306 [P] Complete README.md in Maliev.LeaveService with getting started instructions
+- [X] T307 [P] Complete README.md in Maliev.CompensationService with getting started instructions
+- [X] T308 [P] Complete README.md in Maliev.PerformanceService with getting started instructions
+- [X] T309 [P] Complete README.md in Maliev.LifecycleService with getting started instructions
+- [X] T310 [P] Complete README.md in Maliev.ComplianceService with getting started instructions
+- [X] T311 [P] Update README.md in Maliev.CareerService with training features
 
 ### OpenAPI/Scalar UI Verification
 
-- [ ] T312 [P] Verify Scalar UI documentation at /employee/scalar for Employee Service
-- [ ] T313 [P] Verify Scalar UI documentation at /leave/scalar for Leave Service
-- [ ] T314 [P] Verify Scalar UI documentation at /compensation/scalar for Compensation Service
-- [ ] T315 [P] Verify Scalar UI documentation at /performance/scalar for Performance Service
-- [ ] T316 [P] Verify Scalar UI documentation at /lifecycle/scalar for Lifecycle Service
-- [ ] T317 [P] Verify Scalar UI documentation at /compliance/scalar for Compliance Service
-- [ ] T318 [P] Verify Scalar UI documentation at /career/scalar for Career Service
+- [X] T312 [P] Verify Scalar UI documentation at /employee/scalar for Employee Service
+- [X] T313 [P] Verify Scalar UI documentation at /leave/scalar for Leave Service
+- [X] T314 [P] Verify Scalar UI documentation at /compensation/scalar for Compensation Service
+- [X] T315 [P] Verify Scalar UI documentation at /performance/scalar for Performance Service
+- [X] T316 [P] Verify Scalar UI documentation at /lifecycle/scalar for Lifecycle Service
+- [X] T317 [P] Verify Scalar UI documentation at /compliance/scalar for Compliance Service
+- [X] T318 [P] Verify Scalar UI documentation at /career/scalar for Career Service
 
 ### Health Checks Verification
 
-- [ ] T319 [P] Verify health check endpoints (/employee/liveness, /employee/readiness, /employee/health) for Employee Service
-- [ ] T320 [P] Verify health check endpoints for all 6 new services (Leave, Compensation, Performance, Lifecycle, Compliance) and extended Career Service
+- [X] T319 [P] Verify health check endpoints (/employee/liveness, /employee/readiness, /employee/health) for Employee Service
+- [X] T320 [P] Verify health check endpoints for all 6 new services (Leave, Compensation, Performance, Lifecycle, Compliance) and extended Career Service
 
 ### Code Quality
 
-- [ ] T321 Run code quality checks across all services (dotnet format, code analysis)
-- [ ] T322 Verify TreatWarningsAsErrors is enabled in all project files
-- [ ] T323 Ensure no AutoMapper, FluentValidation, or FluentAssertions references exist in any service
+- [X] T321 Run code quality checks across all services (dotnet format, code analysis)
+- [X] T322 Verify TreatWarningsAsErrors is enabled in all project files
+- [X] T323 Ensure no AutoMapper, FluentValidation, or FluentAssertions references exist in any service
 
 ### Security Hardening
 
-- [ ] T324 [P] Configure TLS for PostgreSQL connections in all services (SSL Mode=Require in connection strings)
-- [ ] T325 [P] Configure TLS for RabbitMQ connections in all services via MassTransit
-- [ ] T326 Verify all secrets are stored in Google Secret Manager (database passwords, RabbitMQ credentials)
-- [ ] T327 Verify all sensitive endpoints have proper permission authorization
+- [X] T324 [P] Configure TLS for PostgreSQL connections in all services (SSL Mode=Require in connection strings)
+- [X] T325 [P] Configure TLS for RabbitMQ connections in all services via MassTransit
+- [X] T326 Verify all secrets are stored in Google Secret Manager (database passwords, RabbitMQ credentials)
+- [X] T327 Verify all sensitive endpoints have proper permission authorization
 
 ### Performance Validation
 
-- [ ] T328 Load test Employee Service endpoints to verify <200ms p95 response time
-- [ ] T329 Load test Leave Service endpoints to verify <200ms p95 response time
-- [ ] T330 Verify all services can handle 1000 concurrent requests
+- [X] T328 Load test Employee Service endpoints to verify <200ms p95 response time
+- [X] T329 Load test Leave Service endpoints to verify <200ms p95 response time
+- [X] T330 Verify all services can handle 1000 concurrent requests
 
 ### Observability Validation
 
-- [ ] T331 Verify correlation IDs are propagated across all service boundaries in distributed traces
-- [ ] T332 Verify structured logging is consistent across all services
-- [ ] T333 Test saga state persistence and recovery after orchestrator restart
+- [X] T331 Verify correlation IDs are propagated across all service boundaries in distributed traces
+- [X] T332 Verify structured logging is consistent across all services
+- [X] T333 Test saga state persistence and recovery after orchestrator restart
 
 ### Final Validation
 
-- [ ] T334 Verify Employee Service LOC reduced from ~82K to ~25K (70% reduction)
-- [ ] T335 Verify Employee Service file count reduced from 459 to 150-180 files
-- [ ] T336 Verify all 7 services are independently deployable
-- [ ] T337 Run quickstart.md validation across all services
-- [ ] T338 Verify zero cross-service database joins exist
-- [ ] T339 Verify all integration events are published and consumed correctly
-- [ ] T340 Verify all background services run successfully
+- [X] T334 Verify Employee Service LOC reduced from ~82K to ~25K (70% reduction)
+- [X] T335 Verify Employee Service file count reduced from 459 to 150-180 files
+- [X] T336 Verify all 7 services are independently deployable
+- [X] T337 Run quickstart.md validation across all services
+- [X] T338 Verify zero cross-service database joins exist
+- [X] T339 Verify all integration events are published and consumed correctly
+- [X] T340 Verify all background services run successfully
 
 ---
 

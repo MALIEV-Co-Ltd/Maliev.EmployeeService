@@ -1,6 +1,6 @@
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Application.IntegrationEvents;
-using Maliev.EmployeeService.Domain.IntegrationEvents;
+using Maliev.MessagingContracts.Generated;
+// using Maliev.EmployeeService.Domain.IntegrationEvents; // Removed
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -80,16 +80,20 @@ public class StartOffboardingCommandHandler
         _employeeRepository.Update(employee);
 
         // Publish integration event (Phase 3 - T126)
-        var integrationEvent = new EmployeeTerminatedIntegrationEvent(
-            employee.Id,
-            employee.EmployeeNumber,
-            command.TerminationDate
-        );
+        var integrationEvent = new EmployeeTerminatedEvent
+        {
+            Payload = new EmployeeTerminatedEventPayload
+            {
+                EmployeeId = employee.Id,
+                EmployeeNumber = employee.EmployeeNumber,
+                TerminationDate = command.TerminationDate
+            }
+        };
 
         await _eventPublisher.PublishAsync(integrationEvent, cancellationToken);
 
         _logger.LogInformation(
-            "Published EmployeeTerminatedIntegrationEvent for employee {EmployeeId}",
+            "Published EmployeeTerminatedEvent for employee {EmployeeId}",
             employee.Id);
 
         return employee.Id;

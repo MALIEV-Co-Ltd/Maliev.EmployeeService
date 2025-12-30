@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Diagnostics.CodeAnalysis;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -124,10 +125,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
             // Add permission-based authorization infrastructure for tests
             services.AddHttpContextAccessor();
-#pragma warning disable ASPDEPR006
-            services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.IActionContextAccessor,
-                                  Microsoft.AspNetCore.Mvc.Infrastructure.ActionContextAccessor>();
-#pragma warning restore ASPDEPR006
+            
             services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider,
                                   Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationPolicyProvider>();
             services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
