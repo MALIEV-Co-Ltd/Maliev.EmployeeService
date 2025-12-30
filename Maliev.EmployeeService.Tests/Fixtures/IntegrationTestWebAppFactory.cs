@@ -125,7 +125,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
             // Add permission-based authorization infrastructure for tests
             services.AddHttpContextAccessor();
-            
+
             services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider,
                                   Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationPolicyProvider>();
             services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,

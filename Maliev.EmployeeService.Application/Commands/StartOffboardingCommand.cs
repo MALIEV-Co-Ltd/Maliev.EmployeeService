@@ -80,15 +80,26 @@ public class StartOffboardingCommandHandler
         _employeeRepository.Update(employee);
 
         // Publish integration event (Phase 3 - T126)
-        var integrationEvent = new EmployeeTerminatedEvent
-        {
-            Payload = new EmployeeTerminatedEventPayload
-            {
-                EmployeeId = employee.Id,
-                EmployeeNumber = employee.EmployeeNumber,
-                TerminationDate = command.TerminationDate
-            }
-        };
+        var payload = new EmployeeTerminatedEventPayload(
+            EmployeeId: employee.Id,
+            TerminationDate: command.TerminationDate,
+            TerminationReason: null,
+            EligibleForRehire: false
+        );
+
+        var integrationEvent = new EmployeeTerminatedEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: "EmployeeTerminated",
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: payload
+        );
 
         await _eventPublisher.PublishAsync(integrationEvent, cancellationToken);
 

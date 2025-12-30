@@ -278,23 +278,31 @@ public class CreateEmployeeCommandHandler
         // Publish EmployeeCreatedIntegrationEvent (Phase 3 - T125)
         try
         {
-            var integrationEvent = new EmployeeCreatedEvent
-            {
-                Payload = new EmployeeCreatedEventPayload
-                {
-                    EmployeeId = employee.Id,
-                    EmployeeNumber = employee.EmployeeNumber,
-                    FullName = $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
-                    Email = employee.ContactInformation.WorkEmail,
-                    HireDate = employee.StartDate,
-                    DepartmentId = employee.DepartmentId ?? Guid.Empty,
-                    ManagerId = employee.ManagerId,
-                    JobTitle = employee.JobTitle ?? "Employee"
-                }
-            };
+            var payload = new EmployeeCreatedEventPayload(
+                EmployeeId: employee.Id,
+                EmployeeNumber: employee.EmployeeNumber,
+                StartDate: employee.StartDate,
+                DepartmentId: employee.DepartmentId ?? Guid.Empty,
+                PositionId: null,
+                ManagerId: employee.ManagerId
+            );
+
+            var integrationEvent = new EmployeeCreatedEvent(
+                MessageId: Guid.NewGuid(),
+                MessageName: "EmployeeCreated",
+                MessageType: MessageType.Event,
+                MessageVersion: "1.0",
+                PublishedBy: "EmployeeService",
+                ConsumedBy: Array.Empty<string>(),
+                CorrelationId: Guid.NewGuid(),
+                CausationId: null,
+                OccurredAtUtc: DateTimeOffset.UtcNow,
+                IsPublic: false,
+                Payload: payload
+            );
 
             await _eventPublisher.PublishAsync(integrationEvent, cancellationToken);
-            
+
             _logger.LogInformation(
                 "Published EmployeeCreatedEvent for employee {EmployeeId} ({EmployeeNumber})",
                 employee.Id,

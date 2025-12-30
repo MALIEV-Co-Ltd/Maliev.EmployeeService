@@ -116,16 +116,28 @@ public class TransferDepartmentCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Publish event for access control and email distribution list updates (Phase 3 - T127)
-        await _eventPublisher.PublishAsync(new DepartmentTransferredEvent
-        {
-            Payload = new DepartmentTransferredEventPayload
-            {
-                EmployeeId = employee.Id,
-                OldDepartmentId = oldDepartmentId ?? Guid.Empty,
-                NewDepartmentId = command.NewDepartmentId,
-                EffectiveDate = command.EffectiveDate
-            }
-        }, cancellationToken);
+        var payload = new DepartmentTransferredEventPayload(
+            EmployeeId: employee.Id,
+            PreviousDepartmentId: oldDepartmentId ?? Guid.Empty,
+            NewDepartmentId: command.NewDepartmentId,
+            EffectiveDate: command.EffectiveDate
+        );
+
+        var departmentTransferredEvent = new DepartmentTransferredEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: "DepartmentTransferred",
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: payload
+        );
+
+        await _eventPublisher.PublishAsync(departmentTransferredEvent, cancellationToken);
 
         return new TransferDepartmentCommandResult(true, null);
     }
