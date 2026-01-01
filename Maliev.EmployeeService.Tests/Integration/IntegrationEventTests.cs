@@ -1,5 +1,5 @@
 using Maliev.EmployeeService.Application.Commands;
-using Maliev.EmployeeService.Domain.IntegrationEvents;
+using Maliev.MessagingContracts.Generated;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
@@ -59,6 +59,13 @@ public class IntegrationEventTests : IAsyncLifetime
         services.AddSingleton<DatabaseMetricsInterceptor>();
         services.AddSingleton<IEncryptionService>(_encryptionService);
 
+        // Configure MassTransit to wait until fully started before running tests
+        services.Configure<MassTransitHostOptions>(options =>
+        {
+            options.WaitUntilStarted = true;
+            options.StartTimeout = TimeSpan.FromSeconds(30);
+        });
+
         services.AddMassTransitTestHarness(cfg =>
         {
             cfg.UsingInMemory((Context, configurator) =>
@@ -117,10 +124,10 @@ public class IntegrationEventTests : IAsyncLifetime
 
         await handler.HandleAsync(command, CancellationToken.None);
 
-        Assert.True(await _harness!.Published.Any<EmployeeCreatedIntegrationEvent>());
-        var publishedEvent = _harness.Published.Select<EmployeeCreatedIntegrationEvent>().FirstOrDefault();
+        Assert.True(await _harness!.Published.Any<EmployeeCreatedEvent>());
+        var publishedEvent = _harness.Published.Select<EmployeeCreatedEvent>().FirstOrDefault();
         Assert.NotNull(publishedEvent);
-        Assert.Equal(employee.Id, publishedEvent!.Context.Message.EmployeeId);
+        Assert.Equal(employee.Id, publishedEvent!.Context.Message.Payload.EmployeeId);
     }
 
     [Fact]
@@ -139,11 +146,11 @@ public class IntegrationEventTests : IAsyncLifetime
 
         await handler.HandleAsync(command, CancellationToken.None);
 
-        Assert.True(await _harness!.Published.Any<EmployeeTerminatedIntegrationEvent>());
-        var publishedEvent = _harness.Published.Select<EmployeeTerminatedIntegrationEvent>().FirstOrDefault();
+        Assert.True(await _harness!.Published.Any<EmployeeTerminatedEvent>());
+        var publishedEvent = _harness.Published.Select<EmployeeTerminatedEvent>().FirstOrDefault();
         Assert.NotNull(publishedEvent);
-        Assert.Equal(employee.Id, publishedEvent!.Context.Message.EmployeeId);
-        Assert.Equal(terminationDate, publishedEvent.Context.Message.TerminationDate);
+        Assert.Equal(employee.Id, publishedEvent!.Context.Message.Payload.EmployeeId);
+        Assert.Equal(terminationDate, publishedEvent.Context.Message.Payload.TerminationDate);
     }
 
     private async Task<Employee> CreateTestEmployee(string jobTitle)

@@ -1,6 +1,5 @@
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Application.IntegrationEvents;
-using Maliev.EmployeeService.Domain.IntegrationEvents;
+using Maliev.MessagingContracts.Generated;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -61,22 +60,34 @@ public class StartOnboardingCommandHandler
             throw new InvalidOperationException($"Employee {command.EmployeeId} not found");
         }
 
-        // Publish EmployeeCreatedIntegrationEvent to trigger onboarding in Lifecycle Service
-        var integrationEvent = new EmployeeCreatedIntegrationEvent(
-            employee.Id,
-            employee.EmployeeNumber,
-            employee.FullName,
-            employee.ContactInformation.WorkEmail,
-            employee.StartDate,
-            employee.DepartmentId ?? Guid.Empty,
-            employee.ManagerId,
-            employee.JobTitle ?? "Employee"
+        // Publish EmployeeCreatedEvent to trigger onboarding in Lifecycle Service (Phase 3 - T125)
+        var payload = new EmployeeCreatedEventPayload(
+            EmployeeId: employee.Id,
+            EmployeeNumber: employee.EmployeeNumber,
+            StartDate: employee.StartDate,
+            DepartmentId: employee.DepartmentId ?? Guid.Empty,
+            PositionId: null,
+            ManagerId: employee.ManagerId
+        );
+
+        var integrationEvent = new EmployeeCreatedEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: "EmployeeCreated",
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: payload
         );
 
         await _eventPublisher.PublishAsync(integrationEvent, cancellationToken);
 
         _logger.LogInformation(
-            "Published EmployeeCreatedIntegrationEvent for onboarding start: {EmployeeId}",
+            "Published EmployeeCreatedEvent for onboarding start: {EmployeeId}",
             employee.Id);
 
         return employee.Id;
