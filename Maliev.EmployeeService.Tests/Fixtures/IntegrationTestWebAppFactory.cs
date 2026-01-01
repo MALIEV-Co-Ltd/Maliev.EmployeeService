@@ -114,12 +114,6 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
         builder.ConfigureTestServices(services =>
         {
-            // Ensure MassTransit waits until started for tests to avoid race conditions
-            services.Configure<MassTransitHostOptions>(options =>
-            {
-                options.WaitUntilStarted = true;
-                options.StartTimeout = TimeSpan.FromSeconds(30);
-            });
 
             // Remove existing DbContext registration
             services.RemoveAll<DbContextOptions<EmployeeDbContext>>();
