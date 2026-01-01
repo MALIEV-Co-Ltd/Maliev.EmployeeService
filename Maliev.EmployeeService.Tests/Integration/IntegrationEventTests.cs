@@ -59,13 +59,6 @@ public class IntegrationEventTests : IAsyncLifetime
         services.AddSingleton<DatabaseMetricsInterceptor>();
         services.AddSingleton<IEncryptionService>(_encryptionService);
 
-        // Configure MassTransit to wait until fully started before running tests
-        services.Configure<MassTransitHostOptions>(options =>
-        {
-            options.WaitUntilStarted = true;
-            options.StartTimeout = TimeSpan.FromSeconds(30);
-        });
-
         services.AddMassTransitTestHarness(cfg =>
         {
             cfg.UsingInMemory((Context, configurator) =>
