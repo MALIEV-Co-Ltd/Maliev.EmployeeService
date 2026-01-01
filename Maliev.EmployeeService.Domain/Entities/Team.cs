@@ -1,4 +1,4 @@
-﻿using Maliev.EmployeeService.Domain.Common;
+using Maliev.EmployeeService.Domain.Common;
 
 namespace Maliev.EmployeeService.Domain.Entities;
 

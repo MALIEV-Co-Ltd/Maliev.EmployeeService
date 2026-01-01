@@ -51,23 +51,9 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
             CreatedDate = DateTime.UtcNow
         };
 
-        var productTeam = new Team
-        {
-            Id = Guid.NewGuid(),
-            Name = "Product Team",
-            TeamType = "Product",
-            IsActive = true,
-            CreatedDate = DateTime.UtcNow
-        };
+        var productTeam = new Team { Id = Guid.NewGuid(), Name = "Product Team", TeamType = "Product", TeamLeadId = employee.Id, IsActive = true, CreatedDate = DateTime.UtcNow };
 
-        var engineeringTeam = new Team
-        {
-            Id = Guid.NewGuid(),
-            Name = "Engineering Team",
-            TeamType = "Engineering",
-            IsActive = true,
-            CreatedDate = DateTime.UtcNow
-        };
+        var engineeringTeam = new Team { Id = Guid.NewGuid(), Name = "Engineering Team", TeamType = "Engineering", TeamLeadId = employee.Id, IsActive = true, CreatedDate = DateTime.UtcNow };
 
         // Employee belongs to primary department (Engineering)
         // But also participates in Product team (matrix organization)
@@ -115,9 +101,9 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
 
         var teams = new[]
         {
-            new Team { Id = Guid.NewGuid(), Name = "Team A", TeamType = "Engineering", IsActive = true, CreatedDate = DateTime.UtcNow },
-            new Team { Id = Guid.NewGuid(), Name = "Team B", TeamType = "Product", IsActive = true, CreatedDate = DateTime.UtcNow },
-            new Team { Id = Guid.NewGuid(), Name = "Team C", TeamType = "DevOps", IsActive = true, CreatedDate = DateTime.UtcNow }
+            new Team { Id = Guid.NewGuid(), Name = "Team A", TeamType = "Engineering", TeamLeadId = employee.Id, IsActive = true, CreatedDate = DateTime.UtcNow },
+            new Team { Id = Guid.NewGuid(), Name = "Team B", TeamType = "Product", TeamLeadId = employee.Id, IsActive = true, CreatedDate = DateTime.UtcNow },
+            new Team { Id = Guid.NewGuid(), Name = "Team C", TeamType = "DevOps", TeamLeadId = employee.Id, IsActive = true, CreatedDate = DateTime.UtcNow }
         };
 
         Context.Employees.Add(employee);
@@ -149,21 +135,14 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
     public async Task TeamMembers_CanHavePrimaryAndSecondaryDesignations()
     {
         // Arrange
-        var team = new Team
-        {
-            Id = Guid.NewGuid(),
-            Name = "Cross-Functional Team",
-            TeamType = "Mixed",
-            IsActive = true,
-            CreatedDate = DateTime.UtcNow
-        };
-
         var primaryMember = CreateTestEmployee("EMP001");
         var secondaryMember1 = CreateTestEmployee("EMP002");
         var secondaryMember2 = CreateTestEmployee("EMP003");
 
-        Context.Teams.Add(team);
+        var team = new Team { Id = Guid.NewGuid(), Name = "Cross-Functional Team", TeamType = "Mixed", TeamLeadId = primaryMember.Id, IsActive = true, CreatedDate = DateTime.UtcNow };
+
         Context.Employees.AddRange(primaryMember, secondaryMember1, secondaryMember2);
+        Context.Teams.Add(team);
 
         Context.EmployeeTeamAssignments.AddRange(
             new EmployeeTeamAssignment
@@ -223,23 +202,9 @@ public class MatrixTeamAssignmentTests : PostgreSqlIntegrationTestBase
         employee.DepartmentId = department.Id;
         employee.ManagerId = manager.Id; // Reports to manager in department
 
-        var productTeam = new Team
-        {
-            Id = Guid.NewGuid(),
-            Name = "Product Innovation Team",
-            TeamType = "Product",
-            IsActive = true,
-            CreatedDate = DateTime.UtcNow
-        };
+        var productTeam = new Team { Id = Guid.NewGuid(), Name = "Product Innovation Team", TeamType = "Product", TeamLeadId = manager.Id, IsActive = true, CreatedDate = DateTime.UtcNow };
 
-        var devOpsTeam = new Team
-        {
-            Id = Guid.NewGuid(),
-            Name = "Infrastructure Team",
-            TeamType = "DevOps",
-            IsActive = true,
-            CreatedDate = DateTime.UtcNow
-        };
+        var devOpsTeam = new Team { Id = Guid.NewGuid(), Name = "Infrastructure Team", TeamType = "DevOps", TeamLeadId = manager.Id, IsActive = true, CreatedDate = DateTime.UtcNow };
 
         Context.Departments.Add(department);
         Context.Employees.AddRange(manager, employee);

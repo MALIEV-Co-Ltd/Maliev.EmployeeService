@@ -90,12 +90,36 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task SeedTeamsAsync_WhenTeamsExist_ShouldSkipSeeding()
     {
-        // Arrange - Create one team
+        // Arrange - Create an employee first for team lead
+        var teamLead = new Employee
+        {
+            Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
+            EmployeeNumber = "EMP001",
+            LegalName = new LegalName
+            {
+                FirstName = "Team",
+                LastName = "Lead"
+            },
+            ContactInformation = new ContactInformation
+            {
+                WorkEmail = "teamlead@company.com"
+            },
+            EmploymentStatus = EmploymentStatus.Active,
+            EmploymentType = EmploymentType.FullTime,
+            StartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        Context.Employees.Add(teamLead);
+        await Context.SaveChangesAsync();
+
+        // Create one team
         var existingTeam = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Existing Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
