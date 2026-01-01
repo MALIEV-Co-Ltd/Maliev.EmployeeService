@@ -46,7 +46,7 @@ public class AuditLogInterceptor : SaveChangesInterceptor
         if (context == null) return;
 
         var auditEntries = new List<AuditLog>();
-        var userId = _currentUserService.PrincipalId?.ToString() ?? "System";
+        var userId = _currentUserService.PrincipalId;
         var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
         var purpose = GetAuditPurpose();
 
@@ -61,7 +61,7 @@ public class AuditLogInterceptor : SaveChangesInterceptor
                 Timestamp = DateTime.UtcNow,
                 UserId = userId,
                 EntityType = entry.Entity.GetType().Name,
-                EntityId = GetEntityId(entry).ToString(),
+                EntityId = GetEntityId(entry),
                 Action = entry.State.ToString(),
                 IpAddress = ipAddress,
                 Purpose = purpose ?? DeterminePurposeFromEntity(entry)

@@ -18,7 +18,7 @@ public class AuditLog
     /// <summary>
     /// Gets or sets the unique identifier of the user who made the change.
     /// </summary>
-    public string UserId { get; set; } = string.Empty;
+    public Guid? UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the type of entity that was changed (e.g., Employee, Department).
@@ -28,7 +28,7 @@ public class AuditLog
     /// <summary>
     /// Gets or sets the unique identifier of the specific entity that was changed.
     /// </summary>
-    public string EntityId { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
 
     /// <summary>
     /// Gets or sets the type of action performed (e.g., Create, Update, Delete).

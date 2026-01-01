@@ -143,11 +143,11 @@ var postgresContainer = new PostgreSqlBuilder()
     .Build();
 
 var rabbitmqContainer = new RabbitMqBuilder()
-    .WithImage("rabbitmq:3-management-alpine")
+    .WithImage("rabbitmq:4.2-alpine")
     .Build();
 
 var redisContainer = new RedisBuilder()
-    .WithImage("redis:7-alpine")
+    .WithImage("redis:8.4-alpine")
     .Build();
 
 await Task.WhenAll(
@@ -501,7 +501,7 @@ public class LeaveServiceIntegrationTests : IAsyncLifetime
             .Build();
 
         _rabbitmqContainer = new RabbitMqBuilder()
-            .WithImage("rabbitmq:3-management-alpine")
+            .WithImage("rabbitmq:4.2-alpine")
             .Build();
 
         await Task.WhenAll(

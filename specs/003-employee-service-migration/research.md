@@ -363,7 +363,7 @@ rabbitmqctl set_permissions -p / leave_service "^leave\..*|^employee\.events$" "
 **Development Environment** (Testcontainers):
 ```csharp
 var rabbitmqContainer = new RabbitMqBuilder()
-    .WithImage("rabbitmq:3-management-alpine")
+    .WithImage("rabbitmq:4.2-alpine")
     .WithUsername("guest")
     .WithPassword("guest")
     // Note: TLS not typically configured in test environments

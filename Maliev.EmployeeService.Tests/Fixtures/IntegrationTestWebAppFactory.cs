@@ -42,11 +42,11 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             .Build();
 
         _redisContainer = new RedisBuilder()
-            .WithImage("redis:7-alpine")
+            .WithImage("redis:8.4-alpine")
             .Build();
 
         _rabbitmqContainer = new RabbitMqBuilder()
-            .WithImage("rabbitmq:4.2.1-alpine")
+            .WithImage("rabbitmq:4.2-alpine")
             .Build();
     }
 
