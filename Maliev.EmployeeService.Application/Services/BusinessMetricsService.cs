@@ -164,12 +164,24 @@ public class BusinessMetricsService : BackgroundService
                     new KeyValuePair<string, object?>("department", g.Key)))
                 .ToList();
 
+            // Ensure at least one measurement exists so the metric name appears in Prometheus output
+            if (!headcounts.Any())
+            {
+                headcounts.Add(new Measurement<int>(
+                    0,
+                    new KeyValuePair<string, object?>("department", "none")));
+            }
+
             return headcounts;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting department headcounts");
-            return Enumerable.Empty<Measurement<int>>();
+            // Return a placeholder measurement even on error so metric name is registered
+            return new[]
+            {
+                new Measurement<int>(0, new KeyValuePair<string, object?>("department", "error"))
+            };
         }
     }
 
