@@ -10,6 +10,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// Integration tests for input sanitization filter
 /// Phase 16 - T381: Input Sanitization
 /// </summary>
+[Collection("IntegrationTests")]
 public class InputSanitizationIntegrationTests : WebApplicationTestBase
 {
     public InputSanitizationIntegrationTests(EmployeeServiceTestFactory factory) : base(factory)

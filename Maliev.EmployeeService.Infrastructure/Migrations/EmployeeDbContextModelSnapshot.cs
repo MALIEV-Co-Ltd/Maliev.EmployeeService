@@ -18,7 +18,7 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("employee")
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -127,93 +127,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Benefit", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_benefits");
-
-                    b.ToTable("benefits", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.BenefitsEnrollment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("BeneficiaryInformation")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("beneficiary_information");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("EnrollmentDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("enrollment_date");
-
-                    b.Property<string>("HealthInsurancePlan")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("health_insurance_plan");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("RetirementContribution")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("retirement_contribution");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_benefits_enrollments");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_benefits_enrollments_employee_id");
-
-                    b.HasIndex("EnrollmentDate")
-                        .HasDatabaseName("i_x_benefits_enrollments_enrollment_date");
-
-                    b.HasIndex("EmployeeId", "EnrollmentDate")
-                        .HasDatabaseName("i_x_benefits_enrollments_employee_id_enrollment_date");
-
-                    b.ToTable("benefits_enrollments", "employee");
-                });
-
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.BulkJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -314,116 +227,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.ToTable("bulk_jobs", "employee");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Certification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expiry_date");
-
-                    b.Property<DateTime>("IssuedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("issued_date");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_certifications");
-
-                    b.ToTable("certifications", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.CompensationRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("BonusStructure")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("bonus_structure");
-
-                    b.Property<string>("ChangeReason")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("change_reason");
-
-                    b.Property<string>("CommissionStructure")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("commission_structure");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasDefaultValue("THB")
-                        .HasColumnName("currency");
-
-                    b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("effective_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("SalaryAmount")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("salary_amount");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_compensation_records");
-
-                    b.HasIndex("EffectiveDate")
-                        .HasDatabaseName("i_x_compensation_records_effective_date");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_compensation_records_employee_id");
-
-                    b.HasIndex("EmployeeId", "EffectiveDate")
-                        .HasDatabaseName("i_x_compensation_records_employee_id_effective_date");
-
-                    b.ToTable("compensation_records", "employee");
-                });
-
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -432,8 +235,7 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("CostCenter")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasColumnType("text")
                         .HasColumnName("cost_center");
 
                     b.Property<Guid?>("CreatedBy")
@@ -448,9 +250,12 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("department_head_id");
 
+                    b.Property<Guid?>("DepartmentHeadId1")
+                        .HasColumnType("uuid")
+                        .HasColumnName("department_head_id1");
+
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
+                        .HasColumnType("text")
                         .HasColumnName("description");
 
                     b.Property<int?>("HeadcountLimit")
@@ -471,8 +276,7 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                        .HasColumnType("text")
                         .HasColumnName("name");
 
                     b.Property<Guid?>("ParentDepartmentId")
@@ -482,298 +286,13 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_departments");
 
-                    b.HasIndex("DepartmentHeadId")
-                        .HasDatabaseName("i_x_departments_department_head_id");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("i_x_departments_is_active");
-
-                    b.HasIndex("Name")
-                        .HasDatabaseName("i_x_departments_name");
+                    b.HasIndex("DepartmentHeadId1")
+                        .HasDatabaseName("i_x_departments_department_head_id1");
 
                     b.HasIndex("ParentDepartmentId")
                         .HasDatabaseName("i_x_departments_parent_department_id");
 
-                    b.HasIndex("ParentDepartmentId", "IsActive")
-                        .HasDatabaseName("i_x_departments_parent_department_id_is_active");
-
                     b.ToTable("departments", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Dependent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date_of_birth");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Relationship")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("relationship");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_dependents");
-
-                    b.ToTable("dependents", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.DisciplinaryAction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("action_type");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("IssueDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("issue_date");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_disciplinary_actions");
-
-                    b.ToTable("disciplinary_actions", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Document", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AccessLevel")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("access_level");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("content_type");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("description");
-
-                    b.Property<string>("DocumentType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("document_type");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expiration_date");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("file_name");
-
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_size_bytes");
-
-                    b.Property<bool>("IsArchived")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_archived");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("StoragePath")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("storage_path");
-
-                    b.Property<DateTime>("UploadDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("upload_date");
-
-                    b.Property<Guid>("UploadedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("uploaded_by");
-
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("version_number");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_documents");
-
-                    b.HasIndex("AccessLevel")
-                        .HasDatabaseName("i_x_documents_access_level");
-
-                    b.HasIndex("DocumentType")
-                        .HasDatabaseName("i_x_documents_document_type");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_documents_employee_id");
-
-                    b.HasIndex("ExpirationDate")
-                        .HasDatabaseName("i_x_documents_expiration_date");
-
-                    b.HasIndex("UploadDate")
-                        .HasDatabaseName("i_x_documents_upload_date");
-
-                    b.HasIndex("UploadedBy")
-                        .HasDatabaseName("i_x_documents_uploaded_by");
-
-                    b.HasIndex("DocumentType", "AccessLevel")
-                        .HasDatabaseName("i_x_documents_document_type_access_level");
-
-                    b.HasIndex("EmployeeId", "DocumentType")
-                        .HasDatabaseName("i_x_documents_employee_id_document_type");
-
-                    b.HasIndex("EmployeeId", "IsArchived")
-                        .HasDatabaseName("i_x_documents_employee_id_is_archived");
-
-                    b.ToTable("documents", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.DocumentVersion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ChangeDescription")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("change_description");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("content_type");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("document_id");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("file_name");
-
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_size_bytes");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("StoragePath")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("storage_path");
-
-                    b.Property<DateTime>("UploadDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("upload_date");
-
-                    b.Property<Guid>("UploadedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("uploaded_by");
-
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("version_number");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_document_versions");
-
-                    b.HasIndex("DocumentId")
-                        .HasDatabaseName("i_x_document_versions_document_id");
-
-                    b.HasIndex("UploadDate")
-                        .HasDatabaseName("i_x_document_versions_upload_date");
-
-                    b.HasIndex("UploadedBy")
-                        .HasDatabaseName("i_x_document_versions_uploaded_by");
-
-                    b.HasIndex("DocumentId", "VersionNumber")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_document_versions_document_id_version_number");
-
-                    b.ToTable("document_versions", "employee");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.EmergencyContact", b =>
@@ -848,6 +367,10 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<DateTime?>("AnonymizedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("anonymized_at");
 
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid")
@@ -982,35 +505,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.ToTable("employees", "employee");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.EmployeeBenefit", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BenefitId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("benefit_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("EnrollmentDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("enrollment_date");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_employee_benefits");
-
-                    b.ToTable("employee_benefits", "employee");
-                });
-
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.EmployeeTeamAssignment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1055,13 +549,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.HasIndex("TeamId")
                         .HasDatabaseName("i_x_employee_team_assignments_team_id");
 
-                    b.HasIndex("EmployeeId", "IsPrimary")
-                        .HasDatabaseName("i_x_employee_team_assignments_employee_id_is_primary");
-
-                    b.HasIndex("EmployeeId", "TeamId")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_employee_team_assignments_employee_id_team_id");
-
                     b.ToTable("employee_team_assignments", "employee");
                 });
 
@@ -1072,75 +559,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("ChangeType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("change_type");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("effective_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_employment_histories");
-
-                    b.ToTable("employment_histories", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.ExitInterview", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ConductedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("conducted_by");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("InterviewDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("interview_date");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_exit_interviews");
-
-                    b.ToTable("exit_interviews", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Goal", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completed_date");
-
-                    b.Property<string>("CompletionStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("completion_status");
-
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid")
                         .HasColumnName("created_by");
@@ -1150,14 +568,21 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnName("created_date");
 
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasColumnType("text")
                         .HasColumnName("description");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("effective_date");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("event_type");
 
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid")
@@ -1167,43 +592,13 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modified_date");
 
-                    b.Property<Guid?>("PerformanceReviewId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("performance_review_id");
-
-                    b.Property<string>("ProgressUpdates")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("progress_updates");
-
-                    b.Property<string>("SuccessCriteria")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("success_criteria");
-
-                    b.Property<DateTime>("TargetDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("target_date");
-
                     b.HasKey("Id")
-                        .HasName("p_k_goals");
-
-                    b.HasIndex("CompletionStatus")
-                        .HasDatabaseName("i_x_goals_completion_status");
+                        .HasName("p_k_employment_histories");
 
                     b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_goals_employee_id");
+                        .HasDatabaseName("i_x_employment_histories_employee_id");
 
-                    b.HasIndex("PerformanceReviewId")
-                        .HasDatabaseName("i_x_goals_performance_review_id");
-
-                    b.HasIndex("TargetDate")
-                        .HasDatabaseName("i_x_goals_target_date");
-
-                    b.HasIndex("EmployeeId", "TargetDate")
-                        .HasDatabaseName("i_x_goals_employee_id_target_date");
-
-                    b.ToTable("goals", "employee");
+                    b.ToTable("employment_histories", "employee");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Incident", b =>
@@ -1241,820 +636,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.ToTable("incidents", "employee");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeaveApproval", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("ApprovalLevel")
-                        .HasColumnType("integer")
-                        .HasColumnName("approval_level");
-
-                    b.Property<Guid>("ApproverId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("approver_id");
-
-                    b.Property<string>("Comments")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("comments");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<string>("Decision")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("decision");
-
-                    b.Property<DateTime?>("DecisionDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("decision_date");
-
-                    b.Property<Guid>("LeaveRequestId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("leave_request_id");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_leave_approvals");
-
-                    b.HasIndex("ApproverId")
-                        .HasDatabaseName("i_x_leave_approvals_approver_id");
-
-                    b.HasIndex("LeaveRequestId")
-                        .HasDatabaseName("i_x_leave_approvals_leave_request_id");
-
-                    b.HasIndex("LeaveRequestId", "ApprovalLevel")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_leave_approvals_leave_request_id_approval_level");
-
-                    b.ToTable("leave_approvals", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeaveBalance", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("CarryForwardDays")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)")
-                        .HasColumnName("carry_forward_days");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expiry_date");
-
-                    b.Property<string>("LeaveType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("leave_type");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<decimal>("PendingDays")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)")
-                        .HasColumnName("pending_days");
-
-                    b.Property<decimal>("TotalEntitlement")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)")
-                        .HasColumnName("total_entitlement");
-
-                    b.Property<decimal>("UsedDays")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)")
-                        .HasColumnName("used_days");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer")
-                        .HasColumnName("year");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_leave_balances");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_leave_balances_employee_id");
-
-                    b.HasIndex("EmployeeId", "LeaveType", "Year")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_leave_balances_employee_id_leave_type_year");
-
-                    b.ToTable("leave_balances", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeavePolicy", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("AccrualRate")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)")
-                        .HasColumnName("accrual_rate");
-
-                    b.Property<string>("BlackoutPeriodsJson")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("blackout_periods_json");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("effective_date");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("LeaveType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("leave_type");
-
-                    b.Property<int?>("MaxCarryover")
-                        .HasColumnType("integer")
-                        .HasColumnName("max_carryover");
-
-                    b.Property<int>("MinimumNoticeDays")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(30)
-                        .HasColumnName("minimum_notice_days");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<bool>("RequiresApproval")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("requires_approval");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_leave_policies");
-
-                    b.HasIndex("LeaveType")
-                        .HasDatabaseName("i_x_leave_policies_leave_type");
-
-                    b.HasIndex("LeaveType", "IsActive", "EffectiveDate")
-                        .HasDatabaseName("i_x_leave_policies_leave_type_is_active_effective_date");
-
-                    b.ToTable("leave_policies", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeaveRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ApprovalComments")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("approval_comments");
-
-                    b.Property<DateTime?>("ApprovalDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("approval_date");
-
-                    b.Property<Guid?>("ApproverId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("approver_id");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_date");
-
-                    b.Property<string>("LeaveType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("leave_type");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("reason");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_date");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("status");
-
-                    b.Property<decimal>("TotalDays")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)")
-                        .HasColumnName("total_days");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_leave_requests");
-
-                    b.HasIndex("ApproverId")
-                        .HasDatabaseName("i_x_leave_requests_approver_id");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_leave_requests_employee_id");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("i_x_leave_requests_status");
-
-                    b.HasIndex("ApproverId", "Status")
-                        .HasDatabaseName("i_x_leave_requests_approver_id_status");
-
-                    b.HasIndex("StartDate", "EndDate")
-                        .HasDatabaseName("i_x_leave_requests_start_date_end_date");
-
-                    b.ToTable("leave_requests", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.MandatoryTrainingRequirement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<int>("DeadlineDaysFromStart")
-                        .HasColumnType("integer")
-                        .HasColumnName("deadline_days_from_start");
-
-                    b.Property<string>("EmploymentType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("employment_type");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("JobRole")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("job_role");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<int>("Priority")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("priority");
-
-                    b.Property<string>("RequiredCourses")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("required_courses");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_mandatory_training_requirements");
-
-                    b.HasIndex("EmploymentType")
-                        .HasDatabaseName("i_x_mandatory_training_requirements_employment_type");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("i_x_mandatory_training_requirements_is_active");
-
-                    b.HasIndex("JobRole")
-                        .HasDatabaseName("i_x_mandatory_training_requirements_job_role");
-
-                    b.HasIndex("EmploymentType", "JobRole", "IsActive")
-                        .HasDatabaseName("i_x_mandatory_training_requirements_employment_type_job_role_is~");
-
-                    b.ToTable("mandatory_training_requirements", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.OffboardingChecklist", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<bool>("BlocksFinalPaycheck")
-                        .HasColumnType("boolean")
-                        .HasColumnName("blocks_final_paycheck");
-
-                    b.Property<Guid?>("CompletedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("completed_by");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completed_date");
-
-                    b.Property<bool>("CompletionStatus")
-                        .HasColumnType("boolean")
-                        .HasColumnName("completion_status");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("display_order");
-
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("due_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("ItemDescription")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("item_description");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<string>("ResponsibleParty")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("responsible_party");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_offboarding_checklists");
-
-                    b.HasIndex("BlocksFinalPaycheck")
-                        .HasDatabaseName("i_x_offboarding_checklists_blocks_final_paycheck");
-
-                    b.HasIndex("CompletedBy")
-                        .HasDatabaseName("i_x_offboarding_checklists_completed_by");
-
-                    b.HasIndex("CompletionStatus")
-                        .HasDatabaseName("i_x_offboarding_checklists_completion_status");
-
-                    b.HasIndex("DueDate")
-                        .HasDatabaseName("i_x_offboarding_checklists_due_date");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_offboarding_checklists_employee_id");
-
-                    b.HasIndex("ResponsibleParty")
-                        .HasDatabaseName("i_x_offboarding_checklists_responsible_party");
-
-                    b.HasIndex("EmployeeId", "DisplayOrder")
-                        .HasDatabaseName("i_x_offboarding_checklists_employee_id_display_order");
-
-                    b.ToTable("offboarding_checklists", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.OffboardingTask", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
-
-                    b.Property<string>("TaskName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("task_name");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_offboarding_tasks");
-
-                    b.ToTable("offboarding_tasks", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.OnboardingChecklist", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid?>("CompletedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("completed_by");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completed_date");
-
-                    b.Property<bool>("CompletionStatus")
-                        .HasColumnType("boolean")
-                        .HasColumnName("completion_status");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("display_order");
-
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("due_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("ItemDescription")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("item_description");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<string>("ResponsibleParty")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("responsible_party");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_onboarding_checklists");
-
-                    b.HasIndex("CompletedBy")
-                        .HasDatabaseName("i_x_onboarding_checklists_completed_by");
-
-                    b.HasIndex("CompletionStatus")
-                        .HasDatabaseName("i_x_onboarding_checklists_completion_status");
-
-                    b.HasIndex("DueDate")
-                        .HasDatabaseName("i_x_onboarding_checklists_due_date");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_onboarding_checklists_employee_id");
-
-                    b.HasIndex("ResponsibleParty")
-                        .HasDatabaseName("i_x_onboarding_checklists_responsible_party");
-
-                    b.HasIndex("EmployeeId", "DisplayOrder")
-                        .HasDatabaseName("i_x_onboarding_checklists_employee_id_display_order");
-
-                    b.ToTable("onboarding_checklists", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.PerformanceImprovementPlan", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_date");
-
-                    b.Property<string>("IssuesDocumented")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("issues_documented");
-
-                    b.Property<Guid>("ManagerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("manager_id");
-
-                    b.Property<string>("Milestones")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("milestones");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Outcome")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("outcome");
-
-                    b.Property<string>("ProgressNotes")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("progress_notes");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_date");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasDefaultValue("Active")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_performance_improvement_plans");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_performance_improvement_plans_employee_id");
-
-                    b.HasIndex("ManagerId")
-                        .HasDatabaseName("i_x_performance_improvement_plans_manager_id");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("i_x_performance_improvement_plans_status");
-
-                    b.HasIndex("Status", "EndDate")
-                        .HasDatabaseName("i_x_performance_improvement_plans_status_end_date");
-
-                    b.HasIndex("EmployeeId", "StartDate", "EndDate")
-                        .HasDatabaseName("i_x_performance_improvement_plans_employee_id_start_date_end_da~");
-
-                    b.ToTable("performance_improvement_plans", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.PerformanceReview", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime?>("AcknowledgedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("acknowledged_date");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("Feedback")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("feedback");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Rating")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("rating");
-
-                    b.Property<string>("ReviewCycle")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("review_cycle");
-
-                    b.Property<DateTime?>("ReviewDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("review_date");
-
-                    b.Property<DateTime>("ReviewPeriodEnd")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("review_period_end");
-
-                    b.Property<DateTime>("ReviewPeriodStart")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("review_period_start");
-
-                    b.Property<Guid>("ReviewerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("reviewer_id");
-
-                    b.Property<string>("SelfAssessment")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("self_assessment");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasDefaultValue("Draft")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_performance_reviews");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_performance_reviews_employee_id");
-
-                    b.HasIndex("ReviewCycle")
-                        .HasDatabaseName("i_x_performance_reviews_review_cycle");
-
-                    b.HasIndex("ReviewerId")
-                        .HasDatabaseName("i_x_performance_reviews_reviewer_id");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("i_x_performance_reviews_status");
-
-                    b.HasIndex("EmployeeId", "ReviewPeriodStart", "ReviewPeriodEnd")
-                        .HasDatabaseName("i_x_performance_reviews_employee_id_review_period_start_review_~");
-
-                    b.ToTable("performance_reviews", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.PersonalDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("DocumentNumber")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("document_number");
-
-                    b.Property<string>("DocumentType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("document_type");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_personal_documents");
-
-                    b.ToTable("personal_documents", "employee");
-                });
-
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Position", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2085,102 +666,96 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.ToTable("positions", "employee");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.SalaryHistory", b =>
+            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.SagaState", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("CorrelationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("amount");
+                        .HasColumnName("correlation_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime>("EffectiveDate")
+                    b.Property<string>("CurrentStep")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("current_step");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("text")
+                        .HasColumnName("payload");
+
+                    b.Property<string>("SagaType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("saga_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("effective_date");
+                        .HasColumnName("updated_at");
 
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
+                    b.HasKey("CorrelationId")
+                        .HasName("p_k_saga_states");
 
-                    b.HasKey("Id")
-                        .HasName("p_k_salary_histories");
+                    b.HasIndex("SagaType")
+                        .HasDatabaseName("i_x_saga_states_saga_type");
 
-                    b.ToTable("salary_histories", "employee");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("i_x_saga_states_status");
+
+                    b.ToTable("saga_states", "employee");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Skill", b =>
+            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.SagaStepHistory", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid?>("CreatedBy")
+                    b.Property<Guid>("CorrelationId")
                         .HasColumnType("uuid")
-                        .HasColumnName("created_by");
+                        .HasColumnName("correlation_id");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("error_message");
+
+                    b.Property<DateTime>("ExecutedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
+                        .HasColumnName("executed_at");
 
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<bool>("IsDevelopmentArea")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_development_area");
-
-                    b.Property<DateTime>("LastAssessedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_assessed_date");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<int>("ProficiencyLevel")
-                        .HasColumnType("integer")
-                        .HasColumnName("proficiency_level");
-
-                    b.Property<string>("SkillName")
+                    b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("skill_name");
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StepName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("step_name");
+
+                    b.Property<string>("StepType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("step_type");
 
                     b.HasKey("Id")
-                        .HasName("p_k_skills");
+                        .HasName("p_k_saga_step_histories");
 
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_skills_employee_id");
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("i_x_saga_step_histories_correlation_id");
 
-                    b.HasIndex("IsDevelopmentArea")
-                        .HasDatabaseName("i_x_skills_is_development_area");
+                    b.HasIndex("ExecutedAt")
+                        .HasDatabaseName("i_x_saga_step_histories_executed_at");
 
-                    b.HasIndex("LastAssessedDate")
-                        .HasDatabaseName("i_x_skills_last_assessed_date");
-
-                    b.HasIndex("EmployeeId", "SkillName")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_skills_employee_id_skill_name");
-
-                    b.ToTable("skills", "employee");
+                    b.ToTable("saga_step_histories", "employee");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Team", b =>
@@ -2199,8 +774,7 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnName("created_date");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
+                        .HasColumnType("text")
                         .HasColumnName("description");
 
                     b.Property<bool>("IsActive")
@@ -2217,254 +791,25 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                        .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<Guid?>("TeamLeadId")
+                    b.Property<Guid>("TeamLeadId")
                         .HasColumnType("uuid")
                         .HasColumnName("team_lead_id");
 
                     b.Property<string>("TeamType")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasColumnType("text")
                         .HasColumnName("team_type");
 
                     b.HasKey("Id")
                         .HasName("p_k_teams");
 
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("i_x_teams_is_active");
-
-                    b.HasIndex("Name")
-                        .HasDatabaseName("i_x_teams_name");
-
                     b.HasIndex("TeamLeadId")
                         .HasDatabaseName("i_x_teams_team_lead_id");
 
-                    b.HasIndex("TeamType", "IsActive")
-                        .HasDatabaseName("i_x_teams_team_type_is_active");
-
                     b.ToTable("teams", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Training", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CompletionDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completion_date");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_trainings");
-
-                    b.ToTable("trainings", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.TrainingRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("CertificateDocumentId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("certificate_document_id");
-
-                    b.Property<DateTime>("CompletionDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completion_date");
-
-                    b.Property<string>("CourseName")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("course_name");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expiration_date");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Provider")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("provider");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("TrainingType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("training_type");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_training_records");
-
-                    b.HasIndex("CompletionDate")
-                        .HasDatabaseName("i_x_training_records_completion_date");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_training_records_employee_id");
-
-                    b.HasIndex("ExpirationDate")
-                        .HasDatabaseName("i_x_training_records_expiration_date");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("i_x_training_records_status");
-
-                    b.HasIndex("EmployeeId", "CompletionDate")
-                        .HasDatabaseName("i_x_training_records_employee_id_completion_date");
-
-                    b.HasIndex("TrainingType", "Status")
-                        .HasDatabaseName("i_x_training_records_training_type_status");
-
-                    b.ToTable("training_records", "employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.WorkAuthorization", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AuthorizationType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("authorization_type");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_date");
-
-                    b.Property<string>("DocumentNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("document_number");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expiration_date");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime>("IssueDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("issue_date");
-
-                    b.Property<string>("IssuingAuthority")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("issuing_authority");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("modified_by");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_date");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<Guid?>("RightToWorkDocumentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("right_to_work_document_id");
-
-                    b.Property<string>("SponsorshipStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("sponsorship_status");
-
-                    b.HasKey("Id")
-                        .HasName("p_k_work_authorizations");
-
-                    b.HasIndex("AuthorizationType")
-                        .HasDatabaseName("i_x_work_authorizations_authorization_type");
-
-                    b.HasIndex("EmployeeId")
-                        .HasDatabaseName("i_x_work_authorizations_employee_id");
-
-                    b.HasIndex("ExpirationDate")
-                        .HasDatabaseName("i_x_work_authorizations_expiration_date");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("i_x_work_authorizations_is_active");
-
-                    b.HasIndex("RightToWorkDocumentId")
-                        .HasDatabaseName("i_x_work_authorizations_right_to_work_document_id");
-
-                    b.HasIndex("ExpirationDate", "IsActive")
-                        .HasDatabaseName("i_x_work_authorizations_expiration_date_is_active");
-
-                    b.HasIndex("EmployeeId", "AuthorizationType", "IsActive")
-                        .HasDatabaseName("i_x_work_authorizations_employee_id_authorization_type_is_active");
-
-                    b.ToTable("work_authorizations", "employee");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.WorkSchedule", b =>
@@ -2501,89 +846,21 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.ToTable("work_schedules", "employee");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.BenefitsEnrollment", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany("BenefitsEnrollments")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_benefits_enrollments__employees_employee_id");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.CompensationRecord", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany("CompensationRecords")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_compensation_records__employees_employee_id");
-
-                    b.Navigation("Employee");
-                });
-
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Department", b =>
                 {
                     b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "DepartmentHead")
                         .WithMany()
-                        .HasForeignKey("DepartmentHeadId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_departments__employees_department_head_id");
+                        .HasForeignKey("DepartmentHeadId1")
+                        .HasConstraintName("f_k_departments__employees_department_head_id1");
 
                     b.HasOne("Maliev.EmployeeService.Domain.Entities.Department", "ParentDepartment")
                         .WithMany("SubDepartments")
                         .HasForeignKey("ParentDepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("f_k_departments_departments_parent_department_id");
 
                     b.Navigation("DepartmentHead");
 
                     b.Navigation("ParentDepartment");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Document", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_documents__employees_employee_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "UploadedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("UploadedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_documents__employees_uploaded_by");
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("UploadedByEmployee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.DocumentVersion", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Document", "Document")
-                        .WithMany("Versions")
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_document_versions_documents_document_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "UploadedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("UploadedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_document_versions__employees_uploaded_by");
-
-                    b.Navigation("Document");
-
-                    b.Navigation("UploadedByEmployee");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.EmergencyContact", b =>
@@ -2705,169 +982,14 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Goal", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany("Goals")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_goals_employees_employee_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.PerformanceReview", "PerformanceReview")
-                        .WithMany("Goals")
-                        .HasForeignKey("PerformanceReviewId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("f_k_goals__performance_reviews_performance_review_id");
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("PerformanceReview");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeaveApproval", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Approver")
-                        .WithMany()
-                        .HasForeignKey("ApproverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_leave_approvals_employees_approver_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.LeaveRequest", "LeaveRequest")
-                        .WithMany()
-                        .HasForeignKey("LeaveRequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_leave_approvals__leave_requests_leave_request_id");
-
-                    b.Navigation("Approver");
-
-                    b.Navigation("LeaveRequest");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeaveBalance", b =>
+            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.EmploymentHistory", b =>
                 {
                     b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("f_k_leave_balances_employees_employee_id");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.LeaveRequest", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Approver")
-                        .WithMany()
-                        .HasForeignKey("ApproverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_leave_requests_employees_approver_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_leave_requests_employees_employee_id");
-
-                    b.Navigation("Approver");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.OffboardingChecklist", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "CompletedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("CompletedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_offboarding_checklists_employees_completed_by");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_offboarding_checklists_employees_employee_id");
-
-                    b.Navigation("CompletedByEmployee");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.OnboardingChecklist", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "CompletedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("CompletedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_onboarding_checklists_employees_completed_by");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_onboarding_checklists_employees_employee_id");
-
-                    b.Navigation("CompletedByEmployee");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.PerformanceImprovementPlan", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany("PerformanceImprovementPlans")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_performance_improvement_plans_employees_employee_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Manager")
-                        .WithMany("ManagedPIPs")
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_performance_improvement_plans_employees_manager_id");
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Manager");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.PerformanceReview", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany("PerformanceReviews")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_performance_reviews_employees_employee_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Reviewer")
-                        .WithMany("ConductedReviews")
-                        .HasForeignKey("ReviewerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("f_k_performance_reviews_employees_reviewer_id");
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Reviewer");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Skill", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_skills_employees_employee_id");
+                        .HasConstraintName("f_k_employment_histories_employees_employee_id");
 
                     b.Navigation("Employee");
                 });
@@ -2877,42 +999,11 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "TeamLead")
                         .WithMany()
                         .HasForeignKey("TeamLeadId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("f_k_teams_employees_team_lead_id");
 
                     b.Navigation("TeamLead");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.TrainingRecord", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_training_records_employees_employee_id");
-
-                    b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.WorkAuthorization", b =>
-                {
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("f_k_work_authorizations_employees_employee_id");
-
-                    b.HasOne("Maliev.EmployeeService.Domain.Entities.Document", "RightToWorkDocument")
-                        .WithMany()
-                        .HasForeignKey("RightToWorkDocumentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("f_k_work_authorizations_documents_right_to_work_document_id");
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("RightToWorkDocument");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Department", b =>
@@ -2922,39 +1013,15 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.Navigation("SubDepartments");
                 });
 
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Document", b =>
-                {
-                    b.Navigation("Versions");
-                });
-
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Employee", b =>
                 {
-                    b.Navigation("BenefitsEnrollments");
-
-                    b.Navigation("CompensationRecords");
-
-                    b.Navigation("ConductedReviews");
-
                     b.Navigation("DirectReports");
 
                     b.Navigation("DottedLineReports");
 
                     b.Navigation("EmergencyContacts");
 
-                    b.Navigation("Goals");
-
-                    b.Navigation("ManagedPIPs");
-
-                    b.Navigation("PerformanceImprovementPlans");
-
-                    b.Navigation("PerformanceReviews");
-
                     b.Navigation("TeamAssignments");
-                });
-
-            modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.PerformanceReview", b =>
-                {
-                    b.Navigation("Goals");
                 });
 
             modelBuilder.Entity("Maliev.EmployeeService.Domain.Entities.Team", b =>

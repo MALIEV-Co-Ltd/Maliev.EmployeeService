@@ -11,7 +11,8 @@ using Maliev.Aspire.ServiceDefaults.Authorization;
 namespace Maliev.EmployeeService.Api.Controllers;
 
 /// <summary>
-/// Employee self-service profile management (User Story 1)
+/// Employee self-service profile management (User Story 1).
+/// Supports operations for viewing and updating personal profile and emergency contacts.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -28,8 +29,15 @@ public class EmployeeProfileController : ControllerBase
     private readonly ILogger<EmployeeProfileController> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EmployeeProfileController"/> class
+    /// Initializes a new instance of the <see cref="EmployeeProfileController"/> class.
     /// </summary>
+    /// <param name="getProfileHandler">The handler for getting employee profiles.</param>
+    /// <param name="updateProfileHandler">The handler for updating employee profiles.</param>
+    /// <param name="createContactHandler">The handler for creating emergency contacts.</param>
+    /// <param name="updateContactHandler">The handler for updating emergency contacts.</param>
+    /// <param name="deleteContactHandler">The handler for deleting emergency contacts.</param>
+    /// <param name="currentUserService">The current user service.</param>
+    /// <param name="logger">The logger instance.</param>
     public EmployeeProfileController(
         GetEmployeeProfileQueryHandler getProfileHandler,
         UpdateEmployeeProfileCommandHandler updateProfileHandler,
@@ -49,24 +57,11 @@ public class EmployeeProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Get employee profile with contact information and emergency contacts
+    /// Get employee profile with contact information and emergency contacts.
     /// </summary>
-    /// <param name="employeeId">The unique identifier of the employee</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Employee profile with personal information and emergency contacts</returns>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     GET /v1/profile/3fa85f64-5717-4562-b3fc-2c963f66afa6/profile
-    ///     Authorization: Bearer {your-jwt-token}
-    ///
-    /// Authorization:
-    /// - Employees can only view their own profile
-    /// - HR and Admin roles can view any employee profile
-    /// </remarks>
-    /// <response code="200">Returns the employee profile with emergency contacts</response>
-    /// <response code="403">User is not authorized to view this profile</response>
-    /// <response code="404">Employee profile not found</response>
+    /// <param name="employeeId">The unique identifier of the employee.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Employee profile with personal information and emergency contacts.</returns>
     [HttpGet("{employeeId:guid}/profile", Name = "GetEmployeeProfile")]
     [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(EmployeeProfileDto), StatusCodes.Status200OK)]
@@ -86,33 +81,12 @@ public class EmployeeProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Update employee profile (limited fields: personal email, mobile phone, preferred name)
+    /// Update employee profile (limited fields: personal email, mobile phone, preferred name).
     /// </summary>
-    /// <param name="employeeId">The unique identifier of the employee</param>
-    /// <param name="updateDto">Profile update data containing allowed fields only</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Success message confirming profile update</returns>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     PUT /v1/profile/3fa85f64-5717-4562-b3fc-2c963f66afa6/profile
-    ///     Content-Type: application/json
-    ///     Authorization: Bearer {your-jwt-token}
-    ///
-    ///     {
-    ///       "personalEmail": "john.doe@personal.com",
-    ///       "mobilePhone": "+66812345678",
-    ///       "preferredName": "Johnny"
-    ///     }
-    ///
-    /// Authorization:
-    /// - Employees can only update their own profile
-    /// - Limited to personal email, mobile phone, and preferred name only
-    /// </remarks>
-    /// <response code="200">Profile updated successfully</response>
-    /// <response code="400">Invalid data provided or validation failed</response>
-    /// <response code="403">User is not authorized to update this profile</response>
-    /// <response code="404">Employee profile not found</response>
+    /// <param name="employeeId">The unique identifier of the employee.</param>
+    /// <param name="updateDto">Profile update data containing allowed fields only.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success message confirming profile update.</returns>
     [HttpPut("{employeeId:guid}/profile")]
     [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -137,33 +111,12 @@ public class EmployeeProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new emergency contact for an employee
+    /// Create a new emergency contact for an employee.
     /// </summary>
-    /// <param name="employeeId">The unique identifier of the employee</param>
-    /// <param name="createDto">Emergency contact information</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Created emergency contact with ID</returns>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     POST /v1/profile/3fa85f64-5717-4562-b3fc-2c963f66afa6/emergency-contacts
-    ///     Content-Type: application/json
-    ///     Authorization: Bearer {your-jwt-token}
-    ///
-    ///     {
-    ///       "fullName": "Jane Doe",
-    ///       "relationship": "Spouse",
-    ///       "phoneNumber": "+66812345678",
-    ///       "email": "jane.doe@email.com",
-    ///       "isPrimary": true
-    ///     }
-    ///
-    /// Authorization:
-    /// - Employees can only create emergency contacts for themselves
-    /// </remarks>
-    /// <response code="201">Emergency contact created successfully</response>
-    /// <response code="400">Invalid data provided or validation failed</response>
-    /// <response code="403">User is not authorized to create emergency contact for this employee</response>
+    /// <param name="employeeId">The unique identifier of the employee.</param>
+    /// <param name="createDto">Emergency contact information.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created emergency contact with ID.</returns>
     [HttpPost("{employeeId:guid}/emergency-contacts")]
     [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
@@ -192,35 +145,13 @@ public class EmployeeProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Update an existing emergency contact
+    /// Update an existing emergency contact.
     /// </summary>
-    /// <param name="employeeId">The unique identifier of the employee</param>
-    /// <param name="contactId">The unique identifier of the emergency contact</param>
-    /// <param name="updateDto">Updated emergency contact information</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Success message confirming update</returns>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     PUT /v1/profile/3fa85f64-5717-4562-b3fc-2c963f66afa6/emergency-contacts/1a2b3c4d-5e6f-7890-abcd-ef1234567890
-    ///     Content-Type: application/json
-    ///     Authorization: Bearer {your-jwt-token}
-    ///
-    ///     {
-    ///       "fullName": "Jane Doe",
-    ///       "relationship": "Spouse",
-    ///       "phoneNumber": "+66898765432",
-    ///       "email": "jane.doe.updated@email.com",
-    ///       "isPrimary": true
-    ///     }
-    ///
-    /// Authorization:
-    /// - Employees can only update their own emergency contacts
-    /// </remarks>
-    /// <response code="200">Emergency contact updated successfully</response>
-    /// <response code="400">Invalid data provided or validation failed</response>
-    /// <response code="403">User is not authorized to update this emergency contact</response>
-    /// <response code="404">Emergency contact not found</response>
+    /// <param name="employeeId">The unique identifier of the employee.</param>
+    /// <param name="contactId">The unique identifier of the emergency contact.</param>
+    /// <param name="updateDto">Updated emergency contact information.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success message confirming update.</returns>
     [HttpPut("{employeeId:guid}/emergency-contacts/{contactId:guid}")]
     [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -248,24 +179,12 @@ public class EmployeeProfileController : ControllerBase
     }
 
     /// <summary>
-    /// Delete an emergency contact
+    /// Delete an emergency contact.
     /// </summary>
-    /// <param name="employeeId">The unique identifier of the employee</param>
-    /// <param name="contactId">The unique identifier of the emergency contact to delete</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Success message confirming deletion</returns>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     DELETE /v1/profile/3fa85f64-5717-4562-b3fc-2c963f66afa6/emergency-contacts/1a2b3c4d-5e6f-7890-abcd-ef1234567890
-    ///     Authorization: Bearer {your-jwt-token}
-    ///
-    /// Authorization:
-    /// - Employees can only delete their own emergency contacts
-    /// </remarks>
-    /// <response code="200">Emergency contact deleted successfully</response>
-    /// <response code="403">User is not authorized to delete this emergency contact</response>
-    /// <response code="404">Emergency contact not found</response>
+    /// <param name="employeeId">The unique identifier of the employee.</param>
+    /// <param name="contactId">The unique identifier of the emergency contact to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success message confirming deletion.</returns>
     [HttpDelete("{employeeId:guid}/emergency-contacts/{contactId:guid}")]
     [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

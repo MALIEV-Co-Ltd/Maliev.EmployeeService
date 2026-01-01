@@ -1,7 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Diagnostics.CodeAnalysis;
 using Maliev.EmployeeService.Infrastructure.Data;
+using MassTransit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -40,11 +42,11 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             .Build();
 
         _redisContainer = new RedisBuilder()
-            .WithImage("redis:7-alpine")
+            .WithImage("redis:8.4-alpine")
             .Build();
 
         _rabbitmqContainer = new RabbitMqBuilder()
-            .WithImage("rabbitmq:4.2.1-alpine")
+            .WithImage("rabbitmq:4.2-alpine")
             .Build();
     }
 
@@ -112,6 +114,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
         builder.ConfigureTestServices(services =>
         {
+
             // Remove existing DbContext registration
             services.RemoveAll<DbContextOptions<EmployeeDbContext>>();
             services.RemoveAll<EmployeeDbContext>();
@@ -124,10 +127,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
             // Add permission-based authorization infrastructure for tests
             services.AddHttpContextAccessor();
-#pragma warning disable ASPDEPR006
-            services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.IActionContextAccessor,
-                                  Microsoft.AspNetCore.Mvc.Infrastructure.ActionContextAccessor>();
-#pragma warning restore ASPDEPR006
+
             services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider,
                                   Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationPolicyProvider>();
             services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,

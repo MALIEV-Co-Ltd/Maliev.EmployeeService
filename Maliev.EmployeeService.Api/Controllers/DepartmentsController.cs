@@ -10,7 +10,8 @@ using Maliev.Aspire.ServiceDefaults.Authorization;
 namespace Maliev.EmployeeService.Api.Controllers;
 
 /// <summary>
-/// Department and organizational structure management (User Story 2)
+/// Department and organizational structure management (User Story 2).
+/// Supports operations for creating, updating, and viewing department hierarchies and capacity.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -27,8 +28,15 @@ public class DepartmentsController : ControllerBase
     private readonly ILogger<DepartmentsController> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DepartmentsController"/> class
+    /// Initializes a new instance of the <see cref="DepartmentsController"/> class.
     /// </summary>
+    /// <param name="departmentRepository">The repository for department data.</param>
+    /// <param name="createDepartmentHandler">The handler for creating departments.</param>
+    /// <param name="updateDepartmentHandler">The handler for updating departments.</param>
+    /// <param name="employeeRepository">The repository for employee data.</param>
+    /// <param name="unitOfWork">The unit of work for database transactions.</param>
+    /// <param name="currentUserService">The current user service.</param>
+    /// <param name="logger">The logger instance.</param>
     public DepartmentsController(
         IDepartmentRepository departmentRepository,
         CreateDepartmentCommandHandler createDepartmentHandler,
@@ -48,10 +56,10 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all departments with hierarchical structure
+    /// Get all departments with hierarchical structure.
     /// </summary>
-    /// <returns>List of departments with parent/child relationships</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of departments with parent/child relationships.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllDepartments(CancellationToken cancellationToken)
@@ -81,11 +89,11 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Get a specific department by ID with details
+    /// Get a specific department by ID with details.
     /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <returns>Department details with employees</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="departmentId">Department ID.</param>
+    /// <returns>Department details with employees.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("{departmentId:guid}")]
     [ProducesResponseType(typeof(DepartmentDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -134,10 +142,10 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Get department hierarchy (org chart)
+    /// Get department hierarchy (org chart).
     /// </summary>
-    /// <returns>Complete hierarchical structure of all departments</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Complete hierarchical structure of all departments.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("hierarchy")]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDepartmentHierarchy(CancellationToken cancellationToken)
@@ -165,10 +173,10 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Get departments approaching or at headcount limit
+    /// Get departments approaching or at headcount limit.
     /// </summary>
-    /// <returns>List of departments needing attention</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of departments needing attention.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("capacity-alerts")]
     [RequirePermission(EmployeePermissions.ReportsView)]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
@@ -191,11 +199,11 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new department (HR Specialist, System Admin only)
+    /// Create a new department.
     /// </summary>
-    /// <param name="createDto">Department creation data</param>
-    /// <returns>Created department ID</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="createDto">Department creation data.</param>
+    /// <returns>Created department ID.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpPost]
     [RequirePermission(EmployeePermissions.DepartmentsManage)]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
@@ -223,12 +231,12 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Get employees in a department
+    /// Get employees in a department.
     /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <param name="includeSubDepartments">Include employees from subdepartments</param>
-    /// <returns>List of employees</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="departmentId">Department ID.</param>
+    /// <param name="includeSubDepartments">Include employees from subdepartments.</param>
+    /// <returns>List of employees.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("{departmentId:guid}/employees")]
     [ProducesResponseType(typeof(IEnumerable<EmployeeSummaryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -249,7 +257,6 @@ public class DepartmentsController : ControllerBase
         if (includeSubDepartments)
         {
             var subDepartments = await _departmentRepository.GetAllSubDepartmentsRecursiveAsync(departmentId, cancellationToken);
-            var subDepartmentIds = subDepartments.Select(d => d.Id).ToList();
 
             // Load employees from subdepartments
             var allDepartments = new[] { department }.Concat(subDepartments);
@@ -272,12 +279,12 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Update an existing department (HR Specialist, System Admin only)
+    /// Update an existing department.
     /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <param name="updateCommand">Department update data</param>
-    /// <returns>Update result with any warnings</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="departmentId">Department ID.</param>
+    /// <param name="updateCommand">Department update data.</param>
+    /// <returns>Update result with any warnings.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpPut("{departmentId:guid}")]
     [RequirePermission(EmployeePermissions.DepartmentsManage)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -308,11 +315,11 @@ public class DepartmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Delete (deactivate) a department (HR Specialist, System Admin only)
+    /// Delete (deactivate) a department.
     /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <returns>Deletion result</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="departmentId">Department ID.</param>
+    /// <returns>Deletion result.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpDelete("{departmentId:guid}")]
     [RequirePermission(EmployeePermissions.DepartmentsManage)]
     [ProducesResponseType(StatusCodes.Status200OK)]

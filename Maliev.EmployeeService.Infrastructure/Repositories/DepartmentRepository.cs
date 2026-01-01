@@ -32,7 +32,7 @@ public class DepartmentRepository : Repository<Department>, IDepartmentRepositor
             .Include(d => d.SubDepartments)
             .Include(d => d.DepartmentHead)
             .Include(d => d.ParentDepartment)
-            .Include(d => d.Employees.Where(e => e.EmploymentStatus == Domain.Enums.EmploymentStatus.Active))
+            .Include(d => d.Employees)
             .AsSplitQuery() // Phase 16 - T388: CRITICAL - Two collections (SubDepartments + Employees) would cause cartesian explosion
             .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
     }
@@ -136,7 +136,7 @@ public class DepartmentRepository : Repository<Department>, IDepartmentRepositor
     public async Task<IEnumerable<Department>> GetDepartmentsNearHeadcountLimitAsync(CancellationToken cancellationToken = default)
     {
         var departments = await _context.Departments
-            .Include(d => d.Employees.Where(e => e.EmploymentStatus == Domain.Enums.EmploymentStatus.Active))
+            .Include(d => d.Employees)
             .Include(d => d.DepartmentHead)
             .Where(d => d.IsActive && d.HeadcountLimit.HasValue)
             .AsSplitQuery() // Phase 16 - T388: Prevent cartesian explosion with collection Include

@@ -70,7 +70,7 @@ public class GetTeamDetailsQueryHandlerTests
             Name = "Engineering Team",
             Description = "Backend engineering team",
             TeamType = "Engineering",
-            TeamLeadId = null,
+            TeamLeadId = Guid.Empty,
             IsActive = true,
             CreatedDate = DateTime.UtcNow,
             TeamMembers = new List<EmployeeTeamAssignment>()
@@ -90,7 +90,7 @@ public class GetTeamDetailsQueryHandlerTests
         Assert.Equal("Engineering Team", result.Name);
         Assert.Equal("Backend engineering team", result.Description);
         Assert.Equal("Engineering", result.TeamType);
-        Assert.Null(result.TeamLeadId);
+        Assert.Equal(Guid.Empty, result.TeamLeadId);
         Assert.Null(result.TeamLeadName);
         Assert.True(result.IsActive);
         Assert.Empty(result.Members);

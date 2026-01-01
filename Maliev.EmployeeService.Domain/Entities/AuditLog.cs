@@ -1,57 +1,57 @@
-namespace Maliev.EmployeeService.Domain.Entities;
+﻿namespace Maliev.EmployeeService.Domain.Entities;
 
 /// <summary>
-/// Immutable audit log entity for tracking all data changes
+/// Represents a single audit log entry for tracking changes to system data.
 /// </summary>
 public class AuditLog
 {
     /// <summary>
-    /// Unique identifier for the audit log entry
+    /// Gets or sets the unique identifier for the audit log entry.
     /// </summary>
     public Guid LogId { get; set; }
 
     /// <summary>
-    /// Timestamp when the action occurred
+    /// Gets or sets the date and time when the change occurred.
     /// </summary>
     public DateTime Timestamp { get; set; }
 
     /// <summary>
-    /// Identity identifier who performed the action (IAM PrincipalId after migration)
+    /// Gets or sets the unique identifier of the user who made the change.
     /// </summary>
     public Guid? UserId { get; set; }
 
     /// <summary>
-    /// Type of entity that was modified (e.g., "Employee", "LeaveRequest")
+    /// Gets or sets the type of entity that was changed (e.g., Employee, Department).
     /// </summary>
     public string EntityType { get; set; } = string.Empty;
 
     /// <summary>
-    /// ID of the entity that was modified
+    /// Gets or sets the unique identifier of the specific entity that was changed.
     /// </summary>
     public Guid EntityId { get; set; }
 
     /// <summary>
-    /// Action performed (Create, Update, Delete)
+    /// Gets or sets the type of action performed (e.g., Create, Update, Delete).
     /// </summary>
     public string Action { get; set; } = string.Empty;
 
     /// <summary>
-    /// JSON representation of old values (for Update/Delete actions)
+    /// Gets or sets the JSON-serialized state of the entity before the change.
     /// </summary>
     public string? OldValues { get; set; }
 
     /// <summary>
-    /// JSON representation of new values (for Create/Update actions)
+    /// Gets or sets the JSON-serialized state of the entity after the change.
     /// </summary>
     public string? NewValues { get; set; }
 
     /// <summary>
-    /// IP address of the client making the request
+    /// Gets or sets the IP address from which the change was initiated.
     /// </summary>
     public string? IpAddress { get; set; }
 
     /// <summary>
-    /// Business purpose/reason for the change (GDPR compliance)
+    /// Gets or sets the purpose or reason for the change, for compliance tracking.
     /// </summary>
     public string? Purpose { get; set; }
 }

@@ -12,7 +12,8 @@ using Maliev.Aspire.ServiceDefaults.Authorization;
 namespace Maliev.EmployeeService.Api.Controllers;
 
 /// <summary>
-/// Team management and matrix organization operations (User Story 5)
+/// Team management and matrix organization operations (User Story 5).
+/// Supports operations for creating, updating, and viewing teams and their members.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -32,8 +33,18 @@ public class TeamsController : ControllerBase
     private readonly ILogger<TeamsController> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TeamsController"/> class
+    /// Initializes a new instance of the <see cref="TeamsController"/> class.
     /// </summary>
+    /// <param name="getTeamDetailsHandler">The handler for getting team details.</param>
+    /// <param name="getEmployeeTeamsHandler">The handler for getting employee teams.</param>
+    /// <param name="createTeamHandler">The handler for creating teams.</param>
+    /// <param name="addTeamMemberHandler">The handler for adding team members.</param>
+    /// <param name="teamRepository">The repository for team data.</param>
+    /// <param name="employeeRepository">The repository for employee data.</param>
+    /// <param name="currentUserService">The current user service.</param>
+    /// <param name="unitOfWork">The unit of work for database transactions.</param>
+    /// <param name="eventPublisher">The integration event publisher.</param>
+    /// <param name="logger">The logger instance.</param>
     public TeamsController(
         GetTeamDetailsQueryHandler getTeamDetailsHandler,
         GetEmployeeTeamsQueryHandler getEmployeeTeamsHandler,
@@ -59,10 +70,10 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all active teams
+    /// Get all active teams.
     /// </summary>
-    /// <returns>List of all active teams</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of all active teams.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet]
     [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
@@ -88,11 +99,11 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Get team details with member information
+    /// Get team details with member information.
     /// </summary>
-    /// <param name="teamId">Team ID</param>
-    /// <returns>Team details including members</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="teamId">Team ID.</param>
+    /// <returns>Team details including members.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("{teamId:guid}")]
     [ProducesResponseType(typeof(TeamDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -112,11 +123,11 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all teams an employee belongs to
+    /// Get all teams an employee belongs to.
     /// </summary>
-    /// <param name="employeeId">Employee ID</param>
-    /// <returns>List of teams for the employee</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="employeeId">Employee ID.</param>
+    /// <returns>List of teams for the employee.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("employee/{employeeId:guid}")]
     [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/{employeeId}")]
     [ProducesResponseType(typeof(List<TeamDto>), StatusCodes.Status200OK)]
@@ -132,11 +143,11 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Get teams by type
+    /// Get teams by type.
     /// </summary>
-    /// <param name="teamType">Team type (e.g., "Engineering", "Product", "Project")</param>
-    /// <returns>List of teams matching the type</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="teamType">Team type (e.g., "Engineering", "Product", "Project").</param>
+    /// <returns>List of teams matching the type.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("by-type/{teamType}")]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeamsByType(
@@ -163,11 +174,11 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Get teams led by a specific employee
+    /// Get teams led by a specific employee.
     /// </summary>
-    /// <param name="teamLeadId">Team lead employee ID</param>
-    /// <returns>List of teams led by the employee</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="teamLeadId">Team lead employee ID.</param>
+    /// <returns>List of teams led by the employee.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("by-team-lead/{teamLeadId:guid}")]
     [ProducesResponseType(typeof(IEnumerable<TeamDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeamsByTeamLead(
@@ -194,11 +205,11 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new team
+    /// Create a new team.
     /// </summary>
-    /// <param name="command">Team creation details</param>
-    /// <returns>Created team ID</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="command">Team creation details.</param>
+    /// <returns>Created team ID.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpPost]
     [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
@@ -238,12 +249,12 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Add a member to a team
+    /// Add a member to a team.
     /// </summary>
-    /// <param name="teamId">Team ID</param>
-    /// <param name="request">Member assignment details</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Success result</returns>
+    /// <param name="teamId">Team ID.</param>
+    /// <param name="request">Member assignment details.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success result.</returns>
     [HttpPost("{teamId:guid}/members")]
     [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -277,12 +288,12 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Remove a member from a team
+    /// Remove a member from a team.
     /// </summary>
-    /// <param name="teamId">Team ID</param>
-    /// <param name="employeeId">Employee ID to remove</param>
-    /// <returns>Success result</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="teamId">Team ID.</param>
+    /// <param name="employeeId">Employee ID to remove.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success result.</returns>
     [HttpDelete("{teamId:guid}/members/{employeeId:guid}")]
     [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -336,12 +347,12 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Update team information
+    /// Update team information.
     /// </summary>
-    /// <param name="teamId">Team ID</param>
-    /// <param name="request">Updated team information</param>
-    /// <returns>Success result</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="teamId">Team ID.</param>
+    /// <param name="request">Updated team information.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success result.</returns>
     [HttpPut("{teamId:guid}")]
     [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -416,11 +427,11 @@ public class TeamsController : ControllerBase
     }
 
     /// <summary>
-    /// Deactivate a team
+    /// Deactivate a team.
     /// </summary>
-    /// <param name="teamId">Team ID</param>
-    /// <returns>Success result</returns>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="teamId">Team ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success result.</returns>
     [HttpDelete("{teamId:guid}")]
     [RequirePermission(EmployeePermissions.TeamsManage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -472,13 +483,20 @@ public class TeamsController : ControllerBase
 }
 
 /// <summary>
-/// Request model for adding a team member
+/// Request model for adding a team member.
 /// </summary>
+/// <param name="EmployeeId">The unique identifier of the employee to add.</param>
+/// <param name="IsPrimary">Indicates if this is the employee's primary team.</param>
 public record AddTeamMemberRequest(Guid EmployeeId, bool IsPrimary = false);
 
 /// <summary>
-/// Request model for updating a team
+/// Request model for updating a team.
 /// </summary>
+/// <param name="Name">The updated name of the team.</param>
+/// <param name="Description">The updated description of the team.</param>
+/// <param name="TeamType">The updated type of the team.</param>
+/// <param name="TeamLeadId">The unique identifier of the new team lead.</param>
+/// <param name="IsActive">The updated active status of the team.</param>
 public record UpdateTeamRequest(
     string? Name = null,
     string? Description = null,

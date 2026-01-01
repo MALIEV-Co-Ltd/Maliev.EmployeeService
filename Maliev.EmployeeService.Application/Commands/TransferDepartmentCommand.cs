@@ -1,4 +1,5 @@
 using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.MessagingContracts.Generated;
 using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -114,19 +115,29 @@ public class TransferDepartmentCommandHandler
         _employeeRepository.Update(employee);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publish event for access control and email distribution list updates
-        await _eventPublisher.PublishAsync(new
-        {
-            EventType = "EmployeeDepartmentTransferred",
-            EmployeeId = employee.Id,
-            EmployeeNumber = employee.EmployeeNumber,
-            EmployeeName = employee.FullName,
-            OldDepartmentId = oldDepartmentId,
-            NewDepartmentId = command.NewDepartmentId,
-            TransferReason = command.TransferReason,
-            EffectiveDate = command.EffectiveDate,
-            Timestamp = DateTime.UtcNow
-        }, cancellationToken);
+        // Publish event for access control and email distribution list updates (Phase 3 - T127)
+        var payload = new DepartmentTransferredEventPayload(
+            EmployeeId: employee.Id,
+            PreviousDepartmentId: oldDepartmentId ?? Guid.Empty,
+            NewDepartmentId: command.NewDepartmentId,
+            EffectiveDate: command.EffectiveDate
+        );
+
+        var departmentTransferredEvent = new DepartmentTransferredEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: "DepartmentTransferred",
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: payload
+        );
+
+        await _eventPublisher.PublishAsync(departmentTransferredEvent, cancellationToken);
 
         return new TransferDepartmentCommandResult(true, null);
     }

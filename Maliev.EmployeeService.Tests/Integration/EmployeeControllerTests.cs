@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Maliev.EmployeeService.Tests.Integration;
 
+[Collection("IntegrationTests")]
 public class EmployeeControllerTests : WebApplicationTestBase
 {
     public EmployeeControllerTests(EmployeeServiceTestFactory factory) : base(factory)

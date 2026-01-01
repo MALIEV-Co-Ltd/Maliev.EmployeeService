@@ -9,17 +9,12 @@ using Xunit;
 using System.Threading;
 using Npgsql;
 
-using Maliev.EmployeeService.Domain.Enums;
-
 namespace Maliev.EmployeeService.Tests.Integration;
-// ... (start of class)
-
-
 
 /// <summary>
-/// Base class for integration tests that require PostgreSQL database
-/// Uses Testcontainers to provision a real PostgreSQL instance for each test class
-/// Database is automatically cleared between tests to ensure isolation
+/// Base class for integration tests that require PostgreSQL database.
+/// Uses Testcontainers to provision a real PostgreSQL instance for each test class.
+/// Database is automatically cleared between tests to ensure isolation.
 /// </summary>
 public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 {
@@ -28,15 +23,23 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     private static readonly Dictionary<Type, bool> _firstTestTracker = new Dictionary<Type, bool>();
     private readonly Type _testClassType;
 
+    /// <summary>
+    /// Gets the database context for the Employee Service.
+    /// </summary>
     protected EmployeeDbContext Context { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the encryption service for handling sensitive data.
+    /// </summary>
     protected IEncryptionService EncryptionService { get; private set; } = null!;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PostgreSqlIntegrationTestBase"/> class.
+    /// </summary>
     protected PostgreSqlIntegrationTestBase()
     {
-        // Track test class type for per-class isolation
         _testClassType = GetType();
 
-        // Create PostgreSQL container for testing
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
@@ -47,17 +50,16 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Initialize PostgreSQL container and apply migrations
-    /// Called before any test in the test class runs
+    /// Initialize PostgreSQL container and apply migrations.
+    /// Called before any test in the test class runs.
     /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public virtual async Task InitializeAsync()
     {
         try
         {
-            // Start PostgreSQL container
             await _postgresContainer.StartAsync();
 
-            // Setup encryption service
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
                 {
@@ -67,7 +69,6 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 
             EncryptionService = new EncryptionService(configuration);
 
-            // Create DbContext with encryption service (used by value converters)
             var options = new DbContextOptionsBuilder<EmployeeDbContext>()
                 .UseNpgsql(_postgresContainer.GetConnectionString())
                 .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
@@ -85,7 +86,6 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
                 new AuditLogInterceptor(new DummyCurrentUserService(), new Microsoft.AspNetCore.Http.HttpContextAccessor()),
                 new DatabaseMetricsInterceptor());
 
-
             var retries = 5;
             while (retries > 0)
             {
@@ -101,8 +101,6 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
                 }
             }
 
-            // Clear any existing data to ensure clean state for first test
-            // This is important because some tests may not call InitializeTestAsync() manually
             await ClearDatabaseAsync();
         }
         catch (Exception ex)
@@ -113,69 +111,51 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Cleanup PostgreSQL container
-    /// Called after all tests in the test class complete
+    /// Cleanup PostgreSQL container.
+    /// Called after all tests in the test class complete.
     /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task DisposeAsync()
     {
-        await Context.DisposeAsync();
-        await _postgresContainer.DisposeAsync();
+        if (Context != null) await Context.DisposeAsync();
+        if (_postgresContainer != null) await _postgresContainer.DisposeAsync();
     }
 
     /// <summary>
-    /// Clear all data from test database between tests
-    /// Clears in proper order to respect foreign key constraints
+    /// Clear all data from test database between tests.
+    /// Clears in proper order to respect foreign key constraints.
     /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     protected async Task ClearDatabaseAsync()
     {
-        // Clear change tracker first to avoid any cached entities interfering
         Context.ChangeTracker.Clear();
 
-        // Delete in order respecting FK constraints (children first, then parents)
-        await Context.DocumentVersions.ExecuteDeleteAsync();
-        await Context.Documents.ExecuteDeleteAsync();
         await Context.EmergencyContacts.ExecuteDeleteAsync();
-        await Context.LeaveApprovals.ExecuteDeleteAsync();
-        await Context.LeaveRequests.ExecuteDeleteAsync();
-        await Context.LeaveBalances.ExecuteDeleteAsync();
-        await Context.LeavePolicies.ExecuteDeleteAsync();
-
-        // Clear performance-related tables
-        await Context.Set<Domain.Entities.Goal>().ExecuteDeleteAsync();
-        await Context.Set<Domain.Entities.PerformanceReview>().ExecuteDeleteAsync();
-
-        // Clear team assignments before teams and employees
         await Context.EmployeeTeamAssignments.ExecuteDeleteAsync();
         await Context.Teams.ExecuteDeleteAsync();
-
-        // Employees last (many tables reference Employee)
         await Context.Employees.ExecuteDeleteAsync();
         await Context.Departments.ExecuteDeleteAsync();
 
         await Context.SaveChangesAsync();
-
-        // Clear tracker again after deletions
         Context.ChangeTracker.Clear();
     }
 
     /// <summary>
-    /// Initialize test with a clean database
-    /// Call this at the start of each test method to ensure test isolation
+    /// Initialize test with a clean database.
+    /// Call this at the start of each test method to ensure test isolation.
     /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     protected async Task InitializeTestAsync()
     {
         await _cleanupLock.WaitAsync();
         try
         {
-            // Check if this is the first test for this test class
             if (!_firstTestTracker.ContainsKey(_testClassType))
             {
-                // First test in this class - mark it and don't clear
                 _firstTestTracker[_testClassType] = true;
             }
             else
             {
-                // Subsequent test in this class - clear database for isolation
                 await ClearDatabaseAsync();
             }
         }
@@ -190,8 +170,6 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
         public Guid? PrincipalId => null;
         public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(null);
         public string? Email => null;
-        public IEnumerable<string> Roles => Enumerable.Empty<string>();
-        public Role PrimaryRole => Role.Employee;
         public bool IsAuthenticated => false;
     }
 }

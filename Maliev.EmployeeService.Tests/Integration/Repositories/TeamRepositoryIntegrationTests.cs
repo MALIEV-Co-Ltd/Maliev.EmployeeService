@@ -11,6 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration.Repositories;
 /// <summary>
 /// Integration tests for TeamRepository using in-memory database (User Story 5)
 /// </summary>
+[Collection("IntegrationTests")]
 public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
 {
 
@@ -124,6 +125,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Active Team 2",
             TeamType = "Product",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -133,6 +135,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Inactive Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = false,
             CreatedDate = DateTime.UtcNow
         };
@@ -156,11 +159,13 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
     {
         // Arrange
         var repository = new TeamRepository(Context);
+        var teamLead = CreateTestEmployee("EMP001", "John Doe");
         var team1 = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Engineering Team 1",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -170,6 +175,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Engineering Team 2",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -179,10 +185,12 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Product Team",
             TeamType = "Product",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
 
+        Context.Employees.Add(teamLead);
         Context.Teams.AddRange(team1, team2, productTeam);
         await Context.SaveChangesAsync();
 
@@ -252,12 +260,14 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         // Arrange
         var repository = new TeamRepository(Context);
         var employee = CreateTestEmployee("EMP001", "John Doe");
+        var teamLead = CreateTestEmployee("EMP002", "Jane Smith");
 
         var team1 = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Engineering Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -267,6 +277,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Product Team",
             TeamType = "Product",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -276,6 +287,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Other Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -298,7 +310,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             CreatedDate = DateTime.UtcNow
         };
 
-        Context.Employees.Add(employee);
+        Context.Employees.AddRange(employee, teamLead);
         Context.Teams.AddRange(team1, team2, team3);
         Context.EmployeeTeamAssignments.AddRange(assignment1, assignment2);
         await Context.SaveChangesAsync();
@@ -319,12 +331,14 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         // Arrange
         var repository = new TeamRepository(Context);
         var employee = CreateTestEmployee("EMP001", "John Doe");
+        var teamLead = CreateTestEmployee("EMP002", "Jane Smith");
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Engineering Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -338,7 +352,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             CreatedDate = DateTime.UtcNow
         };
 
-        Context.Employees.Add(employee);
+        Context.Employees.AddRange(employee, teamLead);
         Context.Teams.Add(team);
         Context.EmployeeTeamAssignments.Add(assignment);
         await Context.SaveChangesAsync();
@@ -356,17 +370,19 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         // Arrange
         var repository = new TeamRepository(Context);
         var employee = CreateTestEmployee("EMP001", "John Doe");
+        var teamLead = CreateTestEmployee("EMP002", "Jane Smith");
 
         var team = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Engineering Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
 
-        Context.Employees.Add(employee);
+        Context.Employees.AddRange(employee, teamLead);
         Context.Teams.Add(team);
         await Context.SaveChangesAsync();
 
@@ -383,12 +399,14 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
         // Arrange
         var repository = new TeamRepository(Context);
         var employee = CreateTestEmployee("EMP001", "John Doe");
+        var teamLead = CreateTestEmployee("EMP002", "Jane Smith");
 
         var primaryTeam = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Primary Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -398,6 +416,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             Id = Guid.NewGuid(),
             Name = "Secondary Team",
             TeamType = "Product",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };
@@ -420,7 +439,7 @@ public class TeamRepositoryIntegrationTests : PostgreSqlIntegrationTestBase
             CreatedDate = DateTime.UtcNow
         };
 
-        Context.Employees.Add(employee);
+        Context.Employees.AddRange(employee, teamLead);
         Context.Teams.AddRange(primaryTeam, secondaryTeam);
         Context.EmployeeTeamAssignments.AddRange(primaryAssignment, secondaryAssignment);
         await Context.SaveChangesAsync();

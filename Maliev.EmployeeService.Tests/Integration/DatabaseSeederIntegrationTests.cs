@@ -12,6 +12,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// <summary>
 /// Integration tests for DatabaseSeeder
 /// </summary>
+[Collection("IntegrationTests")]
 public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 {
 
@@ -69,7 +70,7 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
 
         // Verify team leads are assigned
         var engineeringTeam = teams.First(t => t.Name == "Engineering Team");
-        Assert.NotNull(engineeringTeam.TeamLeadId);
+        Assert.NotEqual(Guid.Empty, engineeringTeam.TeamLeadId);
         Assert.Equal(employees[0].Id, engineeringTeam.TeamLeadId);
 
         // Verify multiple team memberships (matrix organization)
@@ -89,12 +90,36 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     [Fact]
     public async Task SeedTeamsAsync_WhenTeamsExist_ShouldSkipSeeding()
     {
-        // Arrange - Create one team
+        // Arrange - Create an employee first for team lead
+        var teamLead = new Employee
+        {
+            Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
+            EmployeeNumber = "EMP001",
+            LegalName = new LegalName
+            {
+                FirstName = "Team",
+                LastName = "Lead"
+            },
+            ContactInformation = new ContactInformation
+            {
+                WorkEmail = "teamlead@company.com"
+            },
+            EmploymentStatus = EmploymentStatus.Active,
+            EmploymentType = EmploymentType.FullTime,
+            StartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        Context.Employees.Add(teamLead);
+        await Context.SaveChangesAsync();
+
+        // Create one team
         var existingTeam = new Team
         {
             Id = Guid.NewGuid(),
             Name = "Existing Team",
             TeamType = "Engineering",
+            TeamLeadId = teamLead.Id,
             IsActive = true,
             CreatedDate = DateTime.UtcNow
         };

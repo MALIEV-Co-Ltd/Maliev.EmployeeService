@@ -2,7 +2,6 @@ using Asp.Versioning;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
-using Maliev.EmployeeService.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Maliev.Aspire.ServiceDefaults.Authorization;
@@ -11,7 +10,8 @@ using Maliev.EmployeeService.Domain.Authorization;
 namespace Maliev.EmployeeService.Api.Controllers;
 
 /// <summary>
-/// General employee management and lookups
+/// General employee management and lookups.
+/// Supports operations for retrieving employee profile information by different identifiers.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -21,30 +21,30 @@ public class EmployeesController : ControllerBase
 {
     private readonly IEmployeeRepository _employeeRepository;
     private readonly GetEmployeeProfileQueryHandler _getProfileHandler;
-    private readonly BusinessMetricsService _metricsService;
     private readonly ILogger<EmployeesController> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EmployeesController"/> class
+    /// Initializes a new instance of the <see cref="EmployeesController"/> class.
     /// </summary>
+    /// <param name="employeeRepository">The repository for employee data.</param>
+    /// <param name="getProfileHandler">The handler for getting employee profiles.</param>
+    /// <param name="logger">The logger instance.</param>
     public EmployeesController(
         IEmployeeRepository employeeRepository,
         GetEmployeeProfileQueryHandler getProfileHandler,
-        BusinessMetricsService metricsService,
         ILogger<EmployeesController> logger)
     {
         _employeeRepository = employeeRepository;
         _getProfileHandler = getProfileHandler;
-        _metricsService = metricsService;
         _logger = logger;
     }
 
     /// <summary>
-    /// Get employee profile by IAM Principal ID (US2)
+    /// Get employee profile by IAM Principal ID (US2).
     /// </summary>
-    /// <param name="principalId">The IAM Principal ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Employee profile</returns>
+    /// <param name="principalId">The IAM Principal ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Employee profile.</returns>
     [HttpGet("by-principal/{principalId:guid}")]
     [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/principals/{principalId}")]
     [ProducesResponseType(typeof(EmployeeProfileDto), StatusCodes.Status200OK)]
@@ -56,14 +56,12 @@ public class EmployeesController : ControllerBase
         if (employee == null)
         {
             _logger.LogWarning("Employee not found for principal {PrincipalId}", principalId);
-            _metricsService.RecordPrincipalLookup(false);
             return NotFound(new { message = $"Employee not found for principal {principalId}" });
         }
 
         var query = new GetEmployeeProfileQuery(employee.Id);
         var result = await _getProfileHandler.HandleAsync(query, cancellationToken);
 
-        _metricsService.RecordPrincipalLookup(true);
         return Ok(result.Profile);
     }
 }

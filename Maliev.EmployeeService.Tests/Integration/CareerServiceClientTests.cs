@@ -11,6 +11,7 @@ namespace Maliev.EmployeeService.Tests.Integration;
 /// Integration tests for CareerServiceClient using MockHttpMessageHandler to simulate Career Service API
 /// Tests T026n: Verify HTTP client behavior with mock API responses
 /// </summary>
+[Collection("IntegrationTests")]
 public class CareerServiceClientTests : IDisposable
 {
     private readonly MockHttpMessageHandler _mockHandler;

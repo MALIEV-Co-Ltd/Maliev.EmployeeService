@@ -137,9 +137,6 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
 {
     public EmployeeServiceTestFactory()
     {
-        // Force initialization of metrics (same as Program.cs line 295)
-        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(
-            typeof(Maliev.EmployeeService.Application.Services.BusinessMetricsService).TypeHandle);
     }
 
     protected override void ConfigureEnvironmentVariables()
