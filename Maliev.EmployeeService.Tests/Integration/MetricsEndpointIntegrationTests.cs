@@ -69,7 +69,7 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
         var principalId = Guid.NewGuid();
         await _client.GetAsync($"/employee/v1/employees/by-principal/{principalId}"); // Records principal lookup fail
 
-        var authRequest = new { Email = "test@example.com", Password = "password" };
+        var authRequest = new { Email = "test@example.com", Password = TestConstants.DummyPassword };
         await _client.PostAsJsonAsync("/employee/v1/auth/validate", authRequest); // Records validation fail
 
         // Small delay to ensure metrics are flushed
