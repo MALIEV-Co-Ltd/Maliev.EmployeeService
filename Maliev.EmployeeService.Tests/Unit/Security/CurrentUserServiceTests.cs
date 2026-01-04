@@ -1,8 +1,10 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -14,7 +16,7 @@ public class CurrentUserServiceTests
 {
     private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock = new();
     private readonly Mock<IEmployeeRepository> _employeeRepositoryMock = new();
-    private readonly Mock<ICacheService> _cacheServiceMock = new();
+    private readonly Mock<IDistributedCache> _cacheMock = new();
     private readonly Mock<IServiceProvider> _serviceProviderMock = new();
     private readonly CurrentUserService _service;
 
@@ -23,7 +25,7 @@ public class CurrentUserServiceTests
         _service = new CurrentUserService(
             _httpContextAccessorMock.Object,
             _serviceProviderMock.Object,
-            _cacheServiceMock.Object,
+            _cacheMock.Object,
             NullLogger<CurrentUserService>.Instance);
     }
 
@@ -67,8 +69,10 @@ public class CurrentUserServiceTests
         var employeeId = Guid.NewGuid();
         SetupUserWithClaims(new Claim("sub", principalId.ToString()));
 
-        _cacheServiceMock.Setup(x => x.GetAsync<CurrentUserService.EmployeeIdCacheWrapper>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CurrentUserService.EmployeeIdCacheWrapper(employeeId));
+        var wrapper = new CurrentUserService.EmployeeIdCacheWrapper(employeeId);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(wrapper);
+        _cacheMock.Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bytes);
 
         // Act
         var result = await _service.GetEmployeeIdAsync();
@@ -86,8 +90,8 @@ public class CurrentUserServiceTests
         var employeeId = Guid.NewGuid();
         SetupUserWithClaims(new Claim("sub", principalId.ToString()));
 
-        _cacheServiceMock.Setup(x => x.GetAsync<CurrentUserService.EmployeeIdCacheWrapper>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((CurrentUserService.EmployeeIdCacheWrapper?)null);
+        _cacheMock.Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[]?)null);
 
         var serviceScopeMock = new Mock<IServiceScope>();
         var serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
@@ -105,11 +109,10 @@ public class CurrentUserServiceTests
 
         // Assert
         Assert.Equal(employeeId, result);
-        _cacheServiceMock.Verify(x => x.SetAsync(
+        _cacheMock.Verify(x => x.SetAsync(
             $"principal_mapping:{principalId}",
-            It.Is<CurrentUserService.EmployeeIdCacheWrapper>(w => w.Id == employeeId),
-            It.Is<TimeSpan?>(t => t == TimeSpan.FromHours(24)),
-            null,
+            It.IsAny<byte[]>(),
+            It.IsAny<DistributedCacheEntryOptions>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -1,10 +1,11 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Maliev.Aspire.ServiceDefaults.Caching;
 
 namespace Maliev.EmployeeService.Infrastructure.Authentication;
 
@@ -15,18 +16,18 @@ public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IServiceProvider _serviceProvider;
-    private readonly ICacheService _cacheService;
+    private readonly IDistributedCache _cache;
     private readonly ILogger<CurrentUserService> _logger;
 
     public CurrentUserService(
         IHttpContextAccessor httpContextAccessor,
         IServiceProvider serviceProvider,
-        ICacheService cacheService,
+        IDistributedCache cache,
         ILogger<CurrentUserService> logger)
     {
         _httpContextAccessor = httpContextAccessor;
         _serviceProvider = serviceProvider;
-        _cacheService = cacheService;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -63,10 +64,14 @@ public class CurrentUserService : ICurrentUserService
         var cacheKey = $"principal_mapping:{principalId}";
 
         // Try get from cache
-        var cachedEmployeeId = await _cacheService.GetAsync<EmployeeIdCacheWrapper>(cacheKey, cancellationToken);
-        if (cachedEmployeeId != null)
+        var cachedBytes = await _cache.GetAsync(cacheKey, cancellationToken);
+        if (cachedBytes != null)
         {
-            return cachedEmployeeId.Id;
+            var cachedEmployeeId = JsonSerializer.Deserialize<EmployeeIdCacheWrapper>(cachedBytes);
+            if (cachedEmployeeId != null)
+            {
+                return cachedEmployeeId.Id;
+            }
         }
 
         // Lookup in DB via resolved repository
@@ -76,8 +81,13 @@ public class CurrentUserService : ICurrentUserService
         var employee = await employeeRepository.GetByPrincipalIdAsync(principalId.Value, cancellationToken);
         if (employee != null)
         {
-            // Cache for 24 hours (US3)
-            await _cacheService.SetAsync(cacheKey, new EmployeeIdCacheWrapper(employee.Id), ttl: TimeSpan.FromHours(24), cancellationToken: cancellationToken);
+            // Cache for 24 hours
+            var wrapper = new EmployeeIdCacheWrapper(employee.Id);
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(wrapper);
+            await _cache.SetAsync(cacheKey, bytes, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24)
+            }, cancellationToken);
             return employee.Id;
         }
 
