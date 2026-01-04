@@ -1,171 +1,108 @@
-# Employee Service
+# Maliev Employee Service
 
-Core HR and employee management microservice for Maliev Co. Ltd.
+[![Build Status](https://img.shields.io/badge/Build-Passing-success)](https://github.com/ORGANIZATION/Maliev.EmployeeService)
+[![.NET Version](https://img.shields.io/badge/.NET-10.0-blue)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%2018-blue)](https://www.postgresql.org/)
 
-## Overview
+The core HR and organizational management microservice.
 
-The Employee Service is a .NET 10.0 microservice that manages core aspects of the employee lifecycle including:
+**Role in MALIEV Architecture**: Acts as the "Source of Truth" for employee profiles and organizational hierarchy. It publishes integration events consumed by Leave, Payroll, and IAM services.
 
-- **Employee Profile Management** - Self-service profile updates and emergency contacts
-- **Organizational Structure** - Departments, teams, and reporting hierarchies
-- **Reporting & Analytics** - Core organizational metrics and org charts
+---
 
-## Architecture
+## 🏗️ Architecture & Tech Stack
 
-- **Framework**: ASP.NET Core 10.0
-- **Database**: PostgreSQL 18 with Entity Framework Core
-- **Messaging**: RabbitMQ via MassTransit (for integration events)
-- **Caching**: Redis (optional, falls back to in-memory)
-- **Authentication**: JWT Bearer tokens
-- **Authorization**: Role-based and resource-based policies
-- **API Documentation**: OpenAPI with Scalar UI (development only) and comprehensive XML comments
-- **Logging**: Serilog with structured logging and correlation IDs
+- **Framework**: ASP.NET Core 10.0 (C# 13)
+- **Pattern**: 5-Layer Clean Architecture
+- **Database**: PostgreSQL 18 with Entity Framework Core 10.x
+- **Cache**: Redis 7.x (Employee metadata & org charts)
+- **Messaging**: RabbitMQ via MassTransit
+- **API Documentation**: OpenAPI 3.1 + Scalar UI
 
-## Authentication & Authorization
+---
 
-### JWT Token Requirements
+## ⚖️ Constitution Rules
 
-The Employee Service uses JWT (JSON Web Token) Bearer authentication for all protected endpoints.
+### Banned Libraries
+- ❌ **AutoMapper**: Explicit manual mapping only.
+- ❌ **FluentValidation**: Data Annotations only.
+- ❌ **FluentAssertions**: xUnit `Assert` only.
+- ❌ **In-memory Test DB**: Testcontainers with PostgreSQL 18.
 
-#### Token Structure
+### Mandatory Practices
+- ✅ **TreatWarningsAsErrors**: Enabled.
+- ✅ **XML Documentation**: Required on all public members.
+- ✅ **No Secrets in Code**: Environment variable injection only.
+- ✅ **IAM Integration**: Permissions naming: `employee.{resource}.{action}`.
 
-JWT tokens must be obtained from the Auth Service and include the following claims:
+---
 
-```json
-{
-  "sub": "employee-guid",
-  "email": "employee@maliev.co.th",
-  "role": "Employee|Manager|HR|Admin",
-  "name": "John Doe",
-  "employeeNumber": "EMP001",
-  "iss": "https://maliev.co.th",
-  "aud": "employee-service",
-  "exp": 1234567890,
-  "iat": 1234567890
-}
-```
+## ✨ Key Features
 
-### Authorization Roles
+- **Employee Lifecycle**: Management of onboarding, transfers, and offboarding.
+- **Org Chart Engine**: Real-time resolution of reporting lines and hierarchies.
+- **Profile Self-Service**: Employee-facing API for personal data management.
+- **Event-Driven HR**: Publishes `EmployeeCreated` and `EmployeeTerminated` events.
 
-The service supports four primary roles:
+---
 
-#### 1. Employee (Base Role)
-- View own profile and emergency contacts
-- Update limited profile fields (personal email, phone, preferred name)
-- Manage own emergency contacts
-- View own team memberships
-
-#### 2. Manager
-- All Employee permissions
-- View direct reports' profiles
-- View organizational chart for their subtree
-- Manage team assignments
-- Create and update teams
-
-#### 3. HR
-- All Manager permissions
-- View all employee profiles
-- Create new employees
-- Transfer employees between departments
-- Create and manage departments
-- Access core reports and analytics
-
-#### 4. Admin
-- All HR permissions
-- Full system access
-- Manage system configuration
-- Access audit logs
-- Perform bulk operations
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - .NET 10.0 SDK
 - PostgreSQL 18
-- Docker (optional, for Redis and RabbitMQ)
-- Git
+- Docker Desktop
 
 ### Local Development Setup
 
-1. **Clone the repository**:
-
+1. **Clone the repository**
 ```bash
-git clone https://github.com/MALIEV-Co-Ltd/Maliev.EmployeeService.git
+git clone https://github.com/ORGANIZATION/Maliev.EmployeeService.git
 cd Maliev.EmployeeService
 ```
 
-2. **Run database migrations**:
-
+2. **Apply Migrations**
 ```bash
 dotnet ef database update --project Maliev.EmployeeService.Infrastructure --startup-project Maliev.EmployeeService.Api
 ```
 
-3. **Run the service**:
-
+3. **Run the Service**
 ```bash
 dotnet run --project Maliev.EmployeeService.Api
 ```
 
-The service will be available at `https://localhost:7001` (HTTPS) or `http://localhost:5000` (HTTP).
+---
 
-## API Documentation
+## 📡 API Endpoints
 
-### Base URL
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/employees/{id}` | Get detailed employee profile |
+| GET | `/v1/departments` | List organizational departments |
+| POST | `/v1/employees` | Onboard a new employee (HR only) |
 
-- **Development**: `http://localhost:5000/employee`
-- **Production**: `https://api.maliev.co.th/employee`
+---
 
-### Endpoints
+## 🏥 Health & Monitoring
+- **Liveness**: `GET /employee/liveness`
+- **Readiness**: `GET /employee/readiness`
+- **Metrics**: `GET /employee/metrics`
 
-#### Employee Profile Management
+---
 
-```
-GET    /v1/profile/{employeeId}/profile               - Get employee profile
-PUT    /v1/profile/{employeeId}/profile               - Update employee profile
-POST   /v1/profile/{employeeId}/emergency-contacts    - Create emergency contact
-PUT    /v1/profile/{employeeId}/emergency-contacts/{contactId} - Update emergency contact
-DELETE /v1/profile/{employeeId}/emergency-contacts/{contactId} - Delete emergency contact
-```
+## 🧪 Testing
 
-#### Team Management
-
-```
-GET    /v1/teams/{teamId}                             - Get team details
-GET    /v1/teams/employee/{employeeId}                - Get employee teams
-POST   /v1/teams                                      - Create team (Manager/HR)
-POST   /v1/teams/{teamId}/members                     - Add team member (Manager/HR)
-DELETE /v1/teams/{teamId}/members/{employeeId}        - Remove team member (Manager/HR)
+```bash
+# Run integration tests
+dotnet test --verbosity normal
 ```
 
-#### Department Management
+---
 
-```
-GET    /v1/departments                                - List all departments
-GET    /v1/departments/{departmentId}                 - Get department details
-GET    /v1/departments/{departmentId}/employees       - Get department employees
-POST   /v1/departments                                - Create department (HR/Admin)
-PUT    /v1/departments/{departmentId}                 - Update department (HR/Admin)
-```
+## 📦 Deployment
+- **Docker Image**: `REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/maliev-employee-service:{sha}`
 
-## Integration Events
+---
 
-The service publishes integration events to RabbitMQ for cross-service communication:
-
-### Published Events
-
-- `EmployeeCreatedIntegrationEvent` - New employee created
-- `EmployeeTerminatedIntegrationEvent` - Employee offboarded
-- `DepartmentTransferredIntegrationEvent` - Employee transferred to new department
-
-## Support
-
-For issues or questions:
-
-- **GitHub Issues**: https://github.com/MALIEV-Co-Ltd/Maliev.EmployeeService/issues
-- **Email**: dev@maliev.co.th
-- **Documentation**: https://docs.maliev.co.th/employee-service
-
-## License
-
-Copyright © 2025 Maliev Co. Ltd. All rights reserved.
+## 📄 License
+Proprietary - © 2025 MALIEV Co., Ltd. All rights reserved.

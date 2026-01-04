@@ -3,6 +3,7 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Infrastructure.Data.Extensions;
 using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
+using Maliev.EmployeeService.Domain.Sagas;
 
 namespace Maliev.EmployeeService.Infrastructure.Data;
 
@@ -62,6 +63,7 @@ public class EmployeeDbContext : DbContext
     // Saga Infrastructure (Phase 2 - T068, T069)
     public DbSet<SagaState> SagaStates => Set<SagaState>();
     public DbSet<SagaStepHistory> SagaStepHistories => Set<SagaStepHistory>();
+    public DbSet<EmployeeTerminationSagaState> EmployeeTerminationSagaStates => Set<EmployeeTerminationSagaState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -216,6 +218,14 @@ public class EmployeeDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.CorrelationId);
             entity.HasIndex(e => e.ExecutedAt);
+        });
+
+        // Configure EmployeeTerminationSagaState entity
+        modelBuilder.Entity<EmployeeTerminationSagaState>(entity =>
+        {
+            entity.HasKey(e => e.CorrelationId);
+            entity.HasIndex(e => e.EmployeeId);
+            entity.HasIndex(e => e.CurrentState);
         });
 
         // Configure naming convention for PostgreSQL (snake_case)
