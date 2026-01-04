@@ -1,10 +1,11 @@
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Mapping;
-using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.Aspire.ServiceDefaults.Caching;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -97,7 +98,7 @@ public class GetEmployeeProfileQueryHandler
                 await _cacheService.SetAsync(
                     cacheKey,
                     profileDto,
-                    absoluteExpiration: CacheExpiration,
+                    ttl: CacheExpiration,
                     cancellationToken: cancellationToken);
 
                 _logger.LogDebug("Cached employee profile for {EmployeeId}", query.EmployeeId);

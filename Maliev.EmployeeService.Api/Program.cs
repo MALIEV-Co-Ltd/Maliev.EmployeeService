@@ -108,7 +108,6 @@ builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompress
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<AuditLogInterceptor>();
 builder.Services.AddScoped<DatabaseMetricsInterceptor>();
-builder.Services.AddScoped<ICacheService, Maliev.EmployeeService.Infrastructure.Services.RedisCacheService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Repository and Unit of Work
@@ -189,7 +188,7 @@ if (args.Contains("--migrate-principals"))
     return;
 }
 
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
+var logger = app.Services.GetRequiredService<ILogger<Maliev.EmployeeService.Api.Program>>();
 
 // Run database migrations on startup
 await app.MigrateDatabaseAsync<EmployeeDbContext>();
@@ -224,32 +223,35 @@ app.MapDefaultEndpoints(servicePrefix: "employee");
 // Map OpenAPI and Scalar documentation (dev/staging only)
 app.MapApiDocumentation(servicePrefix: "employee");
 
-Log.ServiceStarted(logger);
+Maliev.EmployeeService.Api.Program.Log.ServiceStarted(logger);
 await app.RunAsync();
 
-/// <summary>
-/// Program class for Employee Service API
-/// </summary>
-public partial class Program
+namespace Maliev.EmployeeService.Api
 {
-    internal static partial class Log
+    /// <summary>
+    /// Program class for Employee Service API
+    /// </summary>
+    public partial class Program
     {
-        [LoggerMessage(Level = LogLevel.Information, Message = "EmployeeService started successfully")]
-        public static partial void ServiceStarted(ILogger logger);
+        internal static partial class Log
+        {
+            [LoggerMessage(Level = LogLevel.Information, Message = "EmployeeService started successfully")]
+            public static partial void ServiceStarted(ILogger logger);
 
-        [LoggerMessage(Level = LogLevel.Error, Message = "Database migration failed - application may not function correctly")]
-        public static partial void MigrationFailed(ILogger logger, Exception exception);
+            [LoggerMessage(Level = LogLevel.Error, Message = "Database migration failed - application may not function correctly")]
+            public static partial void MigrationFailed(ILogger logger, Exception exception);
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "Starting database seeding (Development mode with EnableSeeding=true)...")]
-        public static partial void SeedingStarted(ILogger logger);
+            [LoggerMessage(Level = LogLevel.Information, Message = "Starting database seeding (Development mode with EnableSeeding=true)...")]
+            public static partial void SeedingStarted(ILogger logger);
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding completed")]
-        public static partial void SeedingCompleted(ILogger logger);
+            [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding completed")]
+            public static partial void SeedingCompleted(ILogger logger);
 
-        [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred while seeding the database")]
-        public static partial void SeedingFailed(ILogger logger, Exception exception);
+            [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred while seeding the database")]
+            public static partial void SeedingFailed(ILogger logger, Exception exception);
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding disabled (set Database:EnableSeeding=true to enable)")]
-        public static partial void SeedingDisabled(ILogger logger);
+            [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding disabled (set Database:EnableSeeding=true to enable)")]
+            public static partial void SeedingDisabled(ILogger logger);
+        }
     }
 }

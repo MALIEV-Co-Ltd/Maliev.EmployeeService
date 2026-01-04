@@ -4,6 +4,7 @@ using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Maliev.Aspire.ServiceDefaults.Caching;
 
 namespace Maliev.EmployeeService.Infrastructure.Authentication;
 
@@ -76,7 +77,7 @@ public class CurrentUserService : ICurrentUserService
         if (employee != null)
         {
             // Cache for 24 hours (US3)
-            await _cacheService.SetAsync(cacheKey, new EmployeeIdCacheWrapper(employee.Id), absoluteExpiration: TimeSpan.FromHours(24), cancellationToken: cancellationToken);
+            await _cacheService.SetAsync(cacheKey, new EmployeeIdCacheWrapper(employee.Id), ttl: TimeSpan.FromHours(24), cancellationToken: cancellationToken);
             return employee.Id;
         }
 

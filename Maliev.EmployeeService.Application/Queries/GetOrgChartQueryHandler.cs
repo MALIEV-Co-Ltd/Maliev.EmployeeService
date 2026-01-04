@@ -5,6 +5,7 @@ using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Maliev.Aspire.ServiceDefaults.Caching;
 
 namespace Maliev.EmployeeService.Application.Queries;
 
@@ -96,7 +97,7 @@ public class GetOrgChartQueryHandler
                 await _cacheService.SetAsync(
                     cacheKey,
                     orgChart,
-                    absoluteExpiration: CacheExpiration,
+                    ttl: CacheExpiration,
                     cancellationToken: cancellationToken);
 
                 _logger.LogDebug("Cached org chart for manager {ManagerId} with depth {MaxDepth}",
