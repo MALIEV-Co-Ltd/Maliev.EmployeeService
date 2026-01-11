@@ -45,10 +45,10 @@ public class EmployeeTerminationSagaState : SagaStateMachineInstance
     /// <summary>
     /// Gets or sets the date and time when the saga was created.
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Gets or sets the date and time when the saga was last updated.
     /// </summary>
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? ModifiedDate { get; set; }
 }

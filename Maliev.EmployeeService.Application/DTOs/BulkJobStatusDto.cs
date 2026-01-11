@@ -59,7 +59,7 @@ public class BulkJobStatusDto
     /// <summary>
     /// User who initiated the job
     /// </summary>
-    public Guid InitiatedByUserId { get; set; }
+    public Guid InitiatedByPrincipalId { get; set; }
 
     /// <summary>
     /// Result data (e.g., download link for exports)

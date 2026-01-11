@@ -158,14 +158,24 @@ public class Employee : Entity
     public string DisplayName => PreferredName ?? LegalName?.FirstName ?? string.Empty;
 
     /// <summary>
+    /// Calculates the age of the employee in years as of the specified date.
+    /// </summary>
+    public int? GetAge(DateTime asOfDate) => DateOfBirth != default ? (int?)((asOfDate - DateOfBirth).TotalDays / 365.25) : null;
+
+    /// <summary>
+    /// Calculates the tenure of the employee in years as of the specified date.
+    /// </summary>
+    public int? GetTenureInYears(DateTime asOfDate) => StartDate != default ? (int?)((asOfDate - StartDate).TotalDays / 365.25) : null;
+
+    /// <summary>
     /// Gets the current age of the employee in years.
     /// </summary>
-    public int? Age => DateOfBirth != default ? (int?)((DateTime.Today - DateOfBirth).TotalDays / 365.25) : null;
+    public int? Age => GetAge(DateTime.Today);
 
     /// <summary>
     /// Gets the number of years the employee has been with the company.
     /// </summary>
-    public int? TenureInYears => StartDate != default ? (int?)((DateTime.Today - StartDate).TotalDays / 365.25) : null;
+    public int? TenureInYears => GetTenureInYears(DateTime.Today);
 
     /// <summary>
     /// Gets a value indicating whether the employee is currently active.

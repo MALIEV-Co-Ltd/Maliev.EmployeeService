@@ -143,7 +143,7 @@ public class BulkOperationsController : ControllerBase
             CsvContent = csvContent,
             SkipInvalidRows = skipInvalidRows,
             DryRun = dryRun,
-            InitiatedByUserId = _currentUserService.PrincipalId ?? Guid.Empty
+            InitiatedByPrincipalId = _currentUserService.PrincipalId ?? Guid.Empty
         };
 
         var jobId = await _importHandler.HandleAsync(command, cancellationToken);

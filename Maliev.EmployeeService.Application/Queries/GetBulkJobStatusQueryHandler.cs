@@ -81,7 +81,7 @@ public class GetBulkJobStatusQueryHandler
             Errors = errors,
             StartedAt = job.StartedAt,
             CompletedAt = job.CompletedAt,
-            InitiatedByUserId = job.InitiatedByUserId,
+            InitiatedByPrincipalId = job.InitiatedByPrincipalId,
             ResultData = job.ResultData
         };
     }

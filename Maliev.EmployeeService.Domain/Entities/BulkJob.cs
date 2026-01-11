@@ -61,7 +61,7 @@ public class BulkJob : Entity
     /// <summary>
     /// User who initiated the job
     /// </summary>
-    public required Guid InitiatedByUserId { get; set; }
+    public required Guid InitiatedByPrincipalId { get; set; }
 
     /// <summary>
     /// Result data (e.g., file path for export, summary for import)
