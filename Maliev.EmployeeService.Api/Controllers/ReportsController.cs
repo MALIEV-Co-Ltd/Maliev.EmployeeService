@@ -21,6 +21,7 @@ public class ReportsController : ControllerBase
     private readonly GetDiversityMetricsQueryHandler _diversityHandler;
     private readonly GetSpanOfControlReportQueryHandler _spanOfControlHandler;
     private readonly GetOrgChartQueryHandler _orgChartHandler;
+    private readonly SearchEmployeesQueryHandler _searchHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ReportsController"/> class
@@ -30,13 +31,27 @@ public class ReportsController : ControllerBase
         GetTurnoverAnalysisQueryHandler turnoverHandler,
         GetDiversityMetricsQueryHandler diversityHandler,
         GetSpanOfControlReportQueryHandler spanOfControlHandler,
-        GetOrgChartQueryHandler orgChartHandler)
+        GetOrgChartQueryHandler orgChartHandler,
+        SearchEmployeesQueryHandler searchHandler)
     {
         _headcountHandler = headcountHandler;
         _turnoverHandler = turnoverHandler;
         _diversityHandler = diversityHandler;
         _spanOfControlHandler = spanOfControlHandler;
         _orgChartHandler = orgChartHandler;
+        _searchHandler = searchHandler;
+    }
+
+    /// <summary>
+    /// Search employees with multi-criteria filtering
+    /// </summary>
+    [HttpGet("employees/search")]
+    [RequirePermission(EmployeePermissions.EmployeeSearch)]
+    [ProducesResponseType(typeof(EmployeeSearchResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SearchEmployees([FromQuery] SearchEmployeesQuery query, CancellationToken cancellationToken)
+    {
+        var result = await _searchHandler.HandleAsync(query, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
