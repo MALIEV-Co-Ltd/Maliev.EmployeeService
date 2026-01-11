@@ -1,44 +1,26 @@
 namespace Maliev.EmployeeService.Domain.Authorization;
 
-/// <summary>Represents a role registration request for the IAM service.</summary>
-public record RoleRegistration
-{
-    /// <summary>The unique identifier for the role (GCP format: roles.{service}.{role-name}).</summary>
-    public required string RoleId { get; init; }
-
-    /// <summary>The display name of the role.</summary>
-    public required string RoleName { get; init; }
-
-    /// <summary>A description of the role's purpose.</summary>
-    public required string Description { get; init; }
-
-    /// <summary>The list of permissions assigned to this role.</summary>
-    public required string[] Permissions { get; init; }
-}
-
 /// <summary>
 /// Defines predefined roles for the Employee Service.
-/// Roles follow the GCP format: roles.{service}.{role-name}
+/// Roles follow the GCP format: roles.employee.{role-name}
 /// Maps from old enum-based roles: SystemAdministrator, HRGeneralist, HRSpecialist, Manager, Employee
 /// </summary>
 public static class EmployeePredefinedRoles
 {
-    /// <summary>System Administrator: Full system access (was: SystemAdministrator).</summary>
-    public static readonly RoleRegistration SystemAdministrator = new()
-    {
-        RoleId = "roles.employee.system-administrator",
-        RoleName = "System Administrator",
-        Description = "Full system access to all employee operations",
-        Permissions = EmployeePermissions.All
-    };
+    public const string SystemAdministrator = "roles.employee.system-administrator";
+    public const string HRGeneralist = "roles.employee.hr-generalist";
+    public const string HRSpecialist = "roles.employee.hr-specialist";
+    public const string Manager = "roles.employee.manager";
+    public const string Employee = "roles.employee.employee";
 
-    /// <summary>HR Generalist: Broad HR operations access (was: HRGeneralist).</summary>
-    public static readonly RoleRegistration HRGeneralist = new()
+    /// <summary>
+    /// Collection of all predefined roles for the Employee Service.
+    /// </summary>
+    public static readonly IReadOnlyList<(string RoleId, string Description, string[] Permissions)> All = new List<(string, string, string[])>
     {
-        RoleId = "roles.employee.hr-generalist",
-        RoleName = "HR Generalist",
-        Description = "Broad HR operations access",
-        Permissions = new[]
+        (SystemAdministrator, "Full system access to all employee operations", EmployeePermissions.All),
+
+        (HRGeneralist, "Broad HR operations access", new[]
         {
             EmployeePermissions.ProfilesCreate,
             EmployeePermissions.ProfilesRead,
@@ -47,52 +29,25 @@ public static class EmployeePredefinedRoles
             EmployeePermissions.TeamsManage,
             EmployeePermissions.ReportsView,
             EmployeePermissions.ReportsGenerate
-        }
-    };
+        }),
 
-    /// <summary>HR Specialist: Specialized HR functions access (was: HRSpecialist).</summary>
-    public static readonly RoleRegistration HRSpecialist = new()
-    {
-        RoleId = "roles.employee.hr-specialist",
-        RoleName = "HR Specialist",
-        Description = "Specialized HR functions access",
-        Permissions = new[]
+        (HRSpecialist, "Specialized HR functions access", new[]
         {
             EmployeePermissions.ProfilesRead,
             EmployeePermissions.ProfilesUpdate,
             EmployeePermissions.ReportsView
-        }
-    };
+        }),
 
-    /// <summary>Manager: Access to direct reports' data (was: Manager).</summary>
-    public static readonly RoleRegistration Manager = new()
-    {
-        RoleId = "roles.employee.manager",
-        RoleName = "Manager",
-        Description = "Access to direct reports' data",
-        Permissions = new[]
+        (Manager, "Access to direct reports' data", new[]
         {
             EmployeePermissions.ProfilesRead,
             EmployeePermissions.ReportsView
-        }
-    };
+        }),
 
-    /// <summary>Employee: Access to own data (was: Employee).</summary>
-    public static readonly RoleRegistration Employee = new()
-    {
-        RoleId = "roles.employee.employee",
-        RoleName = "Employee",
-        Description = "Access to own employee data",
-        Permissions = new[]
+        (Employee, "Access to own employee data", new[]
         {
             EmployeePermissions.ProfilesRead,
-            EmployeePermissions.ProfilesUpdate  // own profile only
-        }
-    };
-
-    /// <summary>All predefined roles.</summary>
-    public static readonly RoleRegistration[] All = new[]
-    {
-        SystemAdministrator, HRGeneralist, HRSpecialist, Manager, Employee
+            EmployeePermissions.ProfilesUpdate
+        })
     };
 }

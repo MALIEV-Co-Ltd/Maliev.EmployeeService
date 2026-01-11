@@ -83,7 +83,7 @@ public class EmployeeDbContext : DbContext
             entity.HasKey(e => e.LogId);
             entity.HasIndex(e => e.Timestamp);
             entity.HasIndex(e => new { e.EntityType, e.EntityId });
-            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.PrincipalId);
 
             entity.Property(e => e.EntityType).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Action).HasMaxLength(50).IsRequired();
@@ -115,11 +115,8 @@ public class EmployeeDbContext : DbContext
 
             // NationalId is encrypted using value converter
             // Entity property remains plaintext, database stores encrypted value
-            // EF Core tracks plaintext value (avoiding randomized IV concurrency issues)
-            if (_encryptionService != null)
-            {
-                entity.HasEncryption(e => e.NationalId, _encryptionService, maxLength: 255);
-            }
+            ArgumentNullException.ThrowIfNull(_encryptionService);
+            entity.HasEncryption(e => e.NationalId, _encryptionService, maxLength: 255);
 
             // Configure value object: LegalName (Owned Entity - stored in same table)
             entity.OwnsOne(e => e.LegalName, ln =>
@@ -170,6 +167,12 @@ public class EmployeeDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // Configure EmploymentHistory entity
+        modelBuilder.Entity<EmploymentHistory>(entity =>
+        {
+            entity.Property(e => e.EventType).HasConversion<string>().HasMaxLength(50);
+        });
+
         // Configure EmergencyContact entity
         modelBuilder.Entity<EmergencyContact>(entity =>
         {
@@ -183,14 +186,38 @@ public class EmployeeDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(255);
         });
 
-        // Configure Department entity (User Story 2 - HR Employee Lifecycle)
+        // Configure Department entity (User Story 2)
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ParentDepartmentId);
+            entity.HasIndex(e => e.DepartmentHeadId);
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CostCenter).HasMaxLength(50);
+
+            // Configure self-referencing relationship for hierarchy
+            entity.HasOne(d => d.ParentDepartment)
+                .WithMany(d => d.SubDepartments)
+                .HasForeignKey(d => d.ParentDepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure relationship to Department Head (Employee)
+            entity.HasOne(d => d.DepartmentHead)
+                .WithMany()
+                .HasForeignKey(d => d.DepartmentHeadId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure BulkJob entity (User Story 12)
         modelBuilder.Entity<BulkJob>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.JobId).IsUnique();
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.JobType);
-            entity.HasIndex(e => e.InitiatedByUserId);
+            entity.HasIndex(e => e.InitiatedByPrincipalId);
             entity.HasIndex(e => new { e.Status, e.StartedAt });
             entity.HasIndex(e => e.CompletedAt);
 
@@ -231,35 +258,50 @@ public class EmployeeDbContext : DbContext
         // Configure naming convention for PostgreSQL (snake_case)
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
-            // Skip owned entity types (value objects) - they are configured inline with their owner
-            if (entity.IsOwned())
-                continue;
-
             // Convert table names to snake_case
-            entity.SetTableName(ToSnakeCase(entity.GetTableName() ?? entity.DisplayName()));
+            if (!entity.IsOwned())
+            {
+                entity.SetTableName(ToSnakeCase(entity.GetTableName() ?? entity.DisplayName()));
+            }
 
-            // Convert column names to snake_case
+            // Convert column names to snake_case (including owned properties)
             foreach (var property in entity.GetProperties())
             {
+                if (entity.IsOwned() && property.IsPrimaryKey())
+                {
+                    // For owned entities, the PK column should usually match the owner's PK column
+                    var ownership = entity.GetForeignKeys().FirstOrDefault(fk => fk.IsOwnership);
+                    if (ownership != null)
+                    {
+                        var ownerPk = ownership.PrincipalEntityType.FindPrimaryKey();
+                        if (ownerPk != null && ownerPk.Properties.Count == 1)
+                        {
+                            property.SetColumnName(ToSnakeCase(ownerPk.Properties[0].Name));
+                            continue;
+                        }
+                    }
+                }
                 property.SetColumnName(ToSnakeCase(property.Name));
             }
-
-            // Convert foreign key names to snake_case
-            foreach (var key in entity.GetKeys())
+            if (!entity.IsOwned())
             {
-                key.SetName(ToSnakeCase(key.GetName() ?? $"pk_{entity.GetTableName()}"));
-            }
+                // Convert foreign key names to snake_case
+                foreach (var key in entity.GetKeys())
+                {
+                    key.SetName(ToSnakeCase(key.GetName() ?? $"pk_{entity.GetTableName()}"));
+                }
 
-            foreach (var foreignKey in entity.GetForeignKeys())
-            {
-                foreignKey.SetConstraintName(ToSnakeCase(foreignKey.GetConstraintName() ??
-                    $"fk_{entity.GetTableName()}_{foreignKey.PrincipalEntityType.GetTableName()}"));
-            }
+                foreach (var foreignKey in entity.GetForeignKeys())
+                {
+                    foreignKey.SetConstraintName(ToSnakeCase(foreignKey.GetConstraintName() ??
+                        $"fk_{entity.GetTableName()}_{foreignKey.PrincipalEntityType.GetTableName()}"));
+                }
 
-            foreach (var index in entity.GetIndexes())
-            {
-                index.SetDatabaseName(ToSnakeCase(index.GetDatabaseName() ??
-                    $"ix_{entity.GetTableName()}_{string.Join("_", index.Properties.Select(p => p.Name))}"));
+                foreach (var index in entity.GetIndexes())
+                {
+                    index.SetDatabaseName(ToSnakeCase(index.GetDatabaseName() ??
+                        $"ix_{entity.GetTableName()}_{string.Join("_", index.Properties.Select(p => p.Name))}"));
+                }
             }
         }
     }

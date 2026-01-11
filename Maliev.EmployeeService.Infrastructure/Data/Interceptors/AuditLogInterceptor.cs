@@ -59,7 +59,7 @@ public class AuditLogInterceptor : SaveChangesInterceptor
             {
                 LogId = Guid.NewGuid(),
                 Timestamp = DateTime.UtcNow,
-                UserId = userId,
+                PrincipalId = userId,
                 EntityType = entry.Entity.GetType().Name,
                 EntityId = GetEntityId(entry),
                 Action = entry.State.ToString(),

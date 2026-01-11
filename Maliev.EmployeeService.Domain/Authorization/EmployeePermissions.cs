@@ -45,16 +45,27 @@ public static class EmployeePermissions
     public const string SystemAdmin = "employee.system.admin";
 
     /// <summary>
+    /// Collection of all defined employee permissions with descriptions.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> AllWithDescriptions = new Dictionary<string, string>
+    {
+        { ProfilesCreate, "Create employee profiles" },
+        { ProfilesRead, "Read employee profiles" },
+        { ProfilesUpdate, "Update employee profiles" },
+        { ProfilesDelete, "Delete employee profiles" },
+        { DepartmentsManage, "Manage departments" },
+        { TeamsRead, "Read team information" },
+        { TeamsManage, "Manage teams" },
+        { EmployeeSearch, "Search employees" },
+        { ReportsView, "View reports" },
+        { ReportsGenerate, "Generate reports" },
+        { AdminBackgroundJobs, "Manage background jobs" },
+        { AdminSystemConfig, "Manage system configuration" },
+        { SystemAdmin, "Full system administrative access" }
+    };
+
+    /// <summary>
     /// All permissions defined for the Employee Service.
     /// </summary>
-    public static readonly string[] All = new[]
-    {
-        ProfilesCreate, ProfilesRead, ProfilesUpdate, ProfilesDelete,
-        DepartmentsManage,
-        TeamsRead, TeamsManage,
-        EmployeeSearch,
-        ReportsView, ReportsGenerate,
-        AdminBackgroundJobs, AdminSystemConfig,
-        SystemAdmin
-    };
+    public static readonly string[] All = AllWithDescriptions.Keys.ToArray();
 }

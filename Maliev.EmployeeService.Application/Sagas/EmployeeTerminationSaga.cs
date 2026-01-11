@@ -30,7 +30,7 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
                 {
                     context.Saga.EmployeeId = context.Message.EmployeeId;
                     context.Saga.TerminationDate = context.Message.TerminationDate;
-                    context.Saga.CreatedAt = DateTime.UtcNow;
+                    context.Saga.CreatedDate = DateTime.UtcNow;
                 })
                 .Publish(context => new CloseLeaveBalanceCommand
                 {
@@ -45,7 +45,7 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
                 .Then(context =>
                 {
                     context.Saga.LeaveBalanceClosed = true;
-                    context.Saga.UpdatedAt = DateTime.UtcNow;
+                    context.Saga.ModifiedDate = DateTime.UtcNow;
                 })
                 .Publish(context => new ArchiveCompensationCommand
                 {
@@ -56,7 +56,7 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
                 .Then(context =>
                 {
                     context.Saga.CompensationArchived = true;
-                    context.Saga.UpdatedAt = DateTime.UtcNow;
+                    context.Saga.ModifiedDate = DateTime.UtcNow;
                 })
                 .Publish(context => new RevokeAccessCommand
                 {
@@ -67,7 +67,7 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
                 .Then(context =>
                 {
                     context.Saga.AccessRevoked = true;
-                    context.Saga.UpdatedAt = DateTime.UtcNow;
+                    context.Saga.ModifiedDate = DateTime.UtcNow;
                 })
                 .TransitionTo(Completed)
         );

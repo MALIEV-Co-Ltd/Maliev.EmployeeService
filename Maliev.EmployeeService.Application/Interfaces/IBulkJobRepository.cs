@@ -21,5 +21,5 @@ public interface IBulkJobRepository : IRepository<BulkJob>
     /// <summary>
     /// Get jobs initiated by a specific user
     /// </summary>
-    Task<List<BulkJob>> GetJobsByUserAsync(Guid userId, int limit = 50, CancellationToken cancellationToken = default);
+    Task<List<BulkJob>> GetJobsByUserAsync(Guid principalId, int limit = 50, CancellationToken cancellationToken = default);
 }

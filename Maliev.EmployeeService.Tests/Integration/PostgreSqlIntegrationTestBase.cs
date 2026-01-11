@@ -103,9 +103,8 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 
             await ClearDatabaseAsync();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"INITIALIZE ASYNC FAILED: {ex}");
             throw;
         }
     }

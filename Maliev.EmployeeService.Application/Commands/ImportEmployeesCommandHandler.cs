@@ -39,7 +39,7 @@ public class ImportEmployeesCommandHandler
         {
             JobType = "EmployeeImport",
             Status = BulkJobStatus.Processing,
-            InitiatedByUserId = command.InitiatedByUserId,
+            InitiatedByPrincipalId = command.InitiatedByPrincipalId,
             StartedAt = DateTime.UtcNow
         };
 
