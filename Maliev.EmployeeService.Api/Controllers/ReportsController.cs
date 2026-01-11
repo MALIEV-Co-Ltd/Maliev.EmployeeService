@@ -50,6 +50,11 @@ public class ReportsController : ControllerBase
     [ProducesResponseType(typeof(EmployeeSearchResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchEmployees([FromQuery] SearchEmployeesQuery query, CancellationToken cancellationToken)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var result = await _searchHandler.HandleAsync(query, cancellationToken);
         return Ok(result);
     }
