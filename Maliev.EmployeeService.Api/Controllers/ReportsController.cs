@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Maliev.EmployeeService.Application.Queries;
+using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
