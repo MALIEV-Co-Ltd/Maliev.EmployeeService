@@ -39,10 +39,10 @@ public class BulkJobRepository : Repository<BulkJob>, IBulkJobRepository
     /// <summary>
     /// Get jobs initiated by a specific user
     /// </summary>
-    public async Task<List<BulkJob>> GetJobsByUserAsync(Guid userId, int limit = 50, CancellationToken cancellationToken = default)
+    public async Task<List<BulkJob>> GetJobsByUserAsync(Guid principalId, int limit = 50, CancellationToken cancellationToken = default)
     {
         return await _context.Set<BulkJob>()
-            .Where(j => j.InitiatedByUserId == userId)
+            .Where(j => j.InitiatedByPrincipalId == principalId)
             .OrderByDescending(j => j.StartedAt)
             .Take(limit)
             .ToListAsync(cancellationToken);

@@ -38,9 +38,13 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("check_out_time");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnName("created_date");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone")
@@ -49,6 +53,14 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_date");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -97,6 +109,10 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("old_values");
 
+                    b.Property<Guid?>("PrincipalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("principal_id");
+
                     b.Property<string>("Purpose")
                         .HasColumnType("text")
                         .HasColumnName("purpose");
@@ -105,18 +121,14 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
                     b.HasKey("LogId")
                         .HasName("p_k_audit_logs");
 
+                    b.HasIndex("PrincipalId")
+                        .HasDatabaseName("i_x_audit_logs_principal_id");
+
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("i_x_audit_logs_timestamp");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("i_x_audit_logs_user_id");
 
                     b.HasIndex("EntityType", "EntityId")
                         .HasDatabaseName("i_x_audit_logs_entity_type_entity_id");
@@ -154,9 +166,9 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("failed_records");
 
-                    b.Property<Guid>("InitiatedByUserId")
+                    b.Property<Guid>("InitiatedByPrincipalId")
                         .HasColumnType("uuid")
-                        .HasColumnName("initiated_by_user_id");
+                        .HasColumnName("initiated_by_principal_id");
 
                     b.Property<Guid>("JobId")
                         .HasColumnType("uuid")
@@ -208,8 +220,8 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.HasIndex("CompletedAt")
                         .HasDatabaseName("i_x_bulk_jobs_completed_at");
 
-                    b.HasIndex("InitiatedByUserId")
-                        .HasDatabaseName("i_x_bulk_jobs_initiated_by_user_id");
+                    b.HasIndex("InitiatedByPrincipalId")
+                        .HasDatabaseName("i_x_bulk_jobs_initiated_by_principal_id");
 
                     b.HasIndex("JobId")
                         .IsUnique()
@@ -235,7 +247,8 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("CostCenter")
-                        .HasColumnType("text")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("cost_center");
 
                     b.Property<Guid?>("CreatedBy")
@@ -250,12 +263,9 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("department_head_id");
 
-                    b.Property<Guid?>("DepartmentHeadId1")
-                        .HasColumnType("uuid")
-                        .HasColumnName("department_head_id1");
-
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
                         .HasColumnName("description");
 
                     b.Property<int?>("HeadcountLimit")
@@ -276,7 +286,8 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.Property<Guid?>("ParentDepartmentId")
@@ -286,8 +297,8 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("p_k_departments");
 
-                    b.HasIndex("DepartmentHeadId1")
-                        .HasDatabaseName("i_x_departments_department_head_id1");
+                    b.HasIndex("DepartmentHeadId")
+                        .HasDatabaseName("i_x_departments_department_head_id");
 
                     b.HasIndex("ParentDepartmentId")
                         .HasDatabaseName("i_x_departments_parent_department_id");
@@ -581,7 +592,8 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
 
                     b.Property<string>("EventType")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("event_type");
 
                     b.Property<Guid?>("ModifiedBy")
@@ -673,14 +685,18 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("correlation_id");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnName("created_date");
 
                     b.Property<string>("CurrentStep")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("current_step");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_date");
 
                     b.Property<string>("Payload")
                         .HasColumnType("text")
@@ -695,10 +711,6 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("status");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
 
                     b.HasKey("CorrelationId")
                         .HasName("p_k_saga_states");
@@ -861,9 +873,9 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("compensation_archived");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnName("created_date");
 
                     b.Property<string>("CurrentState")
                         .IsRequired()
@@ -878,13 +890,13 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("leave_balance_closed");
 
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_date");
+
                     b.Property<DateTime>("TerminationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("termination_date");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
 
                     b.HasKey("CorrelationId")
                         .HasName("p_k_employee_termination_saga_states");
@@ -902,12 +914,14 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                 {
                     b.HasOne("Maliev.EmployeeService.Domain.Entities.Employee", "DepartmentHead")
                         .WithMany()
-                        .HasForeignKey("DepartmentHeadId1")
-                        .HasConstraintName("f_k_departments__employees_department_head_id1");
+                        .HasForeignKey("DepartmentHeadId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("f_k_departments__employees_department_head_id");
 
                     b.HasOne("Maliev.EmployeeService.Domain.Entities.Department", "ParentDepartment")
                         .WithMany("SubDepartments")
                         .HasForeignKey("ParentDepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("f_k_departments_departments_parent_department_id");
 
                     b.Navigation("DepartmentHead");
@@ -950,20 +964,24 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.OwnsOne("Maliev.EmployeeService.Domain.ValueObjects.ContactInformation", "ContactInformation", b1 =>
                         {
                             b1.Property<Guid>("EmployeeId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
 
                             b1.Property<string>("MobilePhone")
                                 .HasMaxLength(20)
-                                .HasColumnType("character varying(20)");
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("mobile_phone");
 
                             b1.Property<string>("PersonalEmail")
                                 .HasMaxLength(255)
-                                .HasColumnType("character varying(255)");
+                                .HasColumnType("character varying(255)")
+                                .HasColumnName("personal_email");
 
                             b1.Property<string>("WorkEmail")
                                 .IsRequired()
                                 .HasMaxLength(255)
-                                .HasColumnType("character varying(255)");
+                                .HasColumnType("character varying(255)")
+                                .HasColumnName("work_email");
 
                             b1.HasKey("EmployeeId");
 
@@ -976,21 +994,25 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                     b.OwnsOne("Maliev.EmployeeService.Domain.ValueObjects.LegalName", "LegalName", b1 =>
                         {
                             b1.Property<Guid>("EmployeeId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
 
                             b1.Property<string>("FirstName")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)");
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("first_name");
 
                             b1.Property<string>("LastName")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)");
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("last_name");
 
                             b1.Property<string>("MiddleName")
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)");
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("middle_name");
 
                             b1.HasKey("EmployeeId");
 

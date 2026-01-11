@@ -18,7 +18,7 @@ public class AuditLog
     /// <summary>
     /// Gets or sets the unique identifier of the user who made the change.
     /// </summary>
-    public Guid? UserId { get; set; }
+    public Guid? PrincipalId { get; set; }
 
     /// <summary>
     /// Gets or sets the type of entity that was changed (e.g., Employee, Department).

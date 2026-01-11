@@ -59,7 +59,7 @@ public class SagaRecoveryService : BackgroundService
         // Find sagas stuck in Processing state for more than the threshold
         // Using EmployeeTerminationSagaState which is the MassTransit state machine instance
         var stalledSagas = await context.Set<EmployeeTerminationSagaState>()
-            .Where(s => s.CurrentState == "Processing" && (s.UpdatedAt ?? s.CreatedAt) < staleDate)
+            .Where(s => s.CurrentState == "Processing" && (s.ModifiedDate ?? s.CreatedDate) < staleDate)
             .ToListAsync(cancellationToken);
 
         if (!stalledSagas.Any()) return;
@@ -90,7 +90,7 @@ public class SagaRecoveryService : BackgroundService
             }
 
             // Update timestamp to avoid immediate re-processing
-            saga.UpdatedAt = DateTime.UtcNow;
+            saga.ModifiedDate = DateTime.UtcNow;
             context.Update(saga);
         }
 

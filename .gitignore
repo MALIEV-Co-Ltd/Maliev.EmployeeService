@@ -1,30 +1,34 @@
-# .NET Core
-bin/
-obj/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-
-# Visual Studio
-.vs/
-*.userprefs
-
 # Build results
+[Bb]in/
+[Oo]bj/
 [Dd]ebug/
-[Dd]ebugPublic/
 [Rr]elease/
-[Rr]eleases/
 x64/
 x86/
+bld/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
 [Ll]og/
 [Ll]ogs/
+out/
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.sln.docstates
+*.sln.iml
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
 
 # NuGet Packages
 *.nupkg
@@ -37,126 +41,80 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
-# Test Results
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+secrets/
+appsettings.Local.json
+appsettings.Testing.json
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.AppleDouble
+.LSOverride
+NUL
+
+# Temporary & Logs
+*.log
+*.bak
+*.sql
+*.tmp
+*.temp
+build_errors.txt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.txt
+
+# Test Artifacts
+TestResults/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 *.trx
 *.coverage
 *.coveragexml
+coverage/
+*test-output.txt
+*_error.txt
 
-# ReSharper
-_ReSharper*/
-*.[Rr]e[Ss]harper
-*.DotSettings.user
-
-# JetBrains Rider
-.idea/
-*.sln.iml
-
-# Visual Studio Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# User-specific files
-*.rsuser
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-# Mono Auto Generated Files
-mono_crash.*
-
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-*.env
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Temporary files
-*.tmp
-*.temp
-*.swp
-*.swo
-*~
-
-# Publishing
-publish/
-PublishProfiles/
-*.pubxml
-*.publishsettings
-
-# Migration backups
-Migrations/backup/
-
-# Azure
-*.azurePubxml
-
+# Repository Specific
 # Don't ignore these directories (they are part of spec workflow)
 !.claude/
 !.gemini/
 !.specify/
 !.github/
 !specs/
-
-# Ignore local tool settings
 .claude/settings.local.json
 .gemini/settings.local.json
 .specify/settings.local.json
-
-# Temporary/debug files
-*.bak
-*.log
-*.sql
-build_errors.txt
-docker-compose.test.yml
-docker-compose.dev.yml
-
-# OpenAPI exports
-*-openapi.json
-*-openapi-*.json
-
-# Temporary tracking docs
 *MIGRATION*.md
 *SUMMARY*.md
 *AUDIT*.md
 *.Improvements.md
 
-# Test Outputs
-*test-output.txt
-*_error.txt
+# Publishing
+publish/
+PublishProfiles/
+*.pubxml
+*.publishsettings
+*.azurePubxml
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+Migrations/backup/
 
-# Extra logs
-*.txt
-# Test Outputs
-*test-output.txt
-*_error.txt
+# OpenAPI & Documentation
+*-openapi.json
+*-openapi-*.json
 
-
-# Windows NUL device file (accidentally created by redirects)
-NUL
+# Enforced Rules (User Request)
+appsettings.Development.json
+docker-compose*.yml
+docker-compose.override.yml

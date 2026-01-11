@@ -24,5 +24,5 @@ public class ImportEmployeesCommand
     /// <summary>
     /// User initiating the import
     /// </summary>
-    public required Guid InitiatedByUserId { get; set; }
+    public required Guid InitiatedByPrincipalId { get; set; }
 }

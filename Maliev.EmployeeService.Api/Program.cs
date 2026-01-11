@@ -9,6 +9,7 @@ using Maliev.EmployeeService.Infrastructure.Messaging;
 using Maliev.EmployeeService.Infrastructure.Security;
 using Maliev.EmployeeService.Infrastructure.IAM;
 using Maliev.EmployeeService.Infrastructure.Scripts;
+using Maliev.EmployeeService.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Maliev.Aspire.ServiceDefaults;
 
@@ -24,10 +25,11 @@ builder.AddStandardMiddleware(options =>
     options.EnableRequestLogging = true;
 });
 builder.AddServiceMeters("employees-meter"); // Register service meters for OpenTelemetry business metrics
-builder.AddIAMServiceClient(); // IAM service client for permission resolution and resource-scoped authorization
+builder.AddIAMServiceClient("employee"); // IAM service client for permission resolution and resource-scoped authorization
 
 builder.AddRedisDistributedCache(instanceName: "employee:"); // Redis with in-memory fallback
 builder.AddMassTransitWithRabbitMq(); // RabbitMQ message bus (non-blocking startup)
+builder.Services.AddIAMRegistration<EmployeeIAMRegistrationService>("employee"); // Register permissions/roles via RabbitMQ
 
 builder.AddPostgresDbContext<EmployeeDbContext>(
     connectionName: "EmployeeDbContext",
@@ -163,9 +165,6 @@ builder.Services.AddHostedService<Maliev.EmployeeService.Application.BackgroundS
 builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.BackgroundServices.SagaRecoveryService>();
 builder.Services.AddHostedService<Maliev.EmployeeService.Application.Services.BusinessMetricsService>();
 
-// IAM Registration Service
-builder.Services.AddIAMRegistration<Maliev.EmployeeService.Api.Services.EmployeeIAMRegistrationService>();
-
 // HTTP Clients for External Services
 builder.AddServiceClient<ICareerServiceClient, CareerServiceClient>("CareerService");
 builder.AddServiceClient<IUploadServiceClient, UploadServiceClient>("UploadService");
@@ -205,7 +204,10 @@ if (app.Environment.IsProduction())
 }
 
 app.UseResponseCompression();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors();
 app.UseRouting();
 app.UseRateLimiter();
