@@ -1,3 +1,4 @@
+#pragma warning disable CA1848 // For improved performance, use the LoggerMessage delegates
 using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Api.HealthChecks;
 using Maliev.EmployeeService.Application.Interfaces;
