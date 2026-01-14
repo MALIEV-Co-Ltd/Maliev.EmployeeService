@@ -1,4 +1,3 @@
-#pragma warning disable CA1848 // For improved performance, use the LoggerMessage delegates
 using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Api.HealthChecks;
 using Maliev.EmployeeService.Application.Interfaces;
@@ -21,7 +20,7 @@ var bootstrapLogger = loggerFactory.CreateLogger("Program");
 
 try
 {
-    bootstrapLogger.LogInformation("Starting Employee Service host");
+    Log.StartingHost(bootstrapLogger, "Employee Service");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -197,7 +196,7 @@ try
         return;
     }
 
-    var logger = app.Services.GetRequiredService<ILogger<Maliev.EmployeeService.Api.Program>>();
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
     // Run database migrations on startup
     await app.MigrateDatabaseAsync<EmployeeDbContext>();
@@ -235,12 +234,12 @@ try
     // Map OpenAPI and Scalar documentation (dev/staging only)
     app.MapApiDocumentation(servicePrefix: "employee");
 
-    logger.LogInformation("EmployeeService started successfully");
+    Log.ServiceStarted(logger, "Employee Service");
     await app.RunAsync();
 }
 catch (Exception ex)
 {
-    bootstrapLogger.LogCritical(ex, "Employee Service host terminated unexpectedly during startup");
+    Log.HostTerminated(bootstrapLogger, ex, "Employee Service");
     throw;
 }
 finally
@@ -248,32 +247,35 @@ finally
     loggerFactory.Dispose();
 }
 
-namespace Maliev.EmployeeService.Api
+/// <summary>
+/// Main program class for the application
+/// </summary>
+public partial class Program
 {
-    /// <summary>
-    /// Program class for Employee Service API
-    /// </summary>
-    public partial class Program
+    internal static partial class Log
     {
-        internal static partial class Log
-        {
-            [LoggerMessage(Level = LogLevel.Information, Message = "EmployeeService started successfully")]
-            public static partial void ServiceStarted(ILogger logger);
+        [LoggerMessage(Level = LogLevel.Information, Message = "Starting {ServiceName} host")]
+        public static partial void StartingHost(ILogger logger, string serviceName);
 
-            [LoggerMessage(Level = LogLevel.Error, Message = "Database migration failed - application may not function correctly")]
-            public static partial void MigrationFailed(ILogger logger, Exception exception);
+        [LoggerMessage(Level = LogLevel.Critical, Message = "{ServiceName} host terminated unexpectedly during startup")]
+        public static partial void HostTerminated(ILogger logger, Exception ex, string serviceName);
 
-            [LoggerMessage(Level = LogLevel.Information, Message = "Starting database seeding (Development mode with EnableSeeding=true)...")]
-            public static partial void SeedingStarted(ILogger logger);
+        [LoggerMessage(Level = LogLevel.Information, Message = "{ServiceName} started successfully")]
+        public static partial void ServiceStarted(ILogger logger, string serviceName);
 
-            [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding completed")]
-            public static partial void SeedingCompleted(ILogger logger);
+        [LoggerMessage(Level = LogLevel.Error, Message = "Database migration failed - application may not function correctly")]
+        public static partial void MigrationFailed(ILogger logger, Exception exception);
 
-            [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred while seeding the database")]
-            public static partial void SeedingFailed(ILogger logger, Exception exception);
+        [LoggerMessage(Level = LogLevel.Information, Message = "Starting database seeding (Development mode with EnableSeeding=true)...")]
+        public static partial void SeedingStarted(ILogger logger);
 
-            [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding disabled (set Database:EnableSeeding=true to enable)")]
-            public static partial void SeedingDisabled(ILogger logger);
-        }
+        [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding completed")]
+        public static partial void SeedingCompleted(ILogger logger);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "An error occurred while seeding the database")]
+        public static partial void SeedingFailed(ILogger logger, Exception exception);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Database seeding disabled (set Database:EnableSeeding=true to enable)")]
+        public static partial void SeedingDisabled(ILogger logger);
     }
 }

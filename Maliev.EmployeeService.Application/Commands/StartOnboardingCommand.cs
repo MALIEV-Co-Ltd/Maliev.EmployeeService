@@ -64,11 +64,13 @@ public class StartOnboardingCommandHandler
         var payload = new EmployeeCreatedEventPayload(
             EmployeeId: employee.Id,
             EmployeeNumber: employee.EmployeeNumber,
+            PrincipalId: employee.PrincipalId,
             StartDate: employee.StartDate,
             DepartmentId: employee.DepartmentId ?? Guid.Empty,
             PositionId: null,
             ManagerId: employee.ManagerId
         );
+
 
         var integrationEvent = new EmployeeCreatedEvent(
             MessageId: Guid.NewGuid(),
