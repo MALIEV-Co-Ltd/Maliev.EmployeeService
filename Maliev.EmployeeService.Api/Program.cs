@@ -12,221 +12,240 @@ using Maliev.EmployeeService.Infrastructure.Scripts;
 using Maliev.EmployeeService.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Maliev.Aspire.ServiceDefaults;
+using Microsoft.Extensions.Logging;
 
-var builder = WebApplication.CreateBuilder(args);
+// Initialize bootstrap logging
+using var loggerFactory = LoggerFactory.Create(logBuilder => logBuilder.AddConsole());
+var bootstrapLogger = loggerFactory.CreateLogger("Program");
 
-// --- Secrets & Configuration ---
-builder.AddGoogleSecretManagerVolume(); // Load secrets from /mnt/secrets if available
-
-// --- Infrastructure & Observability ---
-builder.AddServiceDefaults(); // OpenTelemetry, health checks, resilience
-builder.AddStandardMiddleware(options =>
+try
 {
-    options.EnableRequestLogging = true;
-});
-builder.AddServiceMeters("employees-meter"); // Register service meters for OpenTelemetry business metrics
-builder.AddIAMServiceClient("employee"); // IAM service client for permission resolution and resource-scoped authorization
+    bootstrapLogger.LogInformation("Starting Employee Service host");
 
-builder.AddRedisDistributedCache(instanceName: "employee:"); // Redis with in-memory fallback
-builder.AddMassTransitWithRabbitMq(); // RabbitMQ message bus (non-blocking startup)
-builder.Services.AddIAMRegistration<EmployeeIAMRegistrationService>("employee"); // Register permissions/roles via RabbitMQ
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.AddPostgresDbContext<EmployeeDbContext>(
-    connectionName: "EmployeeDbContext",
-    configureOptions: options =>
+    // --- Secrets & Configuration ---
+    builder.AddGoogleSecretManagerVolume(); // Load secrets from /mnt/secrets if available
+
+    // --- Infrastructure & Observability ---
+    builder.AddServiceDefaults(); // OpenTelemetry, health checks, resilience
+    builder.AddStandardMiddleware(options =>
     {
-        options.ConfigureWarnings(warnings =>
-            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandError));
+        options.EnableRequestLogging = true;
+    });
+    builder.AddServiceMeters("employees-meter"); // Register service meters for OpenTelemetry business metrics
+    builder.AddIAMServiceClient("employee"); // IAM service client for permission resolution and resource-scoped authorization
+
+    builder.AddRedisDistributedCache(instanceName: "employee:"); // Redis with in-memory fallback
+    builder.AddMassTransitWithRabbitMq(); // RabbitMQ message bus (non-blocking startup)
+    builder.Services.AddIAMRegistration<EmployeeIAMRegistrationService>("employee"); // Register permissions/roles via RabbitMQ
+
+    builder.AddPostgresDbContext<EmployeeDbContext>(
+        connectionName: "EmployeeDbContext",
+        configureOptions: options =>
+        {
+            options.ConfigureWarnings(warnings =>
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandError));
+        });
+
+    // --- API Configuration ---
+    builder.AddDefaultCors(); // CORS from CORS:AllowedOrigins config
+    builder.AddDefaultApiVersioning(); // API versioning with URL segment reader
+
+    // JWT Authentication (always enabled - test infrastructure configures appropriate keys)
+    builder.AddJwtAuthentication(); // JWT Bearer authentication with RSA public key
+
+    // Add OpenAPI (must be in Program.cs for XML comments to work via source generator)
+    if (!builder.Environment.IsProduction())
+    {
+        builder.AddStandardOpenApi(
+            title: "MALIEV Employee Service API",
+            description: "Core employee management service. Supports self-service profile updates, emergency contacts, department and team organization.");
+    }
+
+    // Core Services
+    builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<Maliev.EmployeeService.Api.Filters.InputSanitizationFilter>();
+    });
+    builder.Services.AddMemoryCache();
+    builder.Services.AddHttpContextAccessor();
+
+    // Rate Limiting
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
+            System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.User.Identity?.Name ?? context.Request.Headers.Host.ToString(),
+                factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 100,
+                    QueueLimit = 0,
+                    Window = TimeSpan.FromMinutes(1)
+                }));
     });
 
-// --- API Configuration ---
-builder.AddDefaultCors(); // CORS from CORS:AllowedOrigins config
-builder.AddDefaultApiVersioning(); // API versioning with URL segment reader
-
-// JWT Authentication (always enabled - test infrastructure configures appropriate keys)
-builder.AddJwtAuthentication(); // JWT Bearer authentication with RSA public key
-
-// Add OpenAPI (must be in Program.cs for XML comments to work via source generator)
-if (!builder.Environment.IsProduction())
-{
-    builder.AddStandardOpenApi(
-        title: "MALIEV Employee Service API",
-        description: "Core employee management service. Supports self-service profile updates, emergency contacts, department and team organization.");
-}
-
-// Core Services
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<Maliev.EmployeeService.Api.Filters.InputSanitizationFilter>();
-});
-builder.Services.AddMemoryCache();
-builder.Services.AddHttpContextAccessor();
-
-// Rate Limiting
-builder.Services.AddRateLimiter(options =>
-{
-    options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
-        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.User.Identity?.Name ?? context.Request.Headers.Host.ToString(),
-            factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
-            {
-                AutoReplenishment = true,
-                PermitLimit = 100,
-                QueueLimit = 0,
-                Window = TimeSpan.FromMinutes(1)
-            }));
-});
-
-// HSTS Configuration (production only)
-if (builder.Environment.IsProduction())
-{
-    builder.Services.AddHsts(options =>
+    // HSTS Configuration (production only)
+    if (builder.Environment.IsProduction())
     {
-        options.Preload = true;
-        options.IncludeSubDomains = true;
-        options.MaxAge = TimeSpan.FromDays(365);
+        builder.Services.AddHsts(options =>
+        {
+            options.Preload = true;
+            options.IncludeSubDomains = true;
+            options.MaxAge = TimeSpan.FromDays(365);
+        });
+    }
+
+    // Response Compression
+    builder.Services.AddResponseCompression(options =>
+    {
+        options.EnableForHttps = true;
+        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
     });
+
+    builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(options =>
+    {
+        options.Level = System.IO.Compression.CompressionLevel.Fastest;
+    });
+
+    builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
+    {
+        options.Level = System.IO.Compression.CompressionLevel.Fastest;
+    });
+
+    // Core application services
+    builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+    builder.Services.AddScoped<AuditLogInterceptor>();
+    builder.Services.AddScoped<DatabaseMetricsInterceptor>();
+    builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+    // Repository and Unit of Work
+    builder.Services.AddScoped(typeof(IRepository<>), typeof(Maliev.EmployeeService.Infrastructure.Repositories.Repository<>));
+    builder.Services.AddScoped<IUnitOfWork, Maliev.EmployeeService.Infrastructure.Data.UnitOfWork>();
+
+    // Specialized Repositories
+    builder.Services.AddScoped<IEmployeeRepository, Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository>();
+    builder.Services.AddScoped<IEmergencyContactRepository, Maliev.EmployeeService.Infrastructure.Repositories.EmergencyContactRepository>();
+    builder.Services.AddScoped<IDepartmentRepository, Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository>();
+    builder.Services.AddScoped<ITeamRepository, Maliev.EmployeeService.Infrastructure.Repositories.TeamRepository>();
+    builder.Services.AddScoped<IBulkJobRepository, Maliev.EmployeeService.Infrastructure.Repositories.BulkJobRepository>();
+
+    // Query and Command Handlers
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetEmployeeProfileQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmployeeProfileCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmergencyContactCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmergencyContactCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.DeleteEmergencyContactCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmployeeCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.TransferDepartmentCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateDepartmentCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateDepartmentCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetTeamQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetOrgChartQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetTeamDetailsQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetEmployeeTeamsQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateTeamCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.AddTeamMemberCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.StartOnboardingCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.StartOffboardingCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.SearchEmployeesQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetHeadcountReportQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetTurnoverAnalysisQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetDiversityMetricsQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetSpanOfControlReportQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.ExportEmployeesQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetBulkJobStatusQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.ImportEmployeesCommandHandler>();
+
+    // Migration Script (US1)
+    builder.Services.AddScoped<MigrateEmployeesToPrincipalsScript>();
+
+    // Integration Event Publisher
+    builder.Services.AddScoped<IntegrationEventPublisher>();
+    builder.Services.AddScoped<IEventPublisher, ResilientIntegrationEventPublisher>();
+
+    // Background Job Status Service
+    builder.Services.AddSingleton<IBackgroundJobStatusService, Maliev.EmployeeService.Infrastructure.Services.BackgroundJobStatusService>();
+
+    // Background Services
+    builder.Services.AddHostedService<Maliev.EmployeeService.Application.BackgroundServices.DataRetentionBackgroundService>();
+    builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.BackgroundServices.SagaRecoveryService>();
+    builder.Services.AddHostedService<Maliev.EmployeeService.Application.Services.BusinessMetricsService>();
+
+    // HTTP Clients for External Services
+    builder.AddServiceClient<ICareerServiceClient, CareerServiceClient>("CareerService");
+    builder.AddServiceClient<IUploadServiceClient, UploadServiceClient>("UploadService");
+    builder.AddServiceClient<IIAMClient, IAMClient>("IAM");
+
+    // Authorization
+    builder.Services.AddPermissionAuthorization();
+
+    // Custom authorization handler for resource-based access
+    builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Maliev.EmployeeService.Api.Security.ResourceAuthorizationHandler>();
+
+    var app = builder.Build();
+
+    // CLI Commands (US1)
+    if (args.Contains("--migrate-principals"))
+    {
+        using var scope = app.Services.CreateScope();
+        var script = scope.ServiceProvider.GetRequiredService<MigrateEmployeesToPrincipalsScript>();
+        await script.ExecuteAsync();
+        return;
+    }
+
+    var logger = app.Services.GetRequiredService<ILogger<Maliev.EmployeeService.Api.Program>>();
+
+    // Run database migrations on startup
+    await app.MigrateDatabaseAsync<EmployeeDbContext>();
+
+    // Force initialization of metrics
+    System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
+
+    // Middleware Pipeline
+    app.UseStandardMiddleware();
+
+    if (app.Environment.IsProduction())
+    {
+        app.UseHsts();
+    }
+
+    app.UseResponseCompression();
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
+    app.UseCors();
+    app.UseRouting();
+    app.UseRateLimiter();
+
+    // Authentication & Authorization
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    // Map endpoints after middleware
+    app.MapControllers();
+
+    // Map Aspire default endpoints (/health, /alive, /metrics)
+    app.MapDefaultEndpoints(servicePrefix: "employee");
+
+    // Map OpenAPI and Scalar documentation (dev/staging only)
+    app.MapApiDocumentation(servicePrefix: "employee");
+
+    logger.LogInformation("EmployeeService started successfully");
+    await app.RunAsync();
 }
-
-// Response Compression
-builder.Services.AddResponseCompression(options =>
+catch (Exception ex)
 {
-    options.EnableForHttps = true;
-    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
-    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
-});
-
-builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(options =>
-{
-    options.Level = System.IO.Compression.CompressionLevel.Fastest;
-});
-
-builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
-{
-    options.Level = System.IO.Compression.CompressionLevel.Fastest;
-});
-
-// Core application services
-builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-builder.Services.AddScoped<AuditLogInterceptor>();
-builder.Services.AddScoped<DatabaseMetricsInterceptor>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-// Repository and Unit of Work
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Maliev.EmployeeService.Infrastructure.Repositories.Repository<>));
-builder.Services.AddScoped<IUnitOfWork, Maliev.EmployeeService.Infrastructure.Data.UnitOfWork>();
-
-// Specialized Repositories
-builder.Services.AddScoped<IEmployeeRepository, Maliev.EmployeeService.Infrastructure.Repositories.EmployeeRepository>();
-builder.Services.AddScoped<IEmergencyContactRepository, Maliev.EmployeeService.Infrastructure.Repositories.EmergencyContactRepository>();
-builder.Services.AddScoped<IDepartmentRepository, Maliev.EmployeeService.Infrastructure.Repositories.DepartmentRepository>();
-builder.Services.AddScoped<ITeamRepository, Maliev.EmployeeService.Infrastructure.Repositories.TeamRepository>();
-builder.Services.AddScoped<IBulkJobRepository, Maliev.EmployeeService.Infrastructure.Repositories.BulkJobRepository>();
-
-// Query and Command Handlers
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetEmployeeProfileQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmployeeProfileCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmergencyContactCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmergencyContactCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.DeleteEmergencyContactCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmployeeCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.TransferDepartmentCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateDepartmentCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateDepartmentCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetTeamQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetOrgChartQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetTeamDetailsQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetEmployeeTeamsQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateTeamCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.AddTeamMemberCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.StartOnboardingCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.StartOffboardingCommandHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.SearchEmployeesQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetHeadcountReportQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetTurnoverAnalysisQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetDiversityMetricsQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetSpanOfControlReportQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.ExportEmployeesQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetBulkJobStatusQueryHandler>();
-builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.ImportEmployeesCommandHandler>();
-
-// Migration Script (US1)
-builder.Services.AddScoped<MigrateEmployeesToPrincipalsScript>();
-
-// Integration Event Publisher
-builder.Services.AddScoped<IntegrationEventPublisher>();
-builder.Services.AddScoped<IEventPublisher, ResilientIntegrationEventPublisher>();
-
-// Background Job Status Service
-builder.Services.AddSingleton<IBackgroundJobStatusService, Maliev.EmployeeService.Infrastructure.Services.BackgroundJobStatusService>();
-
-// Background Services
-builder.Services.AddHostedService<Maliev.EmployeeService.Application.BackgroundServices.DataRetentionBackgroundService>();
-builder.Services.AddHostedService<Maliev.EmployeeService.Infrastructure.BackgroundServices.SagaRecoveryService>();
-builder.Services.AddHostedService<Maliev.EmployeeService.Application.Services.BusinessMetricsService>();
-
-// HTTP Clients for External Services
-builder.AddServiceClient<ICareerServiceClient, CareerServiceClient>("CareerService");
-builder.AddServiceClient<IUploadServiceClient, UploadServiceClient>("UploadService");
-builder.AddServiceClient<IIAMClient, IAMClient>("IAM");
-
-// Authorization
-builder.Services.AddPermissionAuthorization();
-
-// Custom authorization handler for resource-based access
-builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Maliev.EmployeeService.Api.Security.ResourceAuthorizationHandler>();
-
-var app = builder.Build();
-
-// CLI Commands (US1)
-if (args.Contains("--migrate-principals"))
-{
-    using var scope = app.Services.CreateScope();
-    var script = scope.ServiceProvider.GetRequiredService<MigrateEmployeesToPrincipalsScript>();
-    await script.ExecuteAsync();
-    return;
+    bootstrapLogger.LogCritical(ex, "Employee Service host terminated unexpectedly during startup");
+    throw;
 }
-
-var logger = app.Services.GetRequiredService<ILogger<Maliev.EmployeeService.Api.Program>>();
-
-// Run database migrations on startup
-await app.MigrateDatabaseAsync<EmployeeDbContext>();
-
-// Force initialization of metrics
-System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
-
-// Middleware Pipeline
-app.UseStandardMiddleware();
-
-if (app.Environment.IsProduction())
+finally
 {
-    app.UseHsts();
+    loggerFactory.Dispose();
 }
-
-app.UseResponseCompression();
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-app.UseCors();
-app.UseRouting();
-app.UseRateLimiter();
-
-// Authentication & Authorization
-app.UseAuthentication();
-app.UseAuthorization();
-
-// Map endpoints after middleware
-app.MapControllers();
-
-// Map Aspire default endpoints (/health, /alive, /metrics)
-app.MapDefaultEndpoints(servicePrefix: "employee");
-
-// Map OpenAPI and Scalar documentation (dev/staging only)
-app.MapApiDocumentation(servicePrefix: "employee");
-
-Maliev.EmployeeService.Api.Program.Log.ServiceStarted(logger);
-await app.RunAsync();
 
 namespace Maliev.EmployeeService.Api
 {
