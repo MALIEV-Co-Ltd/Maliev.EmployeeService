@@ -51,10 +51,13 @@ public class DatabaseSeeder
                 .Take(15)
                 .ToListAsync();
 
-            if (employees.Count < 1)
+            if (employees.Count < 5)
             {
-                _logger.LogWarning("Not enough active employees found for team seeding (need at least 1, found {Count})", employees.Count);
-                return;
+                _logger.LogWarning("Not enough active employees found for team seeding (need at least 5, found {Count}). Some teams may have the same lead.", employees.Count);
+                if (employees.Count == 0)
+                {
+                    return;
+                }
             }
 
             var teams = new List<Team>

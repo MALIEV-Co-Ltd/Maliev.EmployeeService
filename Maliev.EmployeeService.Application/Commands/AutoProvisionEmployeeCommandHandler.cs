@@ -31,6 +31,7 @@ public class AutoProvisionEmployeeCommandHandler
         var existing = await _repository.GetByEmailAsync(request.Email, cancellationToken);
         if (existing != null)
         {
+            _logger.LogInformation("Employee {Email} already exists, returning existing details.", request.Email);
             return new AutoProvisionEmployeeDto
             {
                 Id = existing.Id,
@@ -46,7 +47,7 @@ public class AutoProvisionEmployeeCommandHandler
         {
             Id = Guid.NewGuid(),
             PrincipalId = Guid.NewGuid(), // Will be linked to IAM later
-            EmployeeNumber = $"EMP-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}", // Temporary number
+            EmployeeNumber = $"TEMP-{Guid.NewGuid():N}", // Temporary number, to be replaced by a proper sequence
             LegalName = new LegalName
             {
                 FirstName = request.FirstName,

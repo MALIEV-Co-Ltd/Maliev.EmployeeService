@@ -43,6 +43,9 @@ public class PasswordService : IPasswordService
             iterationCount: IterationCount,
             numBytesRequested: KeySize));
 
-        return hashed == originalHash;
+        return CryptographicOperations.FixedTimeEquals(
+            System.Text.Encoding.UTF8.GetBytes(hashed),
+            System.Text.Encoding.UTF8.GetBytes(originalHash)
+        );
     }
 }
