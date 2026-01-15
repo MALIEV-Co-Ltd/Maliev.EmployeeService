@@ -19,6 +19,12 @@ public interface IEmployeeRepository : IRepository<Employee>
     Task<Employee?> GetByPrincipalIdAsync(Guid principalId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get employee by work email address (case-insensitive).
+    /// Used by AuthService for Google SSO identity resolution.
+    /// </summary>
+    Task<Employee?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get employee with emergency contacts included
     /// </summary>
     Task<Employee?> GetWithEmergencyContactsAsync(Guid id, CancellationToken cancellationToken = default);

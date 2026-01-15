@@ -1,5 +1,9 @@
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Domain.Enums;
+using Maliev.EmployeeService.Domain.ValueObjects;
+using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Infrastructure.Data;
@@ -10,13 +14,19 @@ namespace Maliev.EmployeeService.Infrastructure.Data;
 public class DatabaseSeeder
 {
     private readonly EmployeeDbContext _context;
+    private readonly IPasswordService _passwordService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DatabaseSeeder> _logger;
 
     public DatabaseSeeder(
         EmployeeDbContext context,
+        IPasswordService passwordService,
+        IConfiguration configuration,
         ILogger<DatabaseSeeder> logger)
     {
         _context = context;
+        _passwordService = passwordService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -43,8 +53,11 @@ public class DatabaseSeeder
 
             if (employees.Count < 5)
             {
-                _logger.LogWarning("Not enough active employees found for team seeding (need at least 5, found {Count})", employees.Count);
-                return;
+                _logger.LogWarning("Not enough active employees found for team seeding (need at least 5, found {Count}). Some teams may have the same lead.", employees.Count);
+                if (employees.Count == 0)
+                {
+                    return;
+                }
             }
 
             var teams = new List<Team>
@@ -54,7 +67,7 @@ public class DatabaseSeeder
                     Name = "Engineering Team",
                     Description = "Core engineering and development team",
                     TeamType = "Engineering",
-                    TeamLeadId = employees[0].Id,
+                    TeamLeadId = employees[0 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -62,7 +75,7 @@ public class DatabaseSeeder
                     Name = "Product Team",
                     Description = "Product management and strategy team",
                     TeamType = "Product",
-                    TeamLeadId = employees[1].Id,
+                    TeamLeadId = employees[1 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -70,7 +83,7 @@ public class DatabaseSeeder
                     Name = "DevOps Team",
                     Description = "Infrastructure and deployment team",
                     TeamType = "Engineering",
-                    TeamLeadId = employees[2].Id,
+                    TeamLeadId = employees[2 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -78,7 +91,7 @@ public class DatabaseSeeder
                     Name = "QA Team",
                     Description = "Quality assurance and testing team",
                     TeamType = "QA",
-                    TeamLeadId = employees[3].Id,
+                    TeamLeadId = employees[3 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -86,7 +99,7 @@ public class DatabaseSeeder
                     Name = "Design Team",
                     Description = "UX/UI design team",
                     TeamType = "Design",
-                    TeamLeadId = employees[4].Id,
+                    TeamLeadId = employees[4 % employees.Count].Id,
                     IsActive = true
                 }
             };
@@ -166,10 +179,88 @@ public class DatabaseSeeder
     }
 
     /// <summary>
+    /// Seeds test user with password authentication for development testing.
+    /// Test credentials are loaded from user secrets or environment variables.
+    /// </summary>
+    public async Task SeedTestUserAsync()
+    {
+        // Read from configuration (user secrets in dev, environment variables in production)
+        var testEmail = _configuration["TestUser:Email"];
+        var testPassword = _configuration["TestUser:Password"];
+        var testPrincipalId = _configuration["TestUser:PrincipalId"];
+
+        if (string.IsNullOrEmpty(testEmail) || string.IsNullOrEmpty(testPassword) || string.IsNullOrEmpty(testPrincipalId))
+        {
+            _logger.LogWarning("Test user credentials not configured in secrets, skipping seed");
+            return;
+        }
+
+        try
+        {
+            if (await _context.Employees.AnyAsync(e => e.ContactInformation.WorkEmail == testEmail))
+            {
+                _logger.LogInformation("Test user {Email} already exists, skipping seed", testEmail);
+                return;
+            }
+
+            _logger.LogInformation("Seeding test user {Email}...", testEmail);
+
+            if (!Guid.TryParse(testPrincipalId, out var principalId))
+            {
+                _logger.LogWarning("Invalid TestUser:PrincipalId configured, skipping seed");
+                return;
+            }
+
+            var testEmployee = new Employee
+            {
+                Id = Guid.NewGuid(),
+                PrincipalId = principalId,
+                EmployeeNumber = "EMP-TEST-001",
+                LegalName = new LegalName
+                {
+                    FirstName = "Natthapol",
+                    LastName = "Vanasrivilai",
+                    MiddleName = null
+                },
+                PreferredName = "Natthapol",
+                DateOfBirth = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                Nationality = "Thai",
+                ContactInformation = new ContactInformation
+                {
+                    WorkEmail = testEmail,
+                    PersonalEmail = "natthapol@example.com",
+                    MobilePhone = "+66-81-234-5678"
+                },
+                EmploymentType = EmploymentType.FullTime,
+                EmploymentStatus = EmploymentStatus.Active,
+                JobTitle = "Software Engineer",
+                WorkLocation = "Bangkok Office",
+                StartDate = DateTime.UtcNow.AddYears(-2),
+                ProbationEndDate = DateTime.UtcNow.AddYears(-2).AddMonths(3),
+                PasswordHash = _passwordService.HashPassword(testPassword),
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow
+            };
+
+            await _context.Employees.AddAsync(testEmployee);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Successfully seeded test user {Email} with PrincipalId {PrincipalId}",
+                testEmail, principalId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding test user");
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Seed all development data.
     /// </summary>
     public async Task SeedAllAsync()
     {
+        await SeedTestUserAsync();
         await SeedTeamsAsync();
     }
 }

@@ -25,8 +25,3 @@ public record CredentialValidationResponse
     /// </summary>
     public string? Name { get; init; }
 }
-
-/// <summary>
-/// Request for credential validation
-/// </summary>
-public record ValidateCredentialsRequest(string Email, string Password);

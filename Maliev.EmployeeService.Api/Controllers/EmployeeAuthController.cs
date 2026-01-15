@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Maliev.EmployeeService.Api.Models;
 using Maliev.EmployeeService.Infrastructure.Data;
+using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,16 +18,19 @@ public class EmployeeAuthController : ControllerBase
 {
     private readonly EmployeeDbContext _context;
     private readonly ILogger<EmployeeAuthController> _logger;
+    private readonly IPasswordService _passwordService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EmployeeAuthController"/> class
     /// </summary>
     public EmployeeAuthController(
         EmployeeDbContext context,
-        ILogger<EmployeeAuthController> logger)
+        ILogger<EmployeeAuthController> logger,
+        IPasswordService passwordService)
     {
         _context = context;
         _logger = logger;
+        _passwordService = passwordService;
     }
 
     /// <summary>
@@ -39,11 +43,24 @@ public class EmployeeAuthController : ControllerBase
     public async Task<IActionResult> ValidateCredentials([FromBody] ValidateCredentialsRequest request)
     {
         var employee = await _context.Employees
-            .FirstOrDefaultAsync(e => e.ContactInformation.WorkEmail == request.Email);
+            .FirstOrDefaultAsync(e => e.ContactInformation.WorkEmail == request.Username);
 
         if (employee == null || employee.EmploymentStatus != Domain.Enums.EmploymentStatus.Active)
         {
-            _logger.LogWarning("Authentication failed for user {Email}: Employee not found or inactive", request.Email);
+            _logger.LogWarning("Authentication failed for user {Username}: Employee not found or inactive", request.Username);
+            return Ok(new CredentialValidationResponse { IsValid = false });
+        }
+
+        // Validate password (password-based authentication is mandatory for this endpoint)
+        if (string.IsNullOrEmpty(employee.PasswordHash))
+        {
+            _logger.LogWarning("Authentication failed for user {Username}: SSO-only account", request.Username);
+            return Ok(new CredentialValidationResponse { IsValid = false });
+        }
+
+        if (!_passwordService.VerifyPassword(request.Password, employee.PasswordHash))
+        {
+            _logger.LogWarning("Authentication failed for user {Username}: Invalid password", request.Username);
             return Ok(new CredentialValidationResponse { IsValid = false });
         }
 

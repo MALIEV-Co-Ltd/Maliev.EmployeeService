@@ -30,6 +30,13 @@ public class EmployeeRepository : Repository<Employee>, IEmployeeRepository
     }
 
     /// <inheritdoc/>
+    public async Task<Employee?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(e => EF.Functions.ILike(e.ContactInformation.WorkEmail, email), cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Employee?> GetWithEmergencyContactsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet
