@@ -51,9 +51,9 @@ public class DatabaseSeeder
                 .Take(15)
                 .ToListAsync();
 
-            if (employees.Count < 5)
+            if (employees.Count < 1)
             {
-                _logger.LogWarning("Not enough active employees found for team seeding (need at least 5, found {Count})", employees.Count);
+                _logger.LogWarning("Not enough active employees found for team seeding (need at least 1, found {Count})", employees.Count);
                 return;
             }
 
@@ -64,7 +64,7 @@ public class DatabaseSeeder
                     Name = "Engineering Team",
                     Description = "Core engineering and development team",
                     TeamType = "Engineering",
-                    TeamLeadId = employees[0].Id,
+                    TeamLeadId = employees[0 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -72,7 +72,7 @@ public class DatabaseSeeder
                     Name = "Product Team",
                     Description = "Product management and strategy team",
                     TeamType = "Product",
-                    TeamLeadId = employees[1].Id,
+                    TeamLeadId = employees[1 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -80,7 +80,7 @@ public class DatabaseSeeder
                     Name = "DevOps Team",
                     Description = "Infrastructure and deployment team",
                     TeamType = "Engineering",
-                    TeamLeadId = employees[2].Id,
+                    TeamLeadId = employees[2 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -88,7 +88,7 @@ public class DatabaseSeeder
                     Name = "QA Team",
                     Description = "Quality assurance and testing team",
                     TeamType = "QA",
-                    TeamLeadId = employees[3].Id,
+                    TeamLeadId = employees[3 % employees.Count].Id,
                     IsActive = true
                 },
                 new Team
@@ -96,7 +96,7 @@ public class DatabaseSeeder
                     Name = "Design Team",
                     Description = "UX/UI design team",
                     TeamType = "Design",
-                    TeamLeadId = employees[4].Id,
+                    TeamLeadId = employees[4 % employees.Count].Id,
                     IsActive = true
                 }
             };
