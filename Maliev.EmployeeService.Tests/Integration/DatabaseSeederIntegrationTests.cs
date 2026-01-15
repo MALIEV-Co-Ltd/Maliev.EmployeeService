@@ -2,7 +2,9 @@ using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Maliev.EmployeeService.Infrastructure.Data;
+using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -23,7 +25,9 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     {
         // Arrange - Create active employees first
         var loggerMock = new Mock<ILogger<DatabaseSeeder>>();
-        var seeder = new DatabaseSeeder(Context, loggerMock.Object);
+        var passwordServiceMock = new Mock<IPasswordService>();
+        var configurationMock = new Mock<IConfiguration>();
+        var seeder = new DatabaseSeeder(Context, passwordServiceMock.Object, configurationMock.Object, loggerMock.Object);
         var employees = new List<Employee>();
         for (int i = 1; i <= 15; i++)
         {
@@ -127,7 +131,9 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
         await Context.SaveChangesAsync();
 
         var loggerMock = new Mock<ILogger<DatabaseSeeder>>();
-        var seeder = new DatabaseSeeder(Context, loggerMock.Object);
+        var passwordServiceMock = new Mock<IPasswordService>();
+        var configurationMock = new Mock<IConfiguration>();
+        var seeder = new DatabaseSeeder(Context, passwordServiceMock.Object, configurationMock.Object, loggerMock.Object);
         // Act
         await seeder.SeedTeamsAsync();
 
@@ -141,7 +147,9 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     public async Task SeedTeamsAsync_WithNoEmployees_ShouldLogWarning()
     {
         var loggerMock = new Mock<ILogger<DatabaseSeeder>>();
-        var seeder = new DatabaseSeeder(Context, loggerMock.Object);
+        var passwordServiceMock = new Mock<IPasswordService>();
+        var configurationMock = new Mock<IConfiguration>();
+        var seeder = new DatabaseSeeder(Context, passwordServiceMock.Object, configurationMock.Object, loggerMock.Object);
         // Act
         await seeder.SeedTeamsAsync();
 
@@ -155,7 +163,9 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     {
         // Arrange
         var loggerMock = new Mock<ILogger<DatabaseSeeder>>();
-        var seeder = new DatabaseSeeder(Context, loggerMock.Object);
+        var passwordServiceMock = new Mock<IPasswordService>();
+        var configurationMock = new Mock<IConfiguration>();
+        var seeder = new DatabaseSeeder(Context, passwordServiceMock.Object, configurationMock.Object, loggerMock.Object);
         var employees = CreateTestEmployees(10);
         Context.Employees.AddRange(employees);
         await Context.SaveChangesAsync();
@@ -181,7 +191,9 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     {
         // Arrange
         var loggerMock = new Mock<ILogger<DatabaseSeeder>>();
-        var seeder = new DatabaseSeeder(Context, loggerMock.Object);
+        var passwordServiceMock = new Mock<IPasswordService>();
+        var configurationMock = new Mock<IConfiguration>();
+        var seeder = new DatabaseSeeder(Context, passwordServiceMock.Object, configurationMock.Object, loggerMock.Object);
         var employees = CreateTestEmployees(10);
         Context.Employees.AddRange(employees);
         await Context.SaveChangesAsync();

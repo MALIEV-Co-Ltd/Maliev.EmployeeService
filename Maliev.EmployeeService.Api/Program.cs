@@ -20,7 +20,7 @@ var bootstrapLogger = loggerFactory.CreateLogger("Program");
 
 try
 {
-    Log.StartingHost(bootstrapLogger, "Employee Service");
+    Program.Log.StartingHost(bootstrapLogger, "Employee Service");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -117,6 +117,7 @@ try
 
     // Core application services
     builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+    builder.Services.AddScoped<IPasswordService, PasswordService>();
     builder.Services.AddScoped<AuditLogInterceptor>();
     builder.Services.AddScoped<DatabaseMetricsInterceptor>();
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -134,11 +135,13 @@ try
 
     // Query and Command Handlers
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetEmployeeProfileQueryHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Queries.GetEmployeeByEmailQueryHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmployeeProfileCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmergencyContactCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmergencyContactCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.DeleteEmergencyContactCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmployeeCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.AutoProvisionEmployeeCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.TransferDepartmentCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateDepartmentCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateDepartmentCommandHandler>();
@@ -201,6 +204,29 @@ try
     // Run database migrations on startup
     await app.MigrateDatabaseAsync<EmployeeDbContext>();
 
+    // Seed test data (Development only)
+    if (app.Environment.IsDevelopment())
+    {
+        using var scope = app.Services.CreateScope();
+        var seeder = new Maliev.EmployeeService.Infrastructure.Data.DatabaseSeeder(
+            scope.ServiceProvider.GetRequiredService<EmployeeDbContext>(),
+            scope.ServiceProvider.GetRequiredService<IPasswordService>(),
+            scope.ServiceProvider.GetRequiredService<IConfiguration>(),
+            scope.ServiceProvider.GetRequiredService<ILogger<Maliev.EmployeeService.Infrastructure.Data.DatabaseSeeder>>()
+        );
+
+        try
+        {
+            Program.Log.SeedingStarted(logger);
+            await seeder.SeedAllAsync();
+            Program.Log.SeedingCompleted(logger);
+        }
+        catch (Exception ex)
+        {
+            Program.Log.SeedingFailed(logger, ex);
+        }
+    }
+
     // Force initialization of metrics
     System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
 
@@ -234,12 +260,12 @@ try
     // Map OpenAPI and Scalar documentation (dev/staging only)
     app.MapApiDocumentation(servicePrefix: "employee");
 
-    Log.ServiceStarted(logger, "Employee Service");
+    Program.Log.ServiceStarted(logger, "Employee Service");
     await app.RunAsync();
 }
 catch (Exception ex)
 {
-    Log.HostTerminated(bootstrapLogger, ex, "Employee Service");
+    Program.Log.HostTerminated(bootstrapLogger, ex, "Employee Service");
     throw;
 }
 finally

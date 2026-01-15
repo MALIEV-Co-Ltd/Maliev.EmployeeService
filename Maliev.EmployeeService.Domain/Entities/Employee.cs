@@ -16,6 +16,13 @@ public class Employee : Entity
     public Guid PrincipalId { get; set; }
 
     /// <summary>
+    /// Gets or sets the PBKDF2 hashed password for authentication.
+    /// Only set for employees who use password-based login.
+    /// NULL for Google Workspace SSO-only accounts.
+    /// </summary>
+    public string? PasswordHash { get; set; }
+
+    /// <summary>
     /// Gets or sets the company-assigned employee number.
     /// </summary>
     public string EmployeeNumber { get; set; } = string.Empty;

@@ -247,12 +247,36 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenString}");
         return client;
     }
+
+    /// <summary>
+    /// Creates an authenticated client for service-to-service calls.
+    /// Service accounts bypass user-level permission checks for internal endpoints.
+    /// </summary>
+    public HttpClient CreateServiceAccountClient(string serviceId = "authservice")
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, serviceId),
+            new(JwtRegisteredClaimNames.Sub, $"{serviceId}@serviceaccount.maliev.local"),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, "service-account"),
+            new("user_type", "service")
+        };
+
+        var credentials = new SigningCredentials(
+            new RsaSecurityKey(_testRsa),
+            SecurityAlgorithms.RsaSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: TestIssuer,
+            audience: TestAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials);
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokenString}");
+        return client;
+    }
 }
-
-
-
-
-
-
-
-

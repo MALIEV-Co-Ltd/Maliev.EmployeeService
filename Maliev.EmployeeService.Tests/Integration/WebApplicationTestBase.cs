@@ -98,7 +98,7 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
 
         return employee;
     }
-    protected void AuthenticateAs(Guid employeeId, string[]? roles = null, string[]? permissions = null)
+    protected void AuthenticateAs(Guid employeeId, string[]? roles = null, string[]? permissions = null, Dictionary<string, string>? additionalClaims = null)
     {
         // Lookup the employee's PrincipalId
         using var scope = _factory.Services.CreateScope();
@@ -108,24 +108,22 @@ public abstract class WebApplicationTestBase : IClassFixture<EmployeeServiceTest
         if (employee == null)
         {
             // If employee not found, authenticate with the ID directly (for role-only tests)
-            AuthenticateAsPrincipal(employeeId, roles, permissions);
+            AuthenticateAsPrincipal(employeeId, roles, permissions, additionalClaims);
             return;
         }
 
-        var additionalClaims = new Dictionary<string, string>
-        {
-            { "employee_id", employeeId.ToString() }
-        };
+        var claims = additionalClaims ?? new Dictionary<string, string>();
+        claims["employee_id"] = employeeId.ToString();
 
         // Use the employee's PrincipalId as the subject (for GetEmployeeIdAsync lookup)
-        var token = _factory.CreateTestJwtToken(employee.PrincipalId.ToString(), roles, permissions, additionalClaims);
+        var token = _factory.CreateTestJwtToken(employee.PrincipalId.ToString(), roles, permissions, claims);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    protected void AuthenticateAsPrincipal(Guid principalId, string[]? roles = null, string[]? permissions = null)
+    protected void AuthenticateAsPrincipal(Guid principalId, string[]? roles = null, string[]? permissions = null, Dictionary<string, string>? additionalClaims = null)
     {
-        var additionalClaims = new Dictionary<string, string>();
-        var token = _factory.CreateTestJwtToken(principalId.ToString(), roles, permissions, additionalClaims);
+        var claims = additionalClaims ?? new Dictionary<string, string>();
+        var token = _factory.CreateTestJwtToken(principalId.ToString(), roles, permissions, claims);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 }

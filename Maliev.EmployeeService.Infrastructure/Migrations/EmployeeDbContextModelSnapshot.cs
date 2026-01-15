@@ -452,6 +452,10 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("nationality");
 
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
+
                     b.Property<string>("PreferredName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
