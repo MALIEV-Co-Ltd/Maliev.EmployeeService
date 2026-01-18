@@ -113,9 +113,6 @@ public class BaseIntegrationTestFactory<TProgram, TDbContext> : WebApplicationFa
                     await connection.GetDatabase().PingAsync();
                 }
 
-                // Apply database migrations
-                await ApplyMigrationsAsync();
-
                 _containersStarted = true;
             }
         }
@@ -128,6 +125,11 @@ public class BaseIntegrationTestFactory<TProgram, TDbContext> : WebApplicationFa
         Environment.SetEnvironmentVariable($"ConnectionStrings__{DbConnectionStringName}", _postgresContainer!.GetConnectionString());
         Environment.SetEnvironmentVariable("ConnectionStrings__redis", _redisContainer!.GetConnectionString());
         Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", _rabbitmqContainer!.GetConnectionString());
+
+        // Apply database migrations and clean data for EVERY test instance
+        // This ensures isolation between test classes sharing the same container
+        await ApplyMigrationsAsync();
+        await CleanDatabaseAsync();
     }
 
     public new async Task DisposeAsync()
