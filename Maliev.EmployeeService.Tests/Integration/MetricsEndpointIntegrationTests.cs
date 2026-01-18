@@ -174,14 +174,14 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
     public async Task GetMetrics_ShouldNotExposePII()
     {
         // Arrange - Create test employee with PII data
-        var department = await CreateTestDepartmentAsync("Engineering");
-        var employeeNumber = "E001";
+        var department = await CreateTestDepartmentAsync("Engineering Metrics");
+        var employeeNumber = "EMP-METRICS-001";
         var employee = await CreateTestEmployeeAsync(
             department.Id,
             employeeNumber: employeeNumber,
-            firstName: "John",
-            lastName: "Doe",
-            email: "john.doe@example.com"
+            firstName: "MetricsJohn",
+            lastName: "MetricsDoe",
+            email: "metrics.john.doe@example.com"
         );
 
         // Wait a moment for metrics to update
@@ -196,9 +196,9 @@ public class MetricsEndpointIntegrationTests : WebApplicationTestBase
         var content = await response.Content.ReadAsStringAsync();
 
         // Verify no PII is exposed in metrics
-        Assert.DoesNotContain("John", content); // First name should not be exposed
-        Assert.DoesNotContain("Doe", content); // Last name should not be exposed
-        Assert.DoesNotContain("john.doe@example.com", content); // Email should not be exposed
+        Assert.DoesNotContain("MetricsJohn", content); // First name should not be exposed
+        Assert.DoesNotContain("MetricsDoe", content); // Last name should not be exposed
+        Assert.DoesNotContain("metrics.john.doe@example.com", content); // Email should not be exposed
         Assert.DoesNotContain(employee.Id.ToString(), content); // Employee ID should not be exposed
         Assert.DoesNotContain(employeeNumber, content); // Employee number should not be exposed
 
