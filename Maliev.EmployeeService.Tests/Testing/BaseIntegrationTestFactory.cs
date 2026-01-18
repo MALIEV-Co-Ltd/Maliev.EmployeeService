@@ -32,9 +32,9 @@ public class BaseIntegrationTestFactory<TProgram, TDbContext> : WebApplicationFa
     where TProgram : class
     where TDbContext : DbContext
 {
-    private static PostgreSqlContainer? _postgresContainer;
-    private static RedisContainer? _redisContainer;
-    private static RabbitMqContainer? _rabbitmqContainer;
+    protected static PostgreSqlContainer? _postgresContainer;
+    protected static RedisContainer? _redisContainer;
+    protected static RabbitMqContainer? _rabbitmqContainer;
     private static bool _containersStarted;
     private static readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -324,23 +324,13 @@ public class BaseIntegrationTestFactory<TProgram, TDbContext> : WebApplicationFa
     /// </summary>
     /// <param name="userId">User ID to include in token</param>
     /// <param name="roles">Roles to include in token claims</param>
+    /// <param name="permissions">Permissions to include in token claims</param>
     /// <param name="additionalClaims">Additional claims to include</param>
     /// <returns>JWT token string</returns>
     public string CreateTestJwtToken(
         string userId = "test-user",
         string[]? roles = null,
-        Dictionary<string, string>? additionalClaims = null)
-    {
-        return CreateTestJwtToken(userId, roles, null, additionalClaims);
-    }
-
-    /// <summary>
-    /// Creates a test JWT token with support for multi-value claims like permissions.
-    /// </summary>
-    public string CreateTestJwtToken(
-        string userId,
-        string[]? roles,
-        string[]? permissions,
+        string[]? permissions = null,
         Dictionary<string, string>? additionalClaims = null)
     {
         var claims = new List<Claim>

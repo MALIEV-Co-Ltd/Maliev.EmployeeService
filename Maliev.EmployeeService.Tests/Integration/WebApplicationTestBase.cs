@@ -190,6 +190,7 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
     public override EmployeeDbContext CreateDbContext()
     {
         var connectionString = Environment.GetEnvironmentVariable($"ConnectionStrings__{DbConnectionStringName}")
+            ?? (_postgresContainer != null ? _postgresContainer.GetConnectionString() : null)
             ?? throw new InvalidOperationException($"Connection string '{DbConnectionStringName}' not found");
 
         var optionsBuilder = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<EmployeeDbContext>();
@@ -199,6 +200,7 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
         var mockEncryptionService = new Mock<IEncryptionService>();
         mockEncryptionService.Setup(x => x.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
         mockEncryptionService.Setup(x => x.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
+        mockEncryptionService.Setup(x => x.IsEncrypted(It.IsAny<string>())).Returns(false);
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
