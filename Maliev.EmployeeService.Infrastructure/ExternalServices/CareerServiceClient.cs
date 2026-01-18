@@ -1,8 +1,8 @@
-using System.Net.Http.Json;
 using Maliev.EmployeeService.Application.DTOs.CareerService;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.ExternalServices;
 

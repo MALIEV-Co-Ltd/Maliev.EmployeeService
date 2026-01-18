@@ -1,10 +1,10 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Application.Queries;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 using Maliev.EmployeeService.Application.DTOs;
+using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 

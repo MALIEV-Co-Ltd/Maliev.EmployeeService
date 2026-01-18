@@ -51,14 +51,17 @@ public class DatabaseSeeder
                 .Take(15)
                 .ToListAsync();
 
+            if (employees.Count == 0)
+            {
+                _logger.LogWarning("No active employees found for team seeding. Skipping.");
+                return;
+            }
+
             if (employees.Count < 5)
             {
-                _logger.LogWarning("Not enough active employees found for team seeding (need at least 5, found {Count}). Some teams may have the same lead.", employees.Count);
-                if (employees.Count == 0)
-                {
-                    return;
-                }
+                _logger.LogInformation("Fewer than 5 active employees found ({Count}). Some teams may have the same lead.", employees.Count);
             }
+
 
             var teams = new List<Team>
             {
@@ -109,61 +112,41 @@ public class DatabaseSeeder
 
             var assignments = new List<EmployeeTeamAssignment>();
 
-            for (int i = 0; i < Math.Min(5, employees.Count); i++)
+            // Ensure every team has its lead as a member
+            for (int i = 0; i < teams.Count; i++)
             {
+                var team = teams[i];
                 assignments.Add(new EmployeeTeamAssignment
                 {
-                    EmployeeId = employees[i].Id,
-                    TeamId = teams[0].Id,
-                    IsPrimary = i < 3
+                    EmployeeId = team.TeamLeadId,
+                    TeamId = team.Id,
+                    IsPrimary = true
                 });
             }
 
-            for (int i = 1; i < Math.Min(4, employees.Count); i++)
+            // Add additional assignments for a more realistic matrix structure if we have enough employees
+            if (employees.Count >= 5)
             {
-                assignments.Add(new EmployeeTeamAssignment
+                // Add some cross-team memberships
+                // Team 0: Engineering (extra members)
+                for (int i = 1; i < Math.Min(5, employees.Count); i++)
                 {
-                    EmployeeId = employees[i].Id,
-                    TeamId = teams[1].Id,
-                    IsPrimary = i == 1
-                });
-            }
+                    assignments.Add(new EmployeeTeamAssignment { EmployeeId = employees[i].Id, TeamId = teams[0].Id, IsPrimary = false });
+                }
 
-            for (int i = 2; i < Math.Min(6, employees.Count); i++)
-            {
-                assignments.Add(new EmployeeTeamAssignment
+                // Team 1: Product (extra members)
+                if (employees.Count >= 3)
                 {
-                    EmployeeId = employees[i].Id,
-                    TeamId = teams[2].Id,
-                    IsPrimary = i < 4
-                });
-            }
+                    assignments.Add(new EmployeeTeamAssignment { EmployeeId = employees[2].Id, TeamId = teams[1].Id, IsPrimary = false });
+                }
 
-            if (employees.Count >= 7)
-            {
-                for (int i = 3; i < Math.Min(7, employees.Count); i++)
+                // Team 2: DevOps (extra members)
+                if (employees.Count >= 6)
                 {
-                    assignments.Add(new EmployeeTeamAssignment
-                    {
-                        EmployeeId = employees[i].Id,
-                        TeamId = teams[3].Id,
-                        IsPrimary = i < 5
-                    });
+                    assignments.Add(new EmployeeTeamAssignment { EmployeeId = employees[5].Id, TeamId = teams[2].Id, IsPrimary = false });
                 }
             }
 
-            if (employees.Count >= 8)
-            {
-                for (int i = 4; i < Math.Min(8, employees.Count); i++)
-                {
-                    assignments.Add(new EmployeeTeamAssignment
-                    {
-                        EmployeeId = employees[i].Id,
-                        TeamId = teams[4].Id,
-                        IsPrimary = i == 4
-                    });
-                }
-            }
 
             await _context.EmployeeTeamAssignments.AddRangeAsync(assignments);
             await _context.SaveChangesAsync();

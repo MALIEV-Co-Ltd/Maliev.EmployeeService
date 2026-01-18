@@ -1,11 +1,10 @@
-using System.Security.Claims;
-using System.Text.Json;
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.Authentication;
 

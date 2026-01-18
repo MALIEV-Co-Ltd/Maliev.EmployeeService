@@ -1,5 +1,5 @@
-using MassTransit;
 using Maliev.EmployeeService.Application.Interfaces;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Infrastructure.Messaging;

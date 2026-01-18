@@ -1,8 +1,8 @@
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Domain.Enums;
-using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Queries;

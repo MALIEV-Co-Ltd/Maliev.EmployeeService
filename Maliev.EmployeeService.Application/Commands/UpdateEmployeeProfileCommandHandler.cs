@@ -1,5 +1,5 @@
-using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.Aspire.ServiceDefaults.Caching;
+using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Commands;

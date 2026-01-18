@@ -1,18 +1,15 @@
-using Maliev.EmployeeService.Domain.Authorization;
-using Maliev.EmployeeService.Api.HealthChecks;
+using Maliev.Aspire.ServiceDefaults;
+using Maliev.EmployeeService.Api.Services;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Infrastructure.Authentication;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 using Maliev.EmployeeService.Infrastructure.ExternalServices;
-using Maliev.EmployeeService.Infrastructure.Messaging;
-using Maliev.EmployeeService.Infrastructure.Security;
 using Maliev.EmployeeService.Infrastructure.IAM;
+using Maliev.EmployeeService.Infrastructure.Messaging;
 using Maliev.EmployeeService.Infrastructure.Scripts;
-using Maliev.EmployeeService.Api.Services;
+using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
-using Maliev.Aspire.ServiceDefaults;
-using Microsoft.Extensions.Logging;
 
 // Initialize bootstrap logging
 using var loggerFactory = LoggerFactory.Create(logBuilder => logBuilder.AddConsole());

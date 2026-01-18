@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Domain.Sagas;
 using Maliev.EmployeeService.Infrastructure.Data.Extensions;
 using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
-using Maliev.EmployeeService.Domain.Sagas;
+using Microsoft.EntityFrameworkCore;
 
 namespace Maliev.EmployeeService.Infrastructure.Data;
 

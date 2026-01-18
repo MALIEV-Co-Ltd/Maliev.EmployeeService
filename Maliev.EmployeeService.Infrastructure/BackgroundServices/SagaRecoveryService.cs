@@ -1,10 +1,10 @@
 using Maliev.EmployeeService.Domain.Sagas;
+using Maliev.EmployeeService.Infrastructure.Data;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using Maliev.EmployeeService.Infrastructure.Data;
 
 namespace Maliev.EmployeeService.Infrastructure.BackgroundServices;
 

@@ -1,9 +1,8 @@
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Maliev.EmployeeService.Domain.Authorization;
-using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.Aspire.ServiceDefaults.Authorization;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Domain.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 

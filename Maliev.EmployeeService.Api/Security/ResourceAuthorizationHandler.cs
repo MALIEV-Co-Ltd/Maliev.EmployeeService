@@ -1,8 +1,6 @@
-using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Maliev.Aspire.ServiceDefaults.IAM;
-using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Api.Security;
 

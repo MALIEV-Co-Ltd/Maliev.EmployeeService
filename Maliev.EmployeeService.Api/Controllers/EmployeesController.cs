@@ -1,12 +1,12 @@
 using Asp.Versioning;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
+using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Maliev.Aspire.ServiceDefaults.Authorization;
-using Maliev.EmployeeService.Domain.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -83,6 +83,7 @@ public class EmployeesController : ControllerBase
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Employee lookup data.</returns>
     [HttpGet("by-email/{email}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(EmployeeLookupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

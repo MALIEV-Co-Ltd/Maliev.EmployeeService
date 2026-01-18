@@ -1,12 +1,11 @@
-using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.MessagingContracts.Generated;
-// using Maliev.EmployeeService.Domain.IntegrationEvents; // Removed
-using Maliev.EmployeeService.Domain.Entities;
-using Maliev.EmployeeService.Domain.Enums;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Authorization;
+// using Maliev.EmployeeService.Domain.IntegrationEvents; // Removed
+using Maliev.EmployeeService.Domain.Enums;
+using Maliev.MessagingContracts.Generated;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Commands;
 

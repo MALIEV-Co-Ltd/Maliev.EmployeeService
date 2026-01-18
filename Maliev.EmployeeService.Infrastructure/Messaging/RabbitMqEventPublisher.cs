@@ -1,9 +1,9 @@
-using System.Text;
-using System.Text.Json;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.Messaging;
 

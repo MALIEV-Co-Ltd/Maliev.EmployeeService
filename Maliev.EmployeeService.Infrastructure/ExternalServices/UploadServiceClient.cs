@@ -1,7 +1,7 @@
-using System.Net.Http.Headers;
-using System.Text.Json;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.ExternalServices;
 

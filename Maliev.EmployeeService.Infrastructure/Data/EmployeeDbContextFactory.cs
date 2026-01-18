@@ -1,10 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
-using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
+using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace Maliev.EmployeeService.Infrastructure.Data;
 

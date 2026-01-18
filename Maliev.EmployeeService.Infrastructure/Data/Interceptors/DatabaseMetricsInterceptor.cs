@@ -1,7 +1,6 @@
-using System.Data.Common;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Data.Common;
+using System.Diagnostics.Metrics;
 
 namespace Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 

@@ -1,8 +1,8 @@
-using Maliev.EmployeeService.Domain.Entities;
-using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Application.Events;
 using Maliev.Aspire.ServiceDefaults.IAM;
+using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.EmployeeService.Domain.Entities;
+using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;
@@ -73,17 +73,28 @@ public class CreateTeamCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Publish TeamCreatedEvent
-        var teamCreatedEvent = new TeamCreatedEvent
-        {
-            TeamId = team.Id,
-            TeamName = team.Name,
-            TeamType = team.TeamType,
-            Description = team.Description,
-            TeamLeadId = team.TeamLeadId,
-            IsActive = team.IsActive,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = _currentUserService.PrincipalId ?? Guid.Empty
-        };
+        var teamCreatedEvent = new TeamCreatedEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: nameof(TeamCreatedEvent),
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: new TeamCreatedEventPayload(
+                TeamId: team.Id,
+                TeamName: team.Name,
+                TeamType: team.TeamType,
+                Description: team.Description,
+                TeamLeadId: team.TeamLeadId,
+                IsActive: team.IsActive,
+                CreatedAt: DateTimeOffset.UtcNow,
+                CreatedBy: _currentUserService.PrincipalId ?? Guid.Empty
+            )
+        );
 
         await _eventPublisher.PublishAsync(teamCreatedEvent, cancellationToken);
 

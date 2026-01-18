@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Maliev.EmployeeService.Infrastructure.Security;
 

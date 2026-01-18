@@ -175,6 +175,13 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
                 requests.ToDictionary(r => r.PermissionId, r => true));
 
         services.AddSingleton<Maliev.Aspire.ServiceDefaults.IAM.IIamServiceClient>(mockIamClient.Object);
+
+        // Mock internal IIAMClient
+        var mockInternalIamClient = new Mock<IIAMClient>();
+        mockInternalIamClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        services.AddSingleton<IIAMClient>(mockInternalIamClient.Object);
+
     }
 
     /// <summary>

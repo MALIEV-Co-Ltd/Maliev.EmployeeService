@@ -1,10 +1,10 @@
 using Maliev.EmployeeService.Application.DTOs;
-using Maliev.MessagingContracts.Generated;
 // using Maliev.EmployeeService.Domain.IntegrationEvents; // Removed
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
+using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 

@@ -92,7 +92,50 @@ public class DatabaseSeederIntegrationTests : PostgreSqlIntegrationTestBase
     }
 
     [Fact]
+    public async Task SeedTeamsAsync_WithOneEmployee_ShouldCreateAllTeamsWithSameLead()
+    {
+        // Arrange
+        await ClearDatabaseAsync();
+        var loggerMock = new Mock<ILogger<DatabaseSeeder>>();
+        var passwordServiceMock = new Mock<IPasswordService>();
+        var configurationMock = new Mock<IConfiguration>();
+        var seeder = new DatabaseSeeder(Context, passwordServiceMock.Object, configurationMock.Object, loggerMock.Object);
+
+        var employee = new Employee
+        {
+            Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
+            EmployeeNumber = "EMP001",
+            LegalName = new LegalName { FirstName = "Single", LastName = "User" },
+            ContactInformation = new ContactInformation { WorkEmail = "single@company.com" },
+            EmploymentStatus = EmploymentStatus.Active,
+            EmploymentType = EmploymentType.FullTime,
+            StartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+        Context.Employees.Add(employee);
+        await Context.SaveChangesAsync();
+
+        // Act
+        await seeder.SeedTeamsAsync();
+
+        // Assert
+        var teams = await Context.Teams.ToListAsync();
+        var assignments = await Context.EmployeeTeamAssignments.ToListAsync();
+
+        Assert.Equal(5, teams.Count);
+        Assert.All(teams, t => Assert.Equal(employee.Id, t.TeamLeadId));
+
+        // Each team should have at least one member (the lead)
+        Assert.Equal(5, assignments.Count);
+        Assert.All(assignments, a => Assert.Equal(employee.Id, a.EmployeeId));
+        var teamIds = teams.Select(t => t.Id).ToList();
+        Assert.All(teamIds, tid => Assert.Contains(assignments, a => a.TeamId == tid));
+    }
+
+    [Fact]
     public async Task SeedTeamsAsync_WhenTeamsExist_ShouldSkipSeeding()
+
     {
         // Arrange - Create an employee first for team lead
         var teamLead = new Employee

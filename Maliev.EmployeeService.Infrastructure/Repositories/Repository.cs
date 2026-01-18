@@ -1,7 +1,7 @@
-using System.Linq.Expressions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Maliev.EmployeeService.Infrastructure.Repositories;
 

@@ -1,5 +1,3 @@
-using Maliev.EmployeeService.Application.DTOs;
-
 namespace Maliev.EmployeeService.Application.Commands;
 
 public record AutoProvisionEmployeeCommand(

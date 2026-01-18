@@ -1,5 +1,5 @@
-using Maliev.EmployeeService.Domain.IntegrationEvents;
 using Maliev.EmployeeService.Domain.Sagas;
+using Maliev.MessagingContracts.Generated;
 using MassTransit;
 
 namespace Maliev.EmployeeService.Application.Sagas;
@@ -14,10 +14,10 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
     {
         InstanceState(x => x.CurrentState);
 
-        Event(() => EmployeeTerminated, x => x.CorrelateById(context => context.Message.EmployeeId));
-        Event(() => LeaveBalanceClosed, x => x.CorrelateById(context => context.Message.EmployeeId));
-        Event(() => CompensationArchived, x => x.CorrelateById(context => context.Message.EmployeeId));
-        Event(() => AccessRevoked, x => x.CorrelateById(context => context.Message.EmployeeId));
+        Event(() => EmployeeTerminated, x => x.CorrelateById(context => context.Message.Payload.EmployeeId));
+        Event(() => LeaveBalanceClosed, x => x.CorrelateById(context => context.Message.Payload.EmployeeId));
+        Event(() => CompensationArchived, x => x.CorrelateById(context => context.Message.Payload.EmployeeId));
+        Event(() => AccessRevoked, x => x.CorrelateById(context => context.Message.Payload.EmployeeId));
 
         // Handle faults for compensating transactions
         Event(() => LeaveClosureFaulted, x => x.CorrelateById(context => context.Message.Message.EmployeeId));
@@ -28,8 +28,8 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
             When(EmployeeTerminated)
                 .Then(context =>
                 {
-                    context.Saga.EmployeeId = context.Message.EmployeeId;
-                    context.Saga.TerminationDate = context.Message.TerminationDate;
+                    context.Saga.EmployeeId = context.Message.Payload.EmployeeId;
+                    context.Saga.TerminationDate = context.Message.Payload.TerminationDate.DateTime;
                     context.Saga.CreatedDate = DateTime.UtcNow;
                 })
                 .Publish(context => new CloseLeaveBalanceCommand
@@ -100,10 +100,10 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
         );
     }
 
-    public Event<EmployeeTerminatedIntegrationEvent> EmployeeTerminated { get; private set; } = null!;
-    public Event<LeaveBalanceClosedEvent> LeaveBalanceClosed { get; private set; } = null!;
-    public Event<CompensationArchivedEvent> CompensationArchived { get; private set; } = null!;
-    public Event<AccessRevokedEvent> AccessRevoked { get; private set; } = null!;
+    public Event<EmployeeTerminatedEvent> EmployeeTerminated { get; private set; } = null!;
+    public Event<Maliev.MessagingContracts.Generated.LeaveBalanceClosedEvent> LeaveBalanceClosed { get; private set; } = null!;
+    public Event<Maliev.MessagingContracts.Generated.CompensationArchivedEvent> CompensationArchived { get; private set; } = null!;
+    public Event<Maliev.MessagingContracts.Generated.AccessRevokedEvent> AccessRevoked { get; private set; } = null!;
 
     // Fault events
     public Event<Fault<CloseLeaveBalanceCommand>> LeaveClosureFaulted { get; private set; } = null!;
@@ -115,7 +115,7 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
     public State Faulted { get; private set; } = null!;
 }
 
-// Internal command/event definitions for the Saga orchestration
+// Internal command definitions for the Saga orchestration (compensation commands)
 public class CloseLeaveBalanceCommand { public Guid EmployeeId { get; set; } public DateTime TerminationDate { get; set; } }
 public class ArchiveCompensationCommand { public Guid EmployeeId { get; set; } }
 public class RevokeAccessCommand { public Guid EmployeeId { get; set; } }
@@ -123,7 +123,3 @@ public class RevokeAccessCommand { public Guid EmployeeId { get; set; } }
 public class UndoCloseLeaveBalanceCommand { public Guid EmployeeId { get; set; } }
 public class UndoArchiveCompensationCommand { public Guid EmployeeId { get; set; } }
 public class UndoRevokeAccessCommand { public Guid EmployeeId { get; set; } }
-
-public class LeaveBalanceClosedEvent { public Guid EmployeeId { get; set; } }
-public class CompensationArchivedEvent { public Guid EmployeeId { get; set; } }
-public class AccessRevokedEvent { public Guid EmployeeId { get; set; } }

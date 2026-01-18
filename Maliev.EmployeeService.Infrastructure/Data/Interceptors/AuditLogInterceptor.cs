@@ -1,10 +1,10 @@
-using System.Text.Json;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Text.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 

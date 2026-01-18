@@ -1,13 +1,13 @@
-using System.Text;
-using System.Text.Json;
+using Maliev.EmployeeService.Application.Commands;
+using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Maliev.EmployeeService.Application.Events;
-using Maliev.EmployeeService.Application.Commands;
+using System.Text;
+using System.Text.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.Messaging;
 
@@ -192,7 +192,7 @@ public class CandidateAcceptedEventConsumer : BackgroundService
 
             _logger.LogInformation(
                 "Successfully processed CandidateAccepted event for {ApplicantName}",
-                candidateEvent.ApplicantName);
+                candidateEvent.Payload.ApplicantName);
         }
         catch (Exception ex)
         {
@@ -233,27 +233,28 @@ public class CandidateAcceptedEventConsumer : BackgroundService
     private async Task HandleCandidateAcceptedAsync(CandidateAcceptedEvent candidateEvent, CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
+        var payload = candidateEvent.Payload;
 
         // Generate employee number (unique based on timestamp and guid)
         var employeeNumber = $"EMP{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}";
 
-        // Create employee DTO from candidate event
+        // Create employee DTO from candidate event payload
         var createEmployeeDto = new Maliev.EmployeeService.Application.DTOs.CreateEmployeeDto
         {
             EmployeeNumber = employeeNumber,
-            FirstName = GetFirstName(candidateEvent.ApplicantName),
-            MiddleName = GetMiddleName(candidateEvent.ApplicantName),
-            LastName = GetLastName(candidateEvent.ApplicantName),
-            WorkEmail = candidateEvent.ApplicantEmail,
-            PersonalEmail = candidateEvent.ApplicantEmail,
-            MobilePhone = candidateEvent.ApplicantPhone,
+            FirstName = GetFirstName(payload.ApplicantName),
+            MiddleName = GetMiddleName(payload.ApplicantName),
+            LastName = GetLastName(payload.ApplicantName),
+            WorkEmail = payload.ApplicantEmail,
+            PersonalEmail = payload.ApplicantEmail,
+            MobilePhone = payload.ApplicantPhone,
             DateOfBirth = DateTime.UtcNow.AddYears(-25), // Default age, should be provided by Career Service
-            StartDate = candidateEvent.StartDate,
+            StartDate = payload.StartDate.DateTime,
             EmploymentType = Domain.Enums.EmploymentType.FullTime,
-            DepartmentId = candidateEvent.DepartmentId,
-            ManagerId = candidateEvent.ManagerId,
-            WorkLocationId = candidateEvent.WorkLocationId,
-            JobApplicationId = candidateEvent.CandidateId
+            DepartmentId = payload.DepartmentId,
+            ManagerId = payload.ManagerId,
+            WorkLocationId = payload.WorkLocationId,
+            JobApplicationId = payload.CandidateId
         };
 
         var createEmployeeCommand = new CreateEmployeeCommand(createEmployeeDto);
@@ -265,7 +266,7 @@ public class CandidateAcceptedEventConsumer : BackgroundService
         {
             _logger.LogError(
                 "Failed to create employee from CandidateAccepted event. Candidate: {CandidateId}, Error: {Error}",
-                candidateEvent.CandidateId,
+                payload.CandidateId,
                 result.ErrorMessage);
 
             throw new InvalidOperationException(
@@ -275,7 +276,7 @@ public class CandidateAcceptedEventConsumer : BackgroundService
         _logger.LogInformation(
             "Employee created from CandidateAccepted event. EmployeeId: {EmployeeId}, CandidateId: {CandidateId}",
             result.EmployeeId,
-            candidateEvent.CandidateId);
+            payload.CandidateId);
 
         // TODO: Initiate onboarding workflow (will be implemented in User Story 10)
         // var startOnboardingCommand = new StartOnboardingCommand { EmployeeId = result.EmployeeId.Value };
