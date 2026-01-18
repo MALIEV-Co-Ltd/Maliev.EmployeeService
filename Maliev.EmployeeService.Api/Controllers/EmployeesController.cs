@@ -83,7 +83,6 @@ public class EmployeesController : ControllerBase
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Employee lookup data.</returns>
     [HttpGet("by-email/{email}")]
-    [AllowAnonymous]
     [ProducesResponseType(typeof(EmployeeLookupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
