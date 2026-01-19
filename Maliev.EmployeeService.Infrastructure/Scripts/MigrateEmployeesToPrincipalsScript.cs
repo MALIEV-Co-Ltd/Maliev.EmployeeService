@@ -1,9 +1,9 @@
-using System.Diagnostics.Metrics;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.Metrics;
 
 namespace Maliev.EmployeeService.Infrastructure.Scripts;
 

@@ -1,7 +1,7 @@
-using System.Linq.Expressions;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Linq.Expressions;
 
 namespace Maliev.EmployeeService.Infrastructure.Data.Extensions;
 

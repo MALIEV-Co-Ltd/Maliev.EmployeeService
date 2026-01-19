@@ -1,13 +1,13 @@
 using Asp.Versioning;
-using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
-using Maliev.EmployeeService.Application.Events;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
+using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.MessagingContracts.Generated;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Maliev.Aspire.ServiceDefaults.Authorization;
 
 namespace Maliev.EmployeeService.Api.Controllers;
 
@@ -327,16 +327,27 @@ public class TeamsController : ControllerBase
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Publish TeamMemberRemovedEvent
-        var teamMemberRemovedEvent = new TeamMemberRemovedEvent
-        {
-            TeamId = team.Id,
-            TeamName = team.Name,
-            EmployeeId = employee.Id,
-            EmployeeNumber = employee.EmployeeNumber,
-            EmployeeName = employee.FullName,
-            RemovedAt = DateTime.UtcNow,
-            RemovedBy = _currentUserService.PrincipalId ?? Guid.Empty
-        };
+        var teamMemberRemovedEvent = new TeamMemberRemovedEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: nameof(TeamMemberRemovedEvent),
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: new TeamMemberRemovedEventPayload(
+                TeamId: team.Id,
+                TeamName: team.Name,
+                EmployeeId: employee.Id,
+                EmployeeNumber: employee.EmployeeNumber,
+                EmployeeName: employee.FullName,
+                RemovedAt: DateTimeOffset.UtcNow,
+                RemovedBy: _currentUserService.PrincipalId ?? Guid.Empty
+            )
+        );
 
         await _eventPublisher.PublishAsync(teamMemberRemovedEvent, cancellationToken);
 
@@ -408,14 +419,28 @@ public class TeamsController : ControllerBase
         // Publish TeamUpdatedEvent if there were changes
         if (changes.Any())
         {
-            var teamUpdatedEvent = new TeamUpdatedEvent
-            {
-                TeamId = team.Id,
-                TeamName = team.Name,
-                Changes = changes,
-                UpdatedBy = _currentUserService.PrincipalId ?? Guid.Empty,
-                UpdatedAt = DateTime.UtcNow
-            };
+            var teamUpdatedEvent = new TeamUpdatedEvent(
+                MessageId: Guid.NewGuid(),
+                MessageName: nameof(TeamUpdatedEvent),
+                MessageType: MessageType.Event,
+                MessageVersion: "1.0.0",
+                PublishedBy: "EmployeeService",
+                ConsumedBy: Array.Empty<string>(),
+                CorrelationId: Guid.NewGuid(),
+                CausationId: null,
+                OccurredAtUtc: DateTimeOffset.UtcNow,
+                IsPublic: false,
+                Payload: new TeamUpdatedEventPayload(
+                    TeamId: team.Id,
+                    TeamName: team.Name,
+                    TeamType: team.TeamType,
+                    Description: team.Description,
+                    TeamLeadId: team.TeamLeadId,
+                    IsActive: team.IsActive,
+                    UpdatedAt: DateTimeOffset.UtcNow,
+                    UpdatedBy: _currentUserService.PrincipalId ?? Guid.Empty
+                )
+            );
 
             await _eventPublisher.PublishAsync(teamUpdatedEvent, cancellationToken);
         }
@@ -454,23 +479,28 @@ public class TeamsController : ControllerBase
         // Publish TeamUpdatedEvent if team was active
         if (wasActive)
         {
-            var changes = new Dictionary<string, object?>
-            {
-                ["IsActive"] = new { Old = true, New = false }
-            };
-
-            var teamUpdatedEvent = new TeamUpdatedEvent
-            {
-                TeamId = team.Id,
-                TeamName = team.Name,
-                TeamType = team.TeamType,
-                Description = team.Description,
-                TeamLeadId = team.TeamLeadId,
-                IsActive = team.IsActive,
-                UpdatedAt = DateTime.UtcNow,
-                UpdatedBy = _currentUserService.PrincipalId ?? Guid.Empty,
-                Changes = changes
-            };
+            var teamUpdatedEvent = new TeamUpdatedEvent(
+                MessageId: Guid.NewGuid(),
+                MessageName: nameof(TeamUpdatedEvent),
+                MessageType: MessageType.Event,
+                MessageVersion: "1.0.0",
+                PublishedBy: "EmployeeService",
+                ConsumedBy: Array.Empty<string>(),
+                CorrelationId: Guid.NewGuid(),
+                CausationId: null,
+                OccurredAtUtc: DateTimeOffset.UtcNow,
+                IsPublic: false,
+                Payload: new TeamUpdatedEventPayload(
+                    TeamId: team.Id,
+                    TeamName: team.Name,
+                    TeamType: team.TeamType,
+                    Description: team.Description,
+                    TeamLeadId: team.TeamLeadId,
+                    IsActive: team.IsActive,
+                    UpdatedAt: DateTimeOffset.UtcNow,
+                    UpdatedBy: _currentUserService.PrincipalId ?? Guid.Empty
+                )
+            );
 
             await _eventPublisher.PublishAsync(teamUpdatedEvent, cancellationToken);
         }

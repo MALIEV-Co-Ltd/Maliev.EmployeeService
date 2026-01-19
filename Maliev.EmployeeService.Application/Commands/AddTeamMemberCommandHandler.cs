@@ -1,6 +1,6 @@
-using Maliev.EmployeeService.Application.Events;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
+using Maliev.MessagingContracts.Generated;
 
 namespace Maliev.EmployeeService.Application.Commands;
 
@@ -73,17 +73,28 @@ public class AddTeamMemberCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Publish TeamMemberAddedEvent
-        var teamMemberAddedEvent = new TeamMemberAddedEvent
-        {
-            TeamId = team.Id,
-            TeamName = team.Name,
-            EmployeeId = employee.Id,
-            EmployeeNumber = employee.EmployeeNumber,
-            EmployeeName = employee.FullName,
-            IsPrimary = command.IsPrimary,
-            AddedAt = DateTime.UtcNow,
-            AddedBy = _currentUserService.PrincipalId ?? Guid.Empty
-        };
+        var teamMemberAddedEvent = new TeamMemberAddedEvent(
+            MessageId: Guid.NewGuid(),
+            MessageName: nameof(TeamMemberAddedEvent),
+            MessageType: MessageType.Event,
+            MessageVersion: "1.0.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: Array.Empty<string>(),
+            CorrelationId: Guid.NewGuid(),
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: new TeamMemberAddedEventPayload(
+                TeamId: team.Id,
+                TeamName: team.Name,
+                EmployeeId: employee.Id,
+                EmployeeNumber: employee.EmployeeNumber,
+                EmployeeName: employee.FullName,
+                IsPrimary: command.IsPrimary,
+                AddedAt: DateTimeOffset.UtcNow,
+                AddedBy: _currentUserService.PrincipalId ?? Guid.Empty
+            )
+        );
 
         await _eventPublisher.PublishAsync(teamMemberAddedEvent, cancellationToken);
     }

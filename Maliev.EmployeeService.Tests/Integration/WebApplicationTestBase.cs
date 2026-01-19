@@ -175,6 +175,13 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
                 requests.ToDictionary(r => r.PermissionId, r => true));
 
         services.AddSingleton<Maliev.Aspire.ServiceDefaults.IAM.IIamServiceClient>(mockIamClient.Object);
+
+        // Mock internal IIAMClient
+        var mockInternalIamClient = new Mock<IIAMClient>();
+        mockInternalIamClient.Setup(x => x.CreatePrincipalAsync(It.IsAny<CreatePrincipalRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePrincipalResponse { PrincipalId = Guid.NewGuid() });
+        services.AddSingleton<IIAMClient>(mockInternalIamClient.Object);
+
     }
 
     /// <summary>
@@ -183,6 +190,7 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
     public override EmployeeDbContext CreateDbContext()
     {
         var connectionString = Environment.GetEnvironmentVariable($"ConnectionStrings__{DbConnectionStringName}")
+            ?? (_postgresContainer != null ? _postgresContainer.GetConnectionString() : null)
             ?? throw new InvalidOperationException($"Connection string '{DbConnectionStringName}' not found");
 
         var optionsBuilder = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<EmployeeDbContext>();
@@ -192,6 +200,7 @@ public class EmployeeServiceTestFactory : BaseIntegrationTestFactory<Program, Em
         var mockEncryptionService = new Mock<IEncryptionService>();
         mockEncryptionService.Setup(x => x.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
         mockEncryptionService.Setup(x => x.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
+        mockEncryptionService.Setup(x => x.IsEncrypted(It.IsAny<string>())).Returns(false);
 
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();

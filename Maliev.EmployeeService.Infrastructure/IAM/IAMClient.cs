@@ -1,7 +1,7 @@
-using System.Net.Http.Json;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
 
 namespace Maliev.EmployeeService.Infrastructure.IAM;
 

@@ -1,11 +1,11 @@
+using Maliev.Aspire.ServiceDefaults.Caching;
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.EmployeeService.Domain.Entities;
-using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.EmployeeService.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Maliev.Aspire.ServiceDefaults.Caching;
 
 namespace Maliev.EmployeeService.Application.Queries;
 

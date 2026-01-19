@@ -1,6 +1,6 @@
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
-using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Domain.Authorization;
 using Microsoft.Extensions.Configuration;
 

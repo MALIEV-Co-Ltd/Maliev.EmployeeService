@@ -82,7 +82,7 @@ public class EmployeeCreationTests : WebApplicationTestBase
         var token = _factory.CreateTestJwtToken(
             Guid.NewGuid().ToString(),
             new[] { "roles.employee.system-administrator" },
-            new Dictionary<string, string> { ["permission"] = "employee.profiles.create" });
+            new[] { "employee.profiles.create" });
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -158,7 +158,7 @@ public class EmployeeCreationTests : WebApplicationTestBase
         var token = _factory.CreateTestJwtToken(
             Guid.NewGuid().ToString(),
             new[] { "roles.employee.system-administrator" },
-            new Dictionary<string, string> { ["permission"] = "employee.profiles.create" });
+            new[] { "employee.profiles.create" });
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         // Act

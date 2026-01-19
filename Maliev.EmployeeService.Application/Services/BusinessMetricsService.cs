@@ -1,9 +1,9 @@
-using System.Diagnostics.Metrics;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.Metrics;
 
 namespace Maliev.EmployeeService.Application.Services;
 

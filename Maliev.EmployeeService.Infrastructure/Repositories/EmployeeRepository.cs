@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Maliev.EmployeeService.Infrastructure.Repositories;
 

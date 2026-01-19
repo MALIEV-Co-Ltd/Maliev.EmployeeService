@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using Maliev.EmployeeService.Application.DTOs;
 using Maliev.EmployeeService.Application.Interfaces;
+using System.Collections.Concurrent;
 
 namespace Maliev.EmployeeService.Infrastructure.Services;
 

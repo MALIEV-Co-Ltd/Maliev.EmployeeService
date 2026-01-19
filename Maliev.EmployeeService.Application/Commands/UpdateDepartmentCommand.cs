@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Maliev.EmployeeService.Application.DTOs;
 
 namespace Maliev.EmployeeService.Application.Commands;
 

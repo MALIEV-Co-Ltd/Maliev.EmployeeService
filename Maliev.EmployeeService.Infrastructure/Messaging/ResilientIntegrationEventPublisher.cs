@@ -1,6 +1,6 @@
 using Maliev.EmployeeService.Application.Interfaces;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
