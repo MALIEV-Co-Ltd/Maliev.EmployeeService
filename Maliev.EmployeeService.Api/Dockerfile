@@ -18,9 +18,6 @@ COPY ["Maliev.EmployeeService.Domain/Maliev.EmployeeService.Domain.csproj", "Mal
 COPY ["Maliev.EmployeeService.Infrastructure/Maliev.EmployeeService.Infrastructure.csproj", "Maliev.EmployeeService.Infrastructure/"]
 COPY ["nuget.config", "."]
 
-# Switch to PackageReference for CI build
-RUN sed -i 's|<ProjectReference Include="..\..\\Maliev.Aspire\\Maliev.Aspire.ServiceDefaults\\Maliev.Aspire.ServiceDefaults.csproj" />|<PackageReference Include="Maliev.Aspire.ServiceDefaults" Version="1.0.0" />|g' Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj
-
 RUN --mount=type=secret,id=nuget_username \
   --mount=type=secret,id=nuget_password \
   NUGET_USERNAME=$(cat /run/secrets/nuget_username) \
