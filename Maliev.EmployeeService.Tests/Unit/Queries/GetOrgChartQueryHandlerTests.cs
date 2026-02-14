@@ -32,7 +32,9 @@ public class GetOrgChartQueryHandlerTests
         _mockCurrentUserService = new Mock<ICurrentUserService>();
         _mockLogger = new Mock<ILogger<GetOrgChartQueryHandler>>();
 
-        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        _mockCurrentUserService.Setup(x => x.PrincipalIdentifier).Returns(principalId.ToString());
         _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 

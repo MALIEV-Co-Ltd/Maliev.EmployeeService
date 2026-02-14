@@ -32,8 +32,7 @@ public class IntegrationEventTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:18-alpine")
+        _postgresContainer = new PostgreSqlBuilder().WithName("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
@@ -181,8 +180,10 @@ public class IntegrationEventTests : IAsyncLifetime
     private class TestAdminUserService : ICurrentUserService
     {
         public Guid? PrincipalId => Guid.Parse("00000000-0000-0000-0000-000000000001");
+        public string? PrincipalIdentifier => PrincipalId?.ToString();
         public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(Guid.Empty);
         public string? Email => "test-admin@example.com";
         public bool IsAuthenticated => true;
+        public bool HasPermission(string permission) => true; // Admin has all permissions in tests
     }
 }

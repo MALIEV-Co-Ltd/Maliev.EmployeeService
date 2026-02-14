@@ -52,13 +52,16 @@ public class CurrentUserServiceTests
     }
 
     [Fact]
-    public void PrincipalId_ShouldThrow_WhenSubClaimIsMalformed()
+    public void PrincipalId_ShouldReturnNull_WhenSubClaimIsMalformed()
     {
         // Arrange
         SetupUserWithClaims(new Claim("sub", "not-a-guid"));
 
-        // Act & Assert
-        Assert.Throws<UnauthorizedAccessException>(() => _service.PrincipalId);
+        // Act
+        var result = _service.PrincipalId;
+
+        // Assert
+        Assert.Null(result);
     }
 
     [Fact]

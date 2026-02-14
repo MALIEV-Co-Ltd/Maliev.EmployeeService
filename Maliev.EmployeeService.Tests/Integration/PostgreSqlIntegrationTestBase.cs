@@ -4,6 +4,7 @@ using Maliev.EmployeeService.Infrastructure.Data.Interceptors;
 using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
 using Xunit;
 using System.Threading;
@@ -22,6 +23,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     private static readonly SemaphoreSlim _cleanupLock = new SemaphoreSlim(1, 1);
     private static readonly Dictionary<Type, bool> _firstTestTracker = new Dictionary<Type, bool>();
     private readonly Type _testClassType;
+    private Microsoft.Extensions.Logging.ILoggerFactory? _loggerFactory;
 
     /// <summary>
     /// Gets the database context for the Employee Service.
@@ -40,8 +42,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     {
         _testClassType = GetType();
 
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:18-alpine")
+        _postgresContainer = new PostgreSqlBuilder().WithName("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
@@ -69,9 +70,11 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
 
             EncryptionService = new EncryptionService(configuration);
 
+            _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(logBuilder => logBuilder.AddConsole());
+
             var options = new DbContextOptionsBuilder<EmployeeDbContext>()
                 .UseNpgsql(_postgresContainer.GetConnectionString())
-                .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+                .UseLoggerFactory(_loggerFactory)
                 .EnableSensitiveDataLogging()
                 .ConfigureWarnings(warnings =>
                 {
@@ -118,6 +121,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     {
         if (Context != null) await Context.DisposeAsync();
         if (_postgresContainer != null) await _postgresContainer.DisposeAsync();
+        _loggerFactory?.Dispose();
     }
 
     /// <summary>
@@ -167,8 +171,10 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     private class DummyCurrentUserService : ICurrentUserService
     {
         public Guid? PrincipalId => null;
+        public string? PrincipalIdentifier => null;
         public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(null);
         public string? Email => null;
         public bool IsAuthenticated => false;
+        public bool HasPermission(string permission) => false;
     }
 }

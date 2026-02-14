@@ -29,7 +29,9 @@ public class GetEmployeeTeamsQueryHandlerTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
 
-        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        _mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        _mockCurrentUserService.Setup(x => x.PrincipalIdentifier).Returns(principalId.ToString());
         _mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 

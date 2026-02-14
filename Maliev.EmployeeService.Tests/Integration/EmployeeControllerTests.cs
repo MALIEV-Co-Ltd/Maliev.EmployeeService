@@ -129,7 +129,8 @@ public class EmployeeControllerTests : WebApplicationTestBase
         AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" }, new[] { EmployeePermissions.ProfilesCreate });
 
         // Act
-        var response = await _client.PostAsJsonAsync("/employee/v1/employees/auto-provision", command);
+        var request = new { email = email, first_name = "Auto", last_name = "Provisioned" };
+        var response = await _client.PostAsJsonAsync("/employee/v1/employees/auto-provision", request);
 
         // Assert
         response.EnsureSuccessStatusCode();
