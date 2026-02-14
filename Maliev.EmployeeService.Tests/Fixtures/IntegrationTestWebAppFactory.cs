@@ -35,16 +35,16 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         // Generate ephemeral RSA key for test JWT tokens
         _testRsa = RSA.Create(2048);
 
-        _postgresContainer = new PostgreSqlBuilder().WithName("postgres:18-alpine")
+        _postgresContainer = new PostgreSqlBuilder().WithImage("postgres:18-alpine")
             .WithDatabase("employee_test")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .Build();
 
-        _redisContainer = new RedisBuilder().WithName("redis:8.4-alpine")
+        _redisContainer = new RedisBuilder().WithImage("redis:8.4-alpine")
             .Build();
 
-        _rabbitmqContainer = new RabbitMqBuilder().WithName("rabbitmq:4.2-alpine")
+        _rabbitmqContainer = new RabbitMqBuilder().WithImage("rabbitmq:4.2-alpine")
             .Build();
     }
 

@@ -43,7 +43,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     {
         _testClassType = GetType();
 
-        _postgresContainer = new PostgreSqlBuilder().WithName("postgres:18-alpine")
+        _postgresContainer = new PostgreSqlBuilder().WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
