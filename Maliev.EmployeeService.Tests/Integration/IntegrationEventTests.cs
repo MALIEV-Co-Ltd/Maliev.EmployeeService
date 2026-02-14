@@ -30,6 +30,7 @@ public class IntegrationEventTests : IAsyncLifetime
     private PostgreSqlContainer? _postgresContainer;
     private IEncryptionService? _encryptionService;
 
+    [Obsolete]
     public async Task InitializeAsync()
     {
         _postgresContainer = new PostgreSqlBuilder().WithName("postgres:18-alpine")

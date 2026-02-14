@@ -29,6 +29,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     private const string TestIssuer = "test-issuer";
     private const string TestAudience = "test-audience";
 
+    [Obsolete]
     public IntegrationTestWebAppFactory()
     {
         // Generate ephemeral RSA key for test JWT tokens

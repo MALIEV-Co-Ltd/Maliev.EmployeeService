@@ -38,6 +38,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     /// <summary>
     /// Initializes a new instance of the <see cref="PostgreSqlIntegrationTestBase"/> class.
     /// </summary>
+    [Obsolete]
     protected PostgreSqlIntegrationTestBase()
     {
         _testClassType = GetType();

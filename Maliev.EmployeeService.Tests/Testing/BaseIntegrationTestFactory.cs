@@ -54,6 +54,7 @@ public class BaseIntegrationTestFactory<TProgram, TDbContext> : WebApplicationFa
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
     }
 
+    [Obsolete]
     public async Task InitializeAsync()
     {
         await _initLock.WaitAsync();

@@ -27,21 +27,21 @@ public class ModelIntegrityTests
         var encryptionServiceMock = new Mock<IEncryptionService>();
         var currentUserServiceMock = new Mock<ICurrentUserService>();
         var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-        
+
         var auditLogInterceptor = new AuditLogInterceptor(currentUserServiceMock.Object, httpContextAccessorMock.Object);
         var databaseMetricsInterceptor = new DatabaseMetricsInterceptor();
 
         using var context = new EmployeeDbContext(
-            options, 
-            encryptionServiceMock.Object, 
-            auditLogInterceptor, 
+            options,
+            encryptionServiceMock.Object,
+            auditLogInterceptor,
             databaseMetricsInterceptor);
-        
-        // This helper (available in EF Core 9.0+) checks if the current code 
+
+        // This helper (available in EF Core 9.0+) checks if the current code
         // matches the last snapshot in the Migrations folder.
         var hasChanges = context.Database.HasPendingModelChanges();
 
-        Assert.False(hasChanges, 
+        Assert.False(hasChanges,
             "The EF Core model for 'EmployeeDbContext' has changed but no migration has been added. " +
             "Run 'dotnet ef migrations add <Name> --project Maliev.EmployeeService.Infrastructure --startup-project Maliev.EmployeeService.Api' to fix this.");
     }
