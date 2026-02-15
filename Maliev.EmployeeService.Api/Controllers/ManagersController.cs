@@ -142,7 +142,8 @@ public class ManagersController : ControllerBase
         // Cache for 1 hour with sliding expiration
         var cacheOptions = new MemoryCacheEntryOptions
         {
-            SlidingExpiration = TimeSpan.FromHours(1)
+            SlidingExpiration = TimeSpan.FromHours(1),
+            Size = 1
         };
         _cache.Set(cacheKey, result.OrgChart, cacheOptions);
 

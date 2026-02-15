@@ -38,12 +38,11 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     /// <summary>
     /// Initializes a new instance of the <see cref="PostgreSqlIntegrationTestBase"/> class.
     /// </summary>
-    [Obsolete]
     protected PostgreSqlIntegrationTestBase()
     {
         _testClassType = GetType();
 
-        _postgresContainer = new PostgreSqlBuilder().WithImage("postgres:18-alpine")
+        _postgresContainer = new PostgreSqlBuilder("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")

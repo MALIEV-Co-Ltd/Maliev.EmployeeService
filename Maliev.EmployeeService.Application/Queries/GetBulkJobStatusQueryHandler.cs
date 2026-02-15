@@ -39,10 +39,11 @@ public class GetBulkJobStatusQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have AdminBackgroundJobs permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         var resourcePath = $"employee/bulk-jobs/{query.JobId}";
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.AdminBackgroundJobs, resourcePath, cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.AdminBackgroundJobs, resourcePath, cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.AdminBackgroundJobs)))
         {
             throw new UnauthorizedAccessException("You do not have permission to view bulk job status");
         }

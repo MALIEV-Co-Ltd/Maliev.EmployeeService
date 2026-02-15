@@ -34,9 +34,10 @@ public class ExportEmployeesQueryHandler
         ExportEmployeesQuery query,
         CancellationToken cancellationToken = default)
     {
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsGenerate, "employee/export", cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsGenerate, "employee/export", cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.ReportsGenerate)))
         {
             throw new UnauthorizedAccessException("No permission");
         }

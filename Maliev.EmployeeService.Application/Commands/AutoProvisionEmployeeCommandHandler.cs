@@ -70,7 +70,35 @@ public class AutoProvisionEmployeeCommandHandler
 
         _logger.LogInformation("Auto-provisioned new employee {Email} with ID {Id}", request.Email, employee.Id);
 
+        // Publish EmployeeCreatedEvent
+        var @event = new Maliev.MessagingContracts.Generated.EmployeeCreatedEvent(
+            Guid.NewGuid(),
+            "EmployeeCreatedEvent",
+            Maliev.MessagingContracts.Generated.MessageType.Event,
+            "1.0.0",
+            "EmployeeService",
+            ["IAMService"],
+            Guid.NewGuid(),
+            null,
+            DateTimeOffset.UtcNow,
+            false,
+            new Maliev.MessagingContracts.Generated.EmployeeCreatedEventPayload(
+                employee.Id,
+                employee.EmployeeNumber,
+                employee.PrincipalId,
+                employee.ContactInformation.WorkEmail,
+                $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
+                employee.StartDate,
+                Guid.Empty, // DepartmentId not available in auto-provision
+                null,
+                null
+            )
+        );
+
+        await _eventPublisher.PublishAsync(@event, cancellationToken);
+
         return new AutoProvisionEmployeeDto
+
         {
             Id = employee.Id,
             PrincipalId = employee.PrincipalId,

@@ -49,9 +49,10 @@ public class GetDiversityMetricsQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have ReportsView permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/diversity", cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/diversity", cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.ReportsView)))
         {
             throw new UnauthorizedAccessException("You do not have permission to view diversity metrics reports");
         }

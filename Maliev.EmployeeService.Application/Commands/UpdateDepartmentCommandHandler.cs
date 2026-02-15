@@ -35,7 +35,7 @@ public class UpdateDepartmentCommandHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have DepartmentsManage permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.DepartmentsManage, "employee/departments", cancellationToken))
         {

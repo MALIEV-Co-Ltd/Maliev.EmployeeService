@@ -31,7 +31,9 @@ public class UpdateDepartmentCommandHandlerTests
         _configurationMock = new Mock<IConfiguration>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
 
-        _currentUserServiceMock.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        _currentUserServiceMock.Setup(x => x.PrincipalId).Returns(principalId);
+        _currentUserServiceMock.Setup(x => x.PrincipalIdentifier).Returns(principalId.ToString());
         _iamClientMock.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 

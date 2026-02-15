@@ -39,9 +39,10 @@ public class GetSpanOfControlReportQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have ReportsView permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/span-of-control", cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports/span-of-control", cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.ReportsView)))
         {
             throw new UnauthorizedAccessException("You do not have permission to view span of control reports");
         }

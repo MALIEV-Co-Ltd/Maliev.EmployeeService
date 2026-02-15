@@ -62,11 +62,14 @@ public class StartOnboardingCommandHandler
             EmployeeId: employee.Id,
             EmployeeNumber: employee.EmployeeNumber,
             PrincipalId: employee.PrincipalId,
+            Email: employee.ContactInformation.WorkEmail,
+            FullName: $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
             StartDate: employee.StartDate,
             DepartmentId: employee.DepartmentId ?? Guid.Empty,
             PositionId: null,
             ManagerId: employee.ManagerId
         );
+
 
 
         var integrationEvent = new EmployeeCreatedEvent(

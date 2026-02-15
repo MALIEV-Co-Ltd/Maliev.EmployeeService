@@ -33,7 +33,7 @@ try
     builder.AddServiceMeters("employees-meter"); // Register service meters for OpenTelemetry business metrics
     builder.AddIAMServiceClient("employee"); // IAM service client for permission resolution and resource-scoped authorization
 
-    builder.AddRedisDistributedCache(instanceName: "employee:"); // Redis with in-memory fallback
+    builder.AddStandardCache("employee:"); // Redis + in-memory fallback, memory-optimized // Redis with in-memory fallback
     builder.AddMassTransitWithRabbitMq(); // RabbitMQ message bus (non-blocking startup)
     builder.Services.AddIAMRegistration<EmployeeIAMRegistrationService>("employee"); // Register permissions/roles via RabbitMQ
 
@@ -46,7 +46,7 @@ try
         });
 
     // --- API Configuration ---
-    builder.AddDefaultCors(); // CORS from CORS:AllowedOrigins config
+    builder.AddStandardCors(); // CORS with fail-fast validation
     builder.AddDefaultApiVersioning(); // API versioning with URL segment reader
 
     // JWT Authentication (always enabled - test infrastructure configures appropriate keys)
@@ -69,20 +69,7 @@ try
     builder.Services.AddHttpContextAccessor();
 
     // Rate Limiting
-    builder.Services.AddRateLimiter(options =>
-    {
-        options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
-            System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: context.User.Identity?.Name ?? context.Request.Headers.Host.ToString(),
-                factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
-                {
-                    AutoReplenishment = true,
-                    PermitLimit = 100,
-                    QueueLimit = 0,
-                    Window = TimeSpan.FromMinutes(1)
-                }));
-    });
-
+    builder.AddStandardRateLimiting(); // Memory-optimized for low-spec nodes
     // HSTS Configuration (production only)
     if (builder.Environment.IsProduction())
     {
@@ -201,30 +188,8 @@ try
     // Run database migrations on startup
     await app.MigrateDatabaseAsync<EmployeeDbContext>();
 
-    // Seed test data (Development only)
-    if (app.Environment.IsDevelopment())
-    {
-        using var scope = app.Services.CreateScope();
-        var seeder = new Maliev.EmployeeService.Infrastructure.Data.DatabaseSeeder(
-            scope.ServiceProvider.GetRequiredService<EmployeeDbContext>(),
-            scope.ServiceProvider.GetRequiredService<IPasswordService>(),
-            scope.ServiceProvider.GetRequiredService<IConfiguration>(),
-            scope.ServiceProvider.GetRequiredService<ILogger<Maliev.EmployeeService.Infrastructure.Data.DatabaseSeeder>>()
-        );
-
-        try
-        {
-            Program.Log.SeedingStarted(logger);
-            await seeder.SeedAllAsync();
-            Program.Log.SeedingCompleted(logger);
-        }
-        catch (Exception ex)
-        {
-            Program.Log.SeedingFailed(logger, ex);
-        }
-    }
-
     // Force initialization of metrics
+
     System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Maliev.EmployeeService.Infrastructure.Data.Interceptors.DatabaseMetricsInterceptor).TypeHandle);
 
     // Middleware Pipeline

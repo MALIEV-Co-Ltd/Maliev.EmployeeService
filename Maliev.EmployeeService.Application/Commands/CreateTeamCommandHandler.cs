@@ -44,7 +44,7 @@ public class CreateTeamCommandHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have TeamsManage permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
             !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TeamsManage, "employee/teams", cancellationToken))
         {

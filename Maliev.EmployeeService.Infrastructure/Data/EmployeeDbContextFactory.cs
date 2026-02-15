@@ -40,6 +40,7 @@ public class EmployeeDbContextFactory : IDesignTimeDbContextFactory<EmployeeDbCo
     private class DummyCurrentUserService : ICurrentUserService
     {
         public Guid? PrincipalId => null;
+        public string? PrincipalIdentifier => null;
         public Task<Guid?> GetEmployeeIdAsync(CancellationToken ct = default) => Task.FromResult<Guid?>(null);
         public Guid? EmployeeId => null;
         public string? Email => null;
@@ -47,6 +48,7 @@ public class EmployeeDbContextFactory : IDesignTimeDbContextFactory<EmployeeDbCo
         public Role PrimaryRole => Role.Employee;
         public bool IsInRole(string role) => false;
         public bool IsAuthenticated => false;
+        public bool HasPermission(string permission) => false;
     }
 
     private class DummyHttpContextAccessor : IHttpContextAccessor

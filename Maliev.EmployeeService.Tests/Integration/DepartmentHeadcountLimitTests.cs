@@ -39,7 +39,9 @@ public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
 
         var mockConfiguration = new Mock<IConfiguration>();
         var mockCurrentUserService = new Mock<ICurrentUserService>();
-        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(Guid.NewGuid());
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        mockCurrentUserService.Setup(x => x.PrincipalIdentifier).Returns(principalId.ToString());
 
         _handler = new UpdateDepartmentCommandHandler(
             _departmentRepository,

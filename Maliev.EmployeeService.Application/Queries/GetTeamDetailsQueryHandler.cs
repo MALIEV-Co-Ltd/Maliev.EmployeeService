@@ -34,10 +34,11 @@ public class GetTeamDetailsQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have TeamsRead permission for this team
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         var resourcePath = $"employee/teams/{query.TeamId}";
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TeamsRead, resourcePath, cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.TeamsRead, resourcePath, cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.TeamsRead)))
         {
             throw new UnauthorizedAccessException("You do not have permission to view this team's details");
         }

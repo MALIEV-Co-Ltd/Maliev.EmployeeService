@@ -47,10 +47,11 @@ public class GetEmployeeProfileQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have ProfilesRead permission for this employee
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         var resourcePath = $"employee/{query.EmployeeId}";
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, resourcePath, cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ProfilesRead, resourcePath, cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.ProfilesRead)))
         {
             throw new UnauthorizedAccessException("You do not have permission to view this employee profile");
         }

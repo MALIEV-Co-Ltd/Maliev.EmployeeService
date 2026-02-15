@@ -50,9 +50,10 @@ public class SearchEmployeesQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have EmployeeSearch permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.EmployeeSearch, "employee/search", cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.EmployeeSearch, "employee/search", cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.EmployeeSearch)))
         {
             throw new UnauthorizedAccessException("You do not have permission to search employees");
         }

@@ -1,3 +1,4 @@
+using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
@@ -34,9 +35,7 @@ public class CurrentUserService : ICurrentUserService
     {
         get
         {
-            var subClaim = _httpContextAccessor.HttpContext?.User?
-                .FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
+            var subClaim = PrincipalIdentifier;
 
             if (string.IsNullOrEmpty(subClaim))
             {
@@ -48,9 +47,16 @@ public class CurrentUserService : ICurrentUserService
                 return id;
             }
 
-            throw new UnauthorizedAccessException("Malformed principal identity in token.");
+            // Handle service accounts or other non-GUID identities gracefully by returning null.
+            // These identities can be checked via PrincipalIdentifier property.
+            return null;
         }
     }
+
+    public string? PrincipalIdentifier =>
+        _httpContextAccessor.HttpContext?.User?
+            .FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
 
     public async Task<Guid?> GetEmployeeIdAsync(CancellationToken cancellationToken = default)
     {
@@ -101,4 +107,17 @@ public class CurrentUserService : ICurrentUserService
 
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+    public bool HasPermission(string permission)
+    {
+        if (_httpContextAccessor.HttpContext?.User == null) return false;
+
+        var userPermissions = _httpContextAccessor.HttpContext.User.Claims
+            .Where(c => c.Type == "permissions" || c.Type == "permission" || c.Type == "role" || c.Type == "roles" || c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+            .Select(c => c.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return PermissionMatcher.Match(permission, userPermissions);
+    }
 }

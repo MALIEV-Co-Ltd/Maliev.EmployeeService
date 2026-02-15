@@ -49,9 +49,10 @@ public class GetHeadcountReportQueryHandler
         CancellationToken cancellationToken = default)
     {
         // Authorization check: User must have ReportsView permission
-        var principalId = _currentUserService.PrincipalId?.ToString();
+        var principalId = _currentUserService.PrincipalIdentifier;
         if (string.IsNullOrEmpty(principalId) ||
-            !await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports", cancellationToken))
+            (!await _iamClient.CheckPermissionAsync(principalId, EmployeePermissions.ReportsView, "employee/reports", cancellationToken) &&
+             !_currentUserService.HasPermission(EmployeePermissions.ReportsView)))
         {
             throw new UnauthorizedAccessException("You do not have permission to view headcount reports");
         }
