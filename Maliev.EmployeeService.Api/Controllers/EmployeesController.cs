@@ -49,6 +49,105 @@ public class EmployeesController : ControllerBase
     }
 
     /// <summary>
+    /// Get a paginated list of all employees.
+    /// </summary>
+    /// <param name="page">Page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Paged list of employee summaries.</returns>
+    [HttpGet]
+    [RequirePermission(EmployeePermissions.ProfilesRead)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+    {
+        var allEmployees = (await _employeeRepository.GetAllAsync(cancellationToken)).ToList();
+        var total = allEmployees.Count;
+        var paged = allEmployees
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(e => new
+            {
+                id = e.Id,
+                name = e.FullName,
+                email = e.ContactInformation.WorkEmail,
+                department = string.Empty,
+                title = e.JobTitle ?? string.Empty,
+                phone = e.ContactInformation.MobilePhone,
+                status = e.EmploymentStatus.ToString(),
+                hireDate = (DateTime?)e.StartDate,
+                manager = (string?)null
+            })
+            .ToList();
+
+        return Ok(new
+        {
+            data = paged,
+            meta = new
+            {
+                currentPage = page,
+                totalPages = (int)Math.Ceiling(total / (double)pageSize),
+                totalItems = total,
+                totalCount = total,
+                pageSize
+            }
+        });
+    }
+
+    /// <summary>
+    /// Get employee by ID.
+    /// </summary>
+    /// <param name="id">The employee ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Employee detail.</returns>
+    [HttpGet("{id:guid}")]
+    [RequirePermission(EmployeePermissions.ProfilesRead, ResourcePathTemplate = "employee/{id}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var query = new GetEmployeeProfileQuery(id);
+        var result = await _getProfileHandler.HandleAsync(query, cancellationToken);
+
+        if (result.Profile == null)
+        {
+            _logger.LogWarning("Employee not found with id {Id}", id);
+            return NotFound(new { message = $"Employee not found with id {id}" });
+        }
+
+        var p = result.Profile;
+        return Ok(new
+        {
+            id = p.Id,
+            firstName = p.FirstName,
+            lastName = p.LastName,
+            email = p.WorkEmail,
+            phone = p.MobilePhone,
+            department = p.DepartmentName ?? string.Empty,
+            title = p.JobTitle ?? string.Empty,
+            status = p.EmploymentStatus,
+            managerId = p.ManagerId?.ToString(),
+            managerName = p.ManagerName,
+            hireDate = (DateTime?)p.StartDate,
+            terminationDate = p.TerminationDate,
+            workLocation = p.WorkLocation,
+            employeeType = p.EmploymentType,
+            notes = Array.Empty<object>(),
+            teams = Array.Empty<object>(),
+            emergencyContacts = p.EmergencyContacts.Select(ec => new
+            {
+                name = ec.ContactName,
+                relationship = ec.Relationship,
+                phone = ec.PhoneNumber,
+                email = ec.Email
+            }).ToList(),
+            employmentHistory = Array.Empty<object>(),
+            documents = Array.Empty<object>(),
+            createdAt = DateTime.UtcNow,
+            updatedAt = DateTime.UtcNow
+        });
+    }
+
+    /// <summary>
     /// Get employee profile by IAM Principal ID (US2).
     /// </summary>
     /// <param name="principalId">The IAM Principal ID.</param>

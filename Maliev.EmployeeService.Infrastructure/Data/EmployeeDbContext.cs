@@ -65,6 +65,9 @@ public class EmployeeDbContext : DbContext
     public DbSet<SagaStepHistory> SagaStepHistories => Set<SagaStepHistory>();
     public DbSet<EmployeeTerminationSagaState> EmployeeTerminationSagaStates => Set<EmployeeTerminationSagaState>();
 
+    // User Preferences (Dashboard Persistence)
+    public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -253,6 +256,14 @@ public class EmployeeDbContext : DbContext
             entity.HasKey(e => e.CorrelationId);
             entity.HasIndex(e => e.EmployeeId);
             entity.HasIndex(e => e.CurrentState);
+        });
+
+        // Configure UserPreference entity
+        modelBuilder.Entity<UserPreference>(entity =>
+        {
+            entity.HasKey(e => new { e.PrincipalId, e.Scope });
+            entity.Property(e => e.Scope).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.PreferenceData).HasColumnType("jsonb").IsRequired();
         });
 
         // Configure naming convention for PostgreSQL (snake_case)
