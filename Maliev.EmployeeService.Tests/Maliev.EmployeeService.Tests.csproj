@@ -40,7 +40,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Maliev.EmployeeService.Api\Maliev.EmployeeService.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
     <ProjectReference Include="..\..\Maliev.Aspire\Maliev.Aspire.ServiceDefaults\Maliev.Aspire.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <PackageReference Include="Maliev.Aspire.ServiceDefaults" Version="1.0.*-*" />
   </ItemGroup>
 
 </Project>
