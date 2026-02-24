@@ -1,6 +1,7 @@
 using Maliev.Aspire.ServiceDefaults.IAM;
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.MessagingContracts.Contracts.Employee;
 using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.Configuration;
 

@@ -3,6 +3,8 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
+using Maliev.MessagingContracts.Contracts.Employee;
+using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Commands;
@@ -71,7 +73,7 @@ public class AutoProvisionEmployeeCommandHandler
         _logger.LogInformation("Auto-provisioned new employee {Email} with ID {Id}", request.Email, employee.Id);
 
         // Publish EmployeeCreatedEvent
-        var @event = new Maliev.MessagingContracts.Generated.EmployeeCreatedEvent(
+        var @event = new EmployeeCreatedEvent(
             Guid.NewGuid(),
             "EmployeeCreatedEvent",
             Maliev.MessagingContracts.Generated.MessageType.Event,
@@ -82,7 +84,7 @@ public class AutoProvisionEmployeeCommandHandler
             null,
             DateTimeOffset.UtcNow,
             false,
-            new Maliev.MessagingContracts.Generated.EmployeeCreatedEventPayload(
+            new EmployeeCreatedEventPayload(
                 employee.Id,
                 employee.EmployeeNumber,
                 employee.PrincipalId,

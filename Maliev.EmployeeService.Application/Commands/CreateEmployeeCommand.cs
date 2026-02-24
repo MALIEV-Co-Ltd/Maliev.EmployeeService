@@ -4,6 +4,7 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
+using Maliev.MessagingContracts.Contracts.Employee;
 using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

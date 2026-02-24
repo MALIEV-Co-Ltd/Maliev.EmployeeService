@@ -1,4 +1,5 @@
 using Maliev.EmployeeService.Application.Commands;
+using Maliev.MessagingContracts.Contracts.Career;
 using Maliev.MessagingContracts.Generated;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
