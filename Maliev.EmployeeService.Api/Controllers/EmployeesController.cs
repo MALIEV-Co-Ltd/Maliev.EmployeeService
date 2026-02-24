@@ -234,7 +234,11 @@ public class EmployeesController : ControllerBase
 
         if (!result.Success)
         {
-            return NotFound(new { message = result.ErrorMessage });
+            if (result.ErrorMessage == "Employee not found")
+            {
+                return NotFound(new { message = result.ErrorMessage });
+            }
+            return BadRequest(new { message = result.ErrorMessage });
         }
 
         var query = new GetEmployeeProfileQuery(id);

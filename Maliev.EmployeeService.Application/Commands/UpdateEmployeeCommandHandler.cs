@@ -35,10 +35,16 @@ public class UpdateEmployeeCommandHandler
         if (command.Phone != null)
             employee.ContactInformation.MobilePhone = command.Phone;
 
-        if (command.Status != null &&
-            Enum.TryParse<EmploymentStatus>(command.Status, ignoreCase: true, out var status))
+        if (command.Status != null)
         {
-            employee.EmploymentStatus = status;
+            if (Enum.TryParse<EmploymentStatus>(command.Status, ignoreCase: true, out var status))
+            {
+                employee.EmploymentStatus = status;
+            }
+            else
+            {
+                return new UpdateEmployeeCommandResult(false, $"Invalid employment status: {command.Status}");
+            }
         }
 
         employee.ModifiedDate = DateTime.UtcNow;

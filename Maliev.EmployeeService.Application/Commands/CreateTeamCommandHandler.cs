@@ -3,6 +3,7 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts.Contracts.Employee;
 using Microsoft.Extensions.Configuration;
 
 namespace Maliev.EmployeeService.Application.Commands;

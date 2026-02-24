@@ -1,6 +1,7 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts.Contracts.Employee;
 
 namespace Maliev.EmployeeService.Application.Commands;
 

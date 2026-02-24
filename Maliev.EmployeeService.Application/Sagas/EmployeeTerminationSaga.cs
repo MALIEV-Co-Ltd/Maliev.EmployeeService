@@ -1,5 +1,9 @@
 using Maliev.EmployeeService.Domain.Sagas;
 using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts.Contracts.Employee;
+using Maliev.MessagingContracts.Contracts.Leave;
+using Maliev.MessagingContracts.Contracts.Compensation;
+using Maliev.MessagingContracts.Contracts.Lifecycle;
 using MassTransit;
 
 namespace Maliev.EmployeeService.Application.Sagas;
@@ -101,9 +105,9 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
     }
 
     public Event<EmployeeTerminatedEvent> EmployeeTerminated { get; private set; } = null!;
-    public Event<Maliev.MessagingContracts.Generated.LeaveBalanceClosedEvent> LeaveBalanceClosed { get; private set; } = null!;
-    public Event<Maliev.MessagingContracts.Generated.CompensationArchivedEvent> CompensationArchived { get; private set; } = null!;
-    public Event<Maliev.MessagingContracts.Generated.AccessRevokedEvent> AccessRevoked { get; private set; } = null!;
+    public Event<LeaveBalanceClosedEvent> LeaveBalanceClosed { get; private set; } = null!;
+    public Event<CompensationArchivedEvent> CompensationArchived { get; private set; } = null!;
+    public Event<AccessRevokedEvent> AccessRevoked { get; private set; } = null!;
 
     // Fault events
     public Event<Fault<CloseLeaveBalanceCommand>> LeaveClosureFaulted { get; private set; } = null!;

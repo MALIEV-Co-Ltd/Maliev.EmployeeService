@@ -3,6 +3,8 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
+using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts.Contracts.Employee;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Commands;
@@ -64,7 +66,7 @@ public class AutoProvisionEmployeeCommandHandler
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create principal in IAM for auto-provisioned employee {Email}", request.Email);
-            throw new InvalidOperationException("Failed to create employee identity in IAM. Please ensure identity service is available.");
+            throw new InvalidOperationException("Failed to create employee identity in IAM. Please ensure identity service is available.", ex);
         }
 
         // Create new employee with the IAM PrincipalId
@@ -96,10 +98,10 @@ public class AutoProvisionEmployeeCommandHandler
         _logger.LogInformation("Auto-provisioned new employee {Email} with ID {Id} and PrincipalId {PrincipalId}", request.Email, employee.Id, employee.PrincipalId);
 
         // Publish EmployeeCreatedEvent
-        var @event = new Maliev.MessagingContracts.Generated.EmployeeCreatedEvent(
+        var @event = new EmployeeCreatedEvent(
             Guid.NewGuid(),
             "EmployeeCreatedEvent",
-            Maliev.MessagingContracts.Generated.MessageType.Event,
+            MessageType.Event,
             "1.0.0",
             "EmployeeService",
             ["IAMService"],
@@ -107,7 +109,7 @@ public class AutoProvisionEmployeeCommandHandler
             null,
             DateTimeOffset.UtcNow,
             false,
-            new Maliev.MessagingContracts.Generated.EmployeeCreatedEventPayload(
+            new EmployeeCreatedEventPayload(
                 employee.Id,
                 employee.EmployeeNumber,
                 employee.PrincipalId,
