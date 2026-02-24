@@ -138,4 +138,50 @@ public class EmployeeControllerTests : WebApplicationTestBase
         Assert.NotNull(result);
         Assert.Equal(email, result!.Email);
     }
+
+    [Fact]
+    public async Task GetOrgChart_ReturnsHierarchy_WhenCalled()
+    {
+        // Arrange
+        var dept = await CreateTestDepartmentAsync("Engineering");
+        Guid managerId;
+        Guid reportId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<Infrastructure.Data.EmployeeDbContext>();
+
+            var manager = await CreateTestEmployeeAsync(dept.Id, "MGR-001");
+            manager.LegalName = new Domain.ValueObjects.LegalName("Big", "Boss");
+            managerId = manager.Id;
+            context.Employees.Update(manager);
+
+            var report = await CreateTestEmployeeAsync(dept.Id, "REP-001");
+            report.LegalName = new Domain.ValueObjects.LegalName("Small", "Fish");
+            report.ManagerId = managerId;
+            reportId = report.Id;
+            context.Employees.Update(report);
+
+            await context.SaveChangesAsync();
+        }
+
+        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" }, new[] { EmployeePermissions.ProfilesRead });
+
+        // Act
+        var response = await _client.GetAsync("/employee/v1/employees/org-chart");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var roots = await response.Content.ReadFromJsonAsync<List<System.Text.Json.JsonElement>>();
+        Assert.NotNull(roots);
+        Assert.NotEmpty(roots);
+
+        var managerNode = roots.First(x => x.GetProperty("Id").GetGuid() == managerId);
+        Assert.Equal("Big Boss", managerNode.GetProperty("Name").GetString());
+
+        var subordinates = managerNode.GetProperty("Subordinates");
+        Assert.Equal(1, subordinates.GetArrayLength());
+        Assert.Equal(reportId, subordinates[0].GetProperty("Id").GetGuid());
+        Assert.Equal("Small Fish", subordinates[0].GetProperty("Name").GetString());
+    }
 }

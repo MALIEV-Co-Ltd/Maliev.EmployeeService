@@ -12,17 +12,20 @@ public class AutoProvisionEmployeeCommandHandler
     private readonly IEmployeeRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IIAMClient _iamClient;
     private readonly ILogger<AutoProvisionEmployeeCommandHandler> _logger;
 
     public AutoProvisionEmployeeCommandHandler(
         IEmployeeRepository repository,
         IUnitOfWork unitOfWork,
         IEventPublisher eventPublisher,
+        IIAMClient iamClient,
         ILogger<AutoProvisionEmployeeCommandHandler> logger)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _eventPublisher = eventPublisher;
+        _iamClient = iamClient;
         _logger = logger;
     }
 
@@ -42,12 +45,34 @@ public class AutoProvisionEmployeeCommandHandler
             };
         }
 
-        // Create new employee
+        // Create IAM Principal first (same pattern as CreateEmployeeCommand)
+        Guid principalId;
+        try
+        {
+            var principalRequest = new CreatePrincipalRequest
+            {
+                Email = request.Email,
+                LinkedService = "EmployeeService",
+                LinkedEntityId = null
+            };
+
+            var principalResponse = await _iamClient.CreatePrincipalAsync(principalRequest, cancellationToken);
+            principalId = principalResponse.PrincipalId;
+
+            _logger.LogInformation("Created IAM principal {PrincipalId} for auto-provisioned employee {Email}", principalId, request.Email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create principal in IAM for auto-provisioned employee {Email}", request.Email);
+            throw new InvalidOperationException("Failed to create employee identity in IAM. Please ensure identity service is available.");
+        }
+
+        // Create new employee with the IAM PrincipalId
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
-            PrincipalId = Guid.NewGuid(), // Will be linked to IAM later
-            EmployeeNumber = $"TEMP-{Guid.NewGuid():N}", // Temporary number, to be replaced by a proper sequence
+            PrincipalId = principalId,
+            EmployeeNumber = $"TEMP-{Guid.NewGuid():N}",
             LegalName = new LegalName
             {
                 FirstName = request.FirstName,
@@ -68,7 +93,7 @@ public class AutoProvisionEmployeeCommandHandler
         await _repository.AddAsync(employee, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Auto-provisioned new employee {Email} with ID {Id}", request.Email, employee.Id);
+        _logger.LogInformation("Auto-provisioned new employee {Email} with ID {Id} and PrincipalId {PrincipalId}", request.Email, employee.Id, employee.PrincipalId);
 
         // Publish EmployeeCreatedEvent
         var @event = new Maliev.MessagingContracts.Generated.EmployeeCreatedEvent(
@@ -89,7 +114,7 @@ public class AutoProvisionEmployeeCommandHandler
                 employee.ContactInformation.WorkEmail,
                 $"{employee.LegalName.FirstName} {employee.LegalName.LastName}",
                 employee.StartDate,
-                Guid.Empty, // DepartmentId not available in auto-provision
+                Guid.Empty,
                 null,
                 null
             )
@@ -98,7 +123,6 @@ public class AutoProvisionEmployeeCommandHandler
         await _eventPublisher.PublishAsync(@event, cancellationToken);
 
         return new AutoProvisionEmployeeDto
-
         {
             Id = employee.Id,
             PrincipalId = employee.PrincipalId,

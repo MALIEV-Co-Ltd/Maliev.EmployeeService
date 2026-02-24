@@ -28,7 +28,8 @@ public class GetEmployeeByEmailQueryHandler
             LastName = employee.LegalName.LastName,
             DepartmentName = null, // Can fetch if needed via navigation prop
             JobTitle = employee.JobTitle,
-            ManagerId = employee.ManagerId
+            ManagerId = employee.ManagerId,
+            EmploymentStatus = employee.EmploymentStatus.ToString()
         };
 
         return new GetEmployeeByEmailResult(dto);

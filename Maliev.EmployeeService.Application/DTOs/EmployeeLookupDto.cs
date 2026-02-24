@@ -11,4 +11,5 @@ public class EmployeeLookupDto
     public string? DepartmentName { get; set; }
     public string? JobTitle { get; set; }
     public Guid? ManagerId { get; set; }
+    public string EmploymentStatus { get; set; } = string.Empty;
 }

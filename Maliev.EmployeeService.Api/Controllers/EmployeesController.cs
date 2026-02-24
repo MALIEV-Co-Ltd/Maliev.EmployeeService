@@ -24,27 +24,25 @@ public class EmployeesController : ControllerBase
     private readonly GetEmployeeProfileQueryHandler _getProfileHandler;
     private readonly GetEmployeeByEmailQueryHandler _getByEmailHandler;
     private readonly AutoProvisionEmployeeCommandHandler _autoProvisionHandler;
+    private readonly UpdateEmployeeCommandHandler _updateHandler;
     private readonly ILogger<EmployeesController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EmployeesController"/> class.
     /// </summary>
-    /// <param name="employeeRepository">The repository for employee data.</param>
-    /// <param name="getProfileHandler">The handler for getting employee profiles.</param>
-    /// <param name="getByEmailHandler">The handler for getting employee by email.</param>
-    /// <param name="autoProvisionHandler">The handler for auto-provisioning employees.</param>
-    /// <param name="logger">The logger instance.</param>
     public EmployeesController(
         IEmployeeRepository employeeRepository,
         GetEmployeeProfileQueryHandler getProfileHandler,
         GetEmployeeByEmailQueryHandler getByEmailHandler,
         AutoProvisionEmployeeCommandHandler autoProvisionHandler,
+        UpdateEmployeeCommandHandler updateHandler,
         ILogger<EmployeesController> logger)
     {
         _employeeRepository = employeeRepository;
         _getProfileHandler = getProfileHandler;
         _getByEmailHandler = getByEmailHandler;
         _autoProvisionHandler = autoProvisionHandler;
+        _updateHandler = updateHandler;
         _logger = logger;
     }
 
@@ -67,15 +65,16 @@ public class EmployeesController : ControllerBase
             .Take(pageSize)
             .Select(e => new
             {
-                id = e.Id,
-                name = e.FullName,
-                email = e.ContactInformation.WorkEmail,
-                department = string.Empty,
-                title = e.JobTitle ?? string.Empty,
-                phone = e.ContactInformation.MobilePhone,
-                status = e.EmploymentStatus.ToString(),
-                hireDate = (DateTime?)e.StartDate,
-                manager = (string?)null
+                Id = e.Id,
+                EmployeeNumber = e.EmployeeNumber,
+                FullName = e.FullName,
+                WorkEmail = e.ContactInformation.WorkEmail,
+                DepartmentName = e.Department?.Name ?? string.Empty,
+                JobTitle = e.JobTitle ?? string.Empty,
+                MobilePhone = e.ContactInformation.MobilePhone,
+                EmploymentStatus = e.EmploymentStatus.ToString(),
+                StartDate = (DateTime?)e.StartDate,
+                ManagerName = (string?)null
             })
             .ToList();
 
@@ -91,6 +90,48 @@ public class EmployeesController : ControllerBase
                 pageSize
             }
         });
+    }
+
+    /// <summary>
+    /// Get the organizational chart data.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Hierarchical list of employees for org chart.</returns>
+    [HttpGet("org-chart")]
+    [RequirePermission(EmployeePermissions.ProfilesRead)]
+    public async Task<IActionResult> GetOrgChart(CancellationToken cancellationToken)
+    {
+        var allEmployees = (await _employeeRepository.GetAllAsync(cancellationToken)).ToList();
+
+        // Simple mapping to build a tree structure
+        var allNodes = allEmployees.Select(e => new
+        {
+            Id = e.Id,
+            Name = e.FullName,
+            Title = e.JobTitle ?? string.Empty,
+            Department = string.Empty,
+            Initials = string.Join("", e.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])),
+            ManagerId = e.ManagerId,
+            Subordinates = new List<object>()
+        }).ToList();
+
+        var nodeMap = allNodes.ToDictionary(n => n.Id);
+        var roots = new List<object>();
+
+        foreach (var node in allNodes)
+        {
+            if (node.ManagerId == null || !nodeMap.ContainsKey(node.ManagerId.Value))
+            {
+                roots.Add(node);
+            }
+            else
+            {
+                var manager = nodeMap[node.ManagerId.Value];
+                ((List<object>)manager.Subordinates).Add(node);
+            }
+        }
+
+        return Ok(roots);
     }
 
     /// <summary>
@@ -114,37 +155,7 @@ public class EmployeesController : ControllerBase
             return NotFound(new { message = $"Employee not found with id {id}" });
         }
 
-        var p = result.Profile;
-        return Ok(new
-        {
-            id = p.Id,
-            firstName = p.FirstName,
-            lastName = p.LastName,
-            email = p.WorkEmail,
-            phone = p.MobilePhone,
-            department = p.DepartmentName ?? string.Empty,
-            title = p.JobTitle ?? string.Empty,
-            status = p.EmploymentStatus,
-            managerId = p.ManagerId?.ToString(),
-            managerName = p.ManagerName,
-            hireDate = (DateTime?)p.StartDate,
-            terminationDate = p.TerminationDate,
-            workLocation = p.WorkLocation,
-            employeeType = p.EmploymentType,
-            notes = Array.Empty<object>(),
-            teams = Array.Empty<object>(),
-            emergencyContacts = p.EmergencyContacts.Select(ec => new
-            {
-                name = ec.ContactName,
-                relationship = ec.Relationship,
-                phone = ec.PhoneNumber,
-                email = ec.Email
-            }).ToList(),
-            employmentHistory = Array.Empty<object>(),
-            documents = Array.Empty<object>(),
-            createdAt = DateTime.UtcNow,
-            updatedAt = DateTime.UtcNow
-        });
+        return Ok(result.Profile);
     }
 
     /// <summary>
@@ -207,6 +218,31 @@ public class EmployeesController : ControllerBase
     }
 
     /// <summary>
+    /// Update an employee's HR-managed fields (title, status, phone).
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    [RequirePermission(EmployeePermissions.ProfilesUpdate, ResourcePathTemplate = "employee/{id}")]
+    [ProducesResponseType(typeof(EmployeeProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateEmployee(
+        Guid id,
+        [FromBody] UpdateEmployeeEndpointRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateEmployeeCommand(id, request.Title, request.Status, request.Phone);
+        var result = await _updateHandler.HandleAsync(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            return NotFound(new { message = result.ErrorMessage });
+        }
+
+        var query = new GetEmployeeProfileQuery(id);
+        var profileResult = await _getProfileHandler.HandleAsync(query, cancellationToken);
+        return Ok(profileResult.Profile);
+    }
+
+    /// <summary>
     /// Auto-provisions a new employee account from Google Workspace SSO.
     /// Triggered by AuthService when a verified @maliev.com user logs in via Google SSO.
     /// Internal service-to-service endpoint - requires service account authentication.
@@ -235,3 +271,12 @@ public class EmployeesController : ControllerBase
         return Ok(result);
     }
 }
+
+/// <summary>
+/// Request model for HR-managed employee update.
+/// </summary>
+public record UpdateEmployeeEndpointRequest(
+    string? Department,
+    string? Title,
+    string? Status,
+    string? Phone);

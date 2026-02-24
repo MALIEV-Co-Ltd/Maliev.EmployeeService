@@ -20,7 +20,7 @@ public class IAMClient : IIAMClient
         CreatePrincipalRequest request,
         CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.PostAsJsonAsync("/iam/v1/service-accounts/users", request, cancellationToken);
+        var response = await _httpClient.PostAsJsonAsync("/iam/v1/principals", request, cancellationToken);
 
         response.EnsureSuccessStatusCode();
 

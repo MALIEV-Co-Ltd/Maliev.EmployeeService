@@ -126,6 +126,7 @@ try
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.DeleteEmergencyContactCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateEmployeeCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.AutoProvisionEmployeeCommandHandler>();
+    builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateEmployeeCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.TransferDepartmentCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.CreateDepartmentCommandHandler>();
     builder.Services.AddScoped<Maliev.EmployeeService.Application.Commands.UpdateDepartmentCommandHandler>();
@@ -164,7 +165,7 @@ try
     // HTTP Clients for External Services
     builder.AddServiceClient<ICareerServiceClient, CareerServiceClient>("CareerService");
     builder.AddServiceClient<IUploadServiceClient, UploadServiceClient>("UploadService");
-    builder.AddServiceClient<IIAMClient, IAMClient>("IAM");
+    builder.AddAuthenticatedServiceClient<IIAMClient, IAMClient>("IAMService", "employee");
 
     // Authorization
     builder.Services.AddPermissionAuthorization();
