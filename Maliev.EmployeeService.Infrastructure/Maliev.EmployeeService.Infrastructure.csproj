@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Maliev.EmployeeService.Application\Maliev.EmployeeService.Application.csproj" />
+    <ProjectReference Include="..\..\Maliev.MessagingContracts\generated\csharp\Maliev.MessagingContracts.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">

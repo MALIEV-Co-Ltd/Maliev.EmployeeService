@@ -279,9 +279,7 @@ public class CandidateAcceptedEventConsumer : BackgroundService
             result.EmployeeId,
             payload.CandidateId);
 
-        // TODO: Initiate onboarding workflow (will be implemented in User Story 10)
-        // var startOnboardingCommand = new StartOnboardingCommand { EmployeeId = result.EmployeeId.Value };
-        // await startOnboardingHandler.HandleAsync(startOnboardingCommand, cancellationToken);
+        // LifecycleService will pick up the EmployeeCreatedEvent and initiate the onboarding workflow
     }
 
     private int GetRetryCount(IReadOnlyBasicProperties? properties)
