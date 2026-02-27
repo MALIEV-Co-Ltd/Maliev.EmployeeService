@@ -1,4 +1,4 @@
-﻿namespace Maliev.EmployeeService.Domain.Entities;
+namespace Maliev.EmployeeService.Domain.Entities;
 
 /// <summary>
 /// Represents a single audit log entry for tracking changes to system data.

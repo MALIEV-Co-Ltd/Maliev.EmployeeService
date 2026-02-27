@@ -3,7 +3,7 @@ using Maliev.MessagingContracts.Contracts.Compensation;
 using Maliev.MessagingContracts.Contracts.Employee;
 using Maliev.MessagingContracts.Contracts.Leave;
 using Maliev.MessagingContracts.Contracts.Lifecycle;
-using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts;
 using MassTransit;
 
 namespace Maliev.EmployeeService.Application.Sagas;

@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.EmployeeService.Domain.ValueObjects;
 using Maliev.MessagingContracts.Contracts.Employee;
-using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts;
 using Microsoft.Extensions.Logging;
 
 namespace Maliev.EmployeeService.Application.Commands;
@@ -76,7 +76,7 @@ public class AutoProvisionEmployeeCommandHandler
         var @event = new EmployeeCreatedEvent(
             Guid.NewGuid(),
             "EmployeeCreatedEvent",
-            Maliev.MessagingContracts.Generated.MessageType.Event,
+            Maliev.MessagingContracts.MessageType.Event,
             "1.0.0",
             "EmployeeService",
             ["IAMService"],

@@ -6,7 +6,7 @@ using Maliev.EmployeeService.Application.Interfaces;
 using Maliev.EmployeeService.Application.Queries;
 using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.MessagingContracts.Contracts.Employee;
-using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

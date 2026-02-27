@@ -1,4 +1,4 @@
-﻿namespace Maliev.EmployeeService.Domain.Entities;
+namespace Maliev.EmployeeService.Domain.Entities;
 
 public class SagaStepHistory
 {

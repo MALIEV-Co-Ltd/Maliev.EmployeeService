@@ -4,7 +4,7 @@ using Maliev.EmployeeService.Domain.Authorization;
 // using Maliev.EmployeeService.Domain.IntegrationEvents; // Removed
 using Maliev.EmployeeService.Domain.Enums;
 using Maliev.MessagingContracts.Contracts.Employee;
-using Maliev.MessagingContracts.Generated;
+using Maliev.MessagingContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 

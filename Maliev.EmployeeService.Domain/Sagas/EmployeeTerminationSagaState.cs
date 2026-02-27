@@ -1,4 +1,4 @@
-﻿using MassTransit;
+using MassTransit;
 
 namespace Maliev.EmployeeService.Domain.Sagas;
 
