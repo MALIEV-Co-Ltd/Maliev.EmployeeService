@@ -173,9 +173,8 @@ public class GetHeadcountReportQueryHandlerTests
         Assert.True(result.ByTenureBand.ContainsKey("0-1 years"));
         Assert.Equal(1, result.ByTenureBand["0-1 years"]); // EMP003 (6 months)
         Assert.True(result.ByTenureBand.ContainsKey("1-2 years"));
-        Assert.Equal(1, result.ByTenureBand["1-2 years"]); // EMP005 (1.5 years)
-        Assert.True(result.ByTenureBand.ContainsKey("2-3 years"));
-        Assert.Equal(1, result.ByTenureBand["2-3 years"]); // EMP002 (2 years)
+        Assert.Equal(2, result.ByTenureBand["1-2 years"]); // EMP002 (~2 years ≈ 1.9999), EMP005 (1.5 years)
+        Assert.False(result.ByTenureBand.ContainsKey("2-3 years")); // No employees in this band
         Assert.True(result.ByTenureBand.ContainsKey("5-10 years"));
         Assert.Equal(1, result.ByTenureBand["5-10 years"]); // EMP001 (7 years)
         Assert.True(result.ByTenureBand.ContainsKey("10+ years"));

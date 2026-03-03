@@ -334,4 +334,93 @@ public class UpdateDepartmentCommandHandlerTests
         Assert.NotNull(department.ModifiedDate);
         _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task HandleAsync_DepartmentHeadNotFound_ShouldReturnFailure()
+    {
+        // Arrange
+        var departmentId = Guid.NewGuid();
+        var departmentHeadId = Guid.NewGuid();
+        var department = new Department
+        {
+            Id = departmentId,
+            Name = "Engineering",
+            IsActive = true
+        };
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = departmentId,
+            Name = "Engineering",
+            DepartmentHeadId = departmentHeadId,
+            IsActive = true
+        };
+
+        _departmentRepositoryMock
+            .Setup(x => x.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(department);
+
+        _employeeRepositoryMock
+            .Setup(x => x.GetCountByDepartmentAsync(departmentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        _employeeRepositoryMock
+            .Setup(x => x.GetByIdAsync(departmentHeadId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Maliev.EmployeeService.Domain.Entities.Employee?)null);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal("Department head employee not found", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ValidDepartmentHead_ShouldSucceed()
+    {
+        // Arrange
+        var departmentId = Guid.NewGuid();
+        var departmentHeadId = Guid.NewGuid();
+        var department = new Department
+        {
+            Id = departmentId,
+            Name = "Engineering",
+            IsActive = true
+        };
+
+        var departmentHead = new Maliev.EmployeeService.Domain.Entities.Employee
+        {
+            Id = departmentHeadId,
+            EmployeeNumber = "EMP001",
+            EmploymentStatus = Maliev.EmployeeService.Domain.Enums.EmploymentStatus.Active
+        };
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = departmentId,
+            Name = "Engineering",
+            DepartmentHeadId = departmentHeadId,
+            IsActive = true
+        };
+
+        _departmentRepositoryMock
+            .Setup(x => x.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(department);
+
+        _employeeRepositoryMock
+            .Setup(x => x.GetCountByDepartmentAsync(departmentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        _employeeRepositoryMock
+            .Setup(x => x.GetByIdAsync(departmentHeadId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(departmentHead);
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal(departmentHeadId, department.DepartmentHeadId);
+    }
 }
