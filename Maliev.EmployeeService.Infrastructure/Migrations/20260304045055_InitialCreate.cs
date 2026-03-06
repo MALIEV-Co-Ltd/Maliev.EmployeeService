@@ -1,3 +1,4 @@
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -174,6 +175,27 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "user_preferences",
+                schema: "employee",
+                columns: table => new
+                {
+                    principal_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    scope = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    preference_data = table.Column<string>(type: "jsonb", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    modified_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    modified_by = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("p_k_user_preferences", x => new { x.principal_id, x.scope });
+                });
+
+            migrationBuilder.CreateTable(
                 name: "work_schedules",
                 schema: "employee",
                 columns: table => new
@@ -227,6 +249,7 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     principal_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    password_hash = table.Column<string>(type: "text", nullable: true),
                     employee_number = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -660,6 +683,10 @@ namespace Maliev.EmployeeService.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "saga_step_histories",
+                schema: "employee");
+
+            migrationBuilder.DropTable(
+                name: "user_preferences",
                 schema: "employee");
 
             migrationBuilder.DropTable(
