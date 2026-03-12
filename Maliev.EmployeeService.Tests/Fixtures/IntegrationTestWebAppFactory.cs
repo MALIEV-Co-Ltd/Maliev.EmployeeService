@@ -123,14 +123,8 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
                 options.UseNpgsql(_postgresContainer.GetConnectionString());
             });
 
-            // Add permission-based authorization infrastructure for tests
-            services.AddHttpContextAccessor();
-
-            services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider,
-                                  Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationPolicyProvider>();
-            services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
-                               Maliev.Aspire.ServiceDefaults.Authorization.PermissionAuthorizationHandler>();
-            services.AddAuthorizationBuilder();
+            // Authorization infrastructure is registered by AddJwtAuthentication() via AddPermissionAuthorization()
+            // in Program.cs — no manual re-registration needed in tests.
 
             // PostConfigure JWT Bearer options to use our test RSA key
             services.PostConfigureAll<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(options =>
