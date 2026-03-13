@@ -42,7 +42,9 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
     {
         _testClassType = GetType();
 
-        _postgresContainer = new PostgreSqlBuilder("postgres:18-alpine")
+        _postgresContainer = 
+                #pragma warning disable CS0618
+        new PostgreSqlBuilder().WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
@@ -67,6 +69,7 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
                     { "ASPNETCORE_ENVIRONMENT", "Testing" }
                 })
                 .Build();
+#pragma warning restore CS0618
 
             EncryptionService = new EncryptionService(configuration);
 
@@ -178,3 +181,6 @@ public abstract class PostgreSqlIntegrationTestBase : IAsyncLifetime
         public bool HasPermission(string permission) => false;
     }
 }
+
+
+

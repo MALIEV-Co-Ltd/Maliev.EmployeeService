@@ -34,7 +34,9 @@ public class IntegrationEventTests : IAsyncLifetime
     [Obsolete]
     public async Task InitializeAsync()
     {
-        _postgresContainer = new PostgreSqlBuilder().WithImage("postgres:18-alpine")
+        _postgresContainer = 
+                #pragma warning disable CS0618
+        new PostgreSqlBuilder().WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
             .WithUsername("postgres")
             .WithPassword("testpassword")
@@ -49,6 +51,7 @@ public class IntegrationEventTests : IAsyncLifetime
                 { "ASPNETCORE_ENVIRONMENT", "Testing" }
             })
             .Build();
+#pragma warning restore CS0618
 
         _encryptionService = new EncryptionService(configuration);
 
@@ -189,3 +192,7 @@ public class IntegrationEventTests : IAsyncLifetime
         public bool HasPermission(string permission) => true; // Admin has all permissions in tests
     }
 }
+
+
+
+
