@@ -12,7 +12,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// HR personnel employee lifecycle management (User Story 2)
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/hr")]
 [RequirePermission(EmployeePermissions.ProfilesCreate)]
 public class HRController : ControllerBase

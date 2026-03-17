@@ -16,7 +16,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// User Story 12 - Reporting, Analytics and Bulk Operations
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/bulk")]
 [Authorize]
 public class BulkOperationsController : ControllerBase

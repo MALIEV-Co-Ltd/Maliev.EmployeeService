@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Supports operations for viewing direct reports and organizational structures.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/managers")]
 [Authorize]
 public class ManagersController : ControllerBase

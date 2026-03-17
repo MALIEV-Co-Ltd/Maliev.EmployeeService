@@ -12,7 +12,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Organizational reporting and analytics
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/reports")]
 [Authorize]
 public class ReportsController : ControllerBase

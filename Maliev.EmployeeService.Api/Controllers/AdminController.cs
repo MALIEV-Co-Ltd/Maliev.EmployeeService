@@ -10,7 +10,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Administrative endpoints for system monitoring and management
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/admin")]
 [RequirePermission(EmployeePermissions.AdminBackgroundJobs)]
 public class AdminController : ControllerBase

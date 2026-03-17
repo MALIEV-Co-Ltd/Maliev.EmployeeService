@@ -13,7 +13,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Controller for high-level HR analytics and summaries.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/analytics")]
 [Authorize]
 public class AnalyticsController : ControllerBase

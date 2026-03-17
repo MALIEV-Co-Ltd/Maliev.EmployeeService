@@ -17,7 +17,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Supports operations for creating, updating, and viewing teams and their members.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/teams")]
 [Authorize]
 public class TeamsController : ControllerBase

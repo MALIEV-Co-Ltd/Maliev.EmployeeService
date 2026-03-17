@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Supports operations for retrieving employee profile information by different identifiers.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/employees")]
 [Authorize]
 public class EmployeesController : ControllerBase

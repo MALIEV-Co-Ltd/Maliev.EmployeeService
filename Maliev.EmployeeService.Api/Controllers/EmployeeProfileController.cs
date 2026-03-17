@@ -15,7 +15,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Supports operations for viewing and updating personal profile and emergency contacts.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/profile")]
 [Authorize]
 public class EmployeeProfileController : ControllerBase

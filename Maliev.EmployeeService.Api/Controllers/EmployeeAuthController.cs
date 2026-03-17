@@ -12,7 +12,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Used by IAM and Auth services during migration
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/auth")]
 public class EmployeeAuthController : ControllerBase
 {

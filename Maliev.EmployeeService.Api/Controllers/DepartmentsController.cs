@@ -14,7 +14,7 @@ namespace Maliev.EmployeeService.Api.Controllers;
 /// Supports operations for creating, updating, and viewing department hierarchies and capacity.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
+[ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/departments")]
 [Authorize]
 public class DepartmentsController : ControllerBase
