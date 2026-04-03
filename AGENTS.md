@@ -3,82 +3,112 @@
 This repository contains the `Maliev.EmployeeService`, a .NET 10 microservice following Clean Architecture principles.
 Use this guide to understand how to build, test, and contribute to the codebase.
 
-## 1. Build, Lint, and Test
+---
 
-### Build
-The project enforces `TreatWarningsAsErrors`, so the build process acts as a strict linter.
-```bash
-# Build the entire solution
+## Build, Test & Lint Commands
+
+All commands run from within this service directory (`B:\maliev\Maliev.EmployeeService`).
+
+```powershell
+# Build (treats warnings as errors — all must be fixed)
 dotnet build Maliev.EmployeeService.slnx
 
-# Build specific project
-dotnet build Maliev.EmployeeService.Api/Maliev.EmployeeService.Api.csproj
-```
-
-### Test
-The project uses **xUnit** with **Moq** and **Testcontainers**.
-```bash
 # Run all tests
-dotnet test Maliev.EmployeeService.slnx
+dotnet test Maliev.EmployeeService.slnx --verbosity normal
 
-# Run a single test (by fully qualified name)
-dotnet test --filter "FullyQualifiedName=Maliev.EmployeeService.Tests.Domain.EmployeeTests.ShouldCreateEmployee"
+# Run a single test method
+dotnet test --filter "FullyQualifiedName~EmployeeTests.ShouldCreateEmployee"
 
-# Run tests matching a display name
-dotnet test --filter "DisplayName~ShouldCreateEmployee"
+# Run all tests in a class
+dotnet test --filter "FullyQualifiedName~EmployeeTests"
+
+# Run with code coverage
+dotnet test Maliev.EmployeeService.slnx --collect:"XPlat Code Coverage"
+
+# Format check
+dotnet format Maliev.EmployeeService.slnx
+
+# EF Core migrations (Infrastructure project only)
+dotnet ef migrations add <Name> --project Maliev.EmployeeService.Infrastructure --startup-project Maliev.EmployeeService.Infrastructure
 ```
 
-### Linting & Formatting
-*   Code style is enforced via compiler warnings treated as errors.
-*   Ensure all code compiles without warnings before submitting.
-*   Standard C# formatting rules apply (suggest running `dotnet format` if unsure, though not explicitly configured in CI yet).
+---
 
-## 2. Code Style & Conventions
+## Code Style & Conventions
 
-### General
-*   **Framework:** .NET 10.0
-*   **Language Version:** Latest (C# 13/14 equivalent).
-*   **Nullable Reference Types:** Enabled (`<Nullable>enable</Nullable>`). Handle nullability explicitly.
-*   **Implicit Usings:** Enabled.
+### Workspace Structure
+```
+Maliev.EmployeeService/
+├── Maliev.EmployeeService.Api/           # Controllers, Consumers, Middleware
+├── Maliev.EmployeeService.Application/   # Use cases, DTOs, Interfaces, Handlers
+├── Maliev.EmployeeService.Domain/        # Entities, value objects, domain interfaces
+├── Maliev.EmployeeService.Infrastructure/ # EF Core DbContext, repositories, HTTP clients
+├── Maliev.EmployeeService.Tests/         # Unit + Integration tests (xUnit)
+├── Directory.Build.props                 # Central package versioning
+└── Maliev.EmployeeService.slnx          # Solution file (.slnx preferred over .sln)
+```
 
-### Formatting
-*   **Namespaces:** Use **file-scoped namespaces** (`namespace Maliev.EmployeeService.Api.Controllers;`).
-*   **Braces:** Use Allman style (braces on new lines).
-*   **Indentation:** 4 spaces.
-*   **Line Length:** Aim for < 120 characters where possible.
+### C# Naming & Formatting
+- **Namespaces**: File-scoped (`namespace Maliev.EmployeeService.Api.Controllers;`)
+- **Classes/Methods/Properties**: `PascalCase`
+- **Private fields**: `_camelCase` (underscore prefix)
+- **Parameters/locals**: `camelCase`
+- **Async methods**: Suffix with `Async` (e.g., `GetByIdAsync`)
+- **Interfaces**: Prefix with `I` (e.g., `IRepository`)
+- **Permissions**: GCP-style `{domain}.{plural-resource}.{action}` as `public const string` in a `Permissions` static class
+  - Valid: `employee.employees.create`, `employee.departments.update`
+  - Invalid: `employee.employee.create` (singular), `employee.create` (missing resource)
+- **XML docs**: Required on ALL public methods and properties
+- **Nullable**: Enabled (`<Nullable>enable</Nullable>`). Use `?` explicitly
+- **Imports**: System first, then third-party, then local. Alphabetize within groups. Remove unused `using`
+- **Braces**: Allman style (new line) for methods and control structures. Expression-bodied for properties/accessors
+- **Indentation**: 4 spaces, LF line endings, UTF-8, trim trailing whitespace
 
-### Naming Conventions
-*   **Classes/Methods/Properties:** PascalCase (`DepartmentController`, `GetAllDepartments`).
-*   **Local Variables/Parameters:** camelCase (`departmentId`, `createDto`).
-*   **Private Fields:** _camelCase (`_departmentRepository`, `_logger`).
-*   **Async Methods:** Suffix with `Async` (`HandleAsync`, `GetByIdAsync`).
-*   **Interfaces:** Prefix with I (`IRepository`).
+### C# Patterns
+- **DI**: Constructor injection with `private readonly` fields
+- **Controllers**: `[ApiController]`, `[ApiVersion("1")]`, `[Route("employee/v{version:apiVersion}")]`
+- **Logging**: `ILogger<T>` with structured placeholders (never interpolate): `_logger.LogInformation("Processing {DepartmentId}", departmentId)`
+- **Error handling**: Global exception middleware. Return `ProblemDetails` / `ErrorResponse` DTOs. Never expose stack traces
+- **Manual mapping**: Static extension methods (`ToDto()`, `ToEntity()`). AutoMapper is banned
+- **Validation**: `System.ComponentModel.DataAnnotations` on DTOs. FluentValidation is banned
 
-### Architecture & Patterns
-*   **Clean Architecture:**
-    *   `Api`: Controllers, Entry point.
-    *   `Application`: Business logic, Commands, Queries, DTOs, Interfaces.
-    *   `Domain`: Entities, Value Objects, Domain Logic (Pure C#).
-    *   `Infrastructure`: Data access, External services implementations.
-*   **CQRS-like Handlers:**
-    *   Handlers are injected directly into Controllers (e.g., `CreateDepartmentCommandHandler`), not via `IMediator`.
-    *   Command/Query segregation is encouraged.
-*   **API Versioning:** Use `[ApiVersion("1.0")]` on Controllers.
-*   **Entities:** Rich Domain Models. Use logic inside entities where possible.
+### Service-Specific Architecture & Patterns
+- **Clean Architecture Layers:**
+  - `Api`: Controllers, Entry point.
+  - `Application`: Business logic, Commands, Queries, DTOs, Interfaces.
+  - `Domain`: Entities, Value Objects, Domain Logic (Pure C#).
+  - `Infrastructure`: Data access, External services implementations.
+- **CQRS-like Handlers:**
+  - Handlers are injected directly into Controllers (e.g., `CreateDepartmentCommandHandler`), not via `IMediator`.
+  - Command/Query segregation is encouraged.
+- **Entities:** Rich Domain Models. Use logic inside entities where possible.
+- **Result Pattern:** Prefer returning a Result object (e.g., `Result.Success` or `Result.Failure`) for business logic failures rather than throwing exceptions.
+  - Controllers map Result objects to HTTP status codes (`Ok`, `BadRequest`, `NotFound`).
+  - Exceptions are reserved for unexpected system errors or critical validation failures.
 
-### Error Handling
-*   **Result Pattern:** Prefer returning a Result object (e.g., `Result.Success` or `Result.Failure`) for business logic failures rather than throwing exceptions.
-*   **Controllers:** Map Result objects to HTTP status codes (`Ok`, `BadRequest`, `NotFound`).
-*   **Exceptions:** Reserve for unexpected system errors or critical validation failures (e.g., `ArgumentNullException` in constructors).
+---
 
-### Documentation
-*   **Public APIs:** Use XML documentation (`/// <summary>`) for Controllers and DTOs.
-*   **Comments:** Sparse. Explain *why*, not *what*. Code should be self-documenting.
+## Banned Libraries (Build Will Fail)
 
-### Imports (Usings)
-*   Place `using` directives at the top of the file.
-*   Remove unused usings.
-*   Sort alphabetically (System.* first is common but not strictly enforced if consistent).
+| Banned | Use Instead |
+|--------|-------------|
+| AutoMapper | Manual mapping extensions |
+| FluentValidation | DataAnnotations or manual validation |
+| FluentAssertions | Standard xUnit `Assert.*` |
+| Swashbuckle/Swagger | Scalar (at `/employee/scalar`) |
+| InMemoryDatabase (EF Core) | Testcontainers with real PostgreSQL |
+
+---
+
+## Testing Rules
+
+- **Framework**: xUnit with standard `Assert` (`Assert.Equal`, `Assert.NotNull`, etc.)
+- **Naming**: `MethodName_StateUnderTest_ExpectedBehavior` or `HTTP_METHOD_Path_Scenario_ExpectedStatus`
+- **Coverage**: Minimum 80% per service
+- **Integration tests**: `BaseIntegrationTestFactory<TProgram, TDbContext>` with Testcontainers (PostgreSQL, Redis, RabbitMQ). Never InMemoryDatabase
+- **System tests** (Tier 3): `AspireTestFixture` with `[Collection("AspireDomainTests")]` — shared AppHost, never one per class
+- **Eventual consistency**: Use `TestHelpers.WaitForAsync`. Never `Task.Delay`
+- **MassTransit consumers**: Must have consumer tests using `AddMassTransitTestHarness()`
 
 ### Testing Strategy (4-Tier Pyramid Context)
 
@@ -91,45 +121,29 @@ This service's tests cover **Tier 1 (Unit)** and **Tier 2 (Service Integration)*
 
 **Tier 3 (System Integration)** — cross-service workflows and event chains — is tested in `Maliev.Aspire.Tests/`.
 
-#### Key Rules
-- Use `BaseIntegrationTestFactory<TProgram, TDbContext>` for integration tests (real Testcontainers, never InMemoryDatabase)
-- Test naming: `MethodName_StateUnderTest_ExpectedBehavior`
-- Minimum 80% code coverage
-- Use `[Fact]` for single cases, `[Theory]` for parameterized tests
-
 > Full ecosystem test strategy: `Maliev.Aspire.Tests/TEST_PLAN.md`
 
-## 3. Agent Behavioral Guidelines
+---
 
-*   **Safety First:** Always run tests (`dotnet test`) after making changes.
-*   **Incremental Changes:** Verify existing functionality before adding new features.
-*   **Proactive Fixes:** If you see a warning, fix it. The build will fail otherwise.
-*   **Context Awareness:** Read related files (e.g., the Controller when modifying a Handler) to ensure interface consistency.
-*   **No "Magic":** Do not assume libraries like AutoMapper or MediatR are configured unless you verify them. Use manual mapping if explicit mappers are not found.
+## Mandatory Rules
 
-
-## Git & Version Control — Mandatory Rules
-
-### 🚨 CRITICAL: Always Commit Code Changes (Non-Negotiable)
-- **You MUST commit your changes to the local repository after completing any meaningful unit of work.**
-- **Never accumulate uncommitted changes.** Do not wait until end of session or until something breaks.
-- **Commit early and often** — if a change is meaningful (even a small fix or refactor), commit it.
-- **You do NOT need to push to remote** — local commits are sufficient to protect against accidental loss.
-- **If you are unsure whether to commit, commit anyway.** Extra commits are harmless; lost work is irreversible.
-- This rule applies even if you are just "testing" or "exploring" — use git branches to isolate experimental work and commit those changes too.
-
-### 🚨 CRITICAL: Never Use `git checkout` to Restore Broken Files
-- **NEVER use `git checkout` to restore or recover files.** This operation discards uncommitted changes permanently and will result in data loss.
-- **To undo/recover from broken files: first commit your current changes, then use `git revert` or `git reset --soft` to safely undo.**
-
-## Database & EF Core — Mandatory Rules
+- **`TreatWarningsAsErrors = true`**: Zero warnings allowed. No suppression
+- **`[RequirePermission("domain.resources.action")]`**: On all endpoints, not plain `[Authorize]`
+- **API versioning**: All routes versioned (`v1/`)
+- **Service prefix**: Routes prefixed with service domain (e.g., `/employee`)
+- **Scalar docs**: Configured at `/employee/scalar`
+- **Secrets**: Never hardcoded. Use GCP Secret Manager or environment variables
+- **Async/await**: All the way down. Pass `CancellationToken`
+- **EF Core Design package**: Only in Infrastructure project, never in Api
+- **PostgreSQL xmin**: Shadow property only — `entity.Property<uint>("xmin").HasColumnType("xid").IsRowVersion()`. Never add entity property
+- **Temporary files**: Generate in `/temp` folder, clean up afterwards
 
 ### EF Core Design Package
-- ❌ `Microsoft.EntityFrameworkCore.Design` MUST NOT be in Api projects
-- ✅ It belongs ONLY in the Infrastructure (or Data) project where migrations live
-- Migration commands must target Infrastructure as both project and startup-project (since EF Core Design package is in Infrastructure):
+- `Microsoft.EntityFrameworkCore.Design` MUST NOT be in Api projects
+- It belongs ONLY in the Infrastructure project where migrations live
+- Migration commands must target Infrastructure as both project and startup-project:
   ```
-  dotnet ef migrations add <Name> --project Maliev.<Domain>Service.Infrastructure --startup-project Maliev.<Domain>Service.Infrastructure
+  dotnet ef migrations add <Name> --project Maliev.EmployeeService.Infrastructure --startup-project Maliev.EmployeeService.Infrastructure
   ```
 
 ### PostgreSQL xmin Concurrency — Mandatory Pattern
@@ -137,6 +151,25 @@ Use shadow property ONLY. Never add a Xmin/xmin property to domain entities.
 ```csharp
 entity.Property<uint>("xmin").HasColumnType("xid").IsRowVersion();
 ```
-- ❌ Never use `UseXminAsConcurrencyToken()` (removed in Npgsql EF v7)
-- ❌ Never use entity property `public uint Xmin { get; set; }` or `public uint xmin { get; set; }`
-- ❌ Never use `.Ignore(e => e.Xmin)` — remove the entity property instead
+- Never use `UseXminAsConcurrencyToken()` (removed in Npgsql EF v7)
+- Never use entity property `public uint Xmin { get; set; }` or `public uint xmin { get; set; }`
+- Never use `.Ignore(e => e.Xmin)` — remove the entity property instead
+
+---
+
+## Git Rules
+
+- Each `Maliev.*` folder is an independent git repo. `cd` into it before git commands
+- **Commit early and often** after every meaningful unit of work. Do not accumulate changes
+- **Never use `git checkout` to restore files** — commit first, then `git revert` or `git reset --soft`
+- Feature branches merged to `develop` via PR. Do not push without being asked
+
+---
+
+## Agent Behavioral Guidelines
+
+- **Safety First:** Always run tests (`dotnet test`) after making changes.
+- **Incremental Changes:** Verify existing functionality before adding new features.
+- **Proactive Fixes:** If you see a warning, fix it. The build will fail otherwise.
+- **Context Awareness:** Read related files (e.g., the Controller when modifying a Handler) to ensure interface consistency.
+- **No "Magic":** Do not assume libraries like AutoMapper or MediatR are configured unless you verify them. Use manual mapping if explicit mappers are not found.
