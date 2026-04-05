@@ -17,7 +17,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/employees")]
-[Authorize]
 public class EmployeesController : ControllerBase
 {
     private readonly IEmployeeRepository _employeeRepository;

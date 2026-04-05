@@ -17,7 +17,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/managers")]
-[Authorize]
 public class ManagersController : ControllerBase
 {
     private readonly GetTeamQueryHandler _getTeamHandler;

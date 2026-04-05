@@ -18,7 +18,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/bulk")]
-[Authorize]
 public class BulkOperationsController : ControllerBase
 {
     private readonly ExportEmployeesQueryHandler _exportHandler;

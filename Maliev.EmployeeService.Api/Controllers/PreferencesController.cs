@@ -16,7 +16,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/preferences")]
-[Authorize]
 public class PreferencesController : ControllerBase
 {
     private readonly EmployeeDbContext _context;

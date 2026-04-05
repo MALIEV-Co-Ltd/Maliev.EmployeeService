@@ -14,7 +14,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/reports")]
-[Authorize]
 public class ReportsController : ControllerBase
 {
     private readonly GetHeadcountReportQueryHandler _headcountHandler;

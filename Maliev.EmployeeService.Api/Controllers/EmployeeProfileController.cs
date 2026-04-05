@@ -17,7 +17,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/profile")]
-[Authorize]
 public class EmployeeProfileController : ControllerBase
 {
     private readonly GetEmployeeProfileQueryHandler _getProfileHandler;

@@ -14,7 +14,6 @@ namespace Maliev.EmployeeService.Api.Controllers;
 [ApiController]
 [ApiVersion("1")]
 [Route("employee/v{version:apiVersion}/metrics")]
-[Authorize]
 public class MetricsController : ControllerBase
 {
     private readonly IEmployeeRepository _employeeRepository;
