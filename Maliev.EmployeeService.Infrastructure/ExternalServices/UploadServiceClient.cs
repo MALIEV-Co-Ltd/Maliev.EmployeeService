@@ -1,7 +1,9 @@
 using Maliev.EmployeeService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Maliev.EmployeeService.Infrastructure.ExternalServices;
 
@@ -38,15 +40,47 @@ public class UploadServiceClient : IUploadServiceClient
         {
             _logger.LogInformation("Uploading file {FileName} to Upload Service", fileName);
 
-            using var content = new MultipartFormDataContent();
+            if (!fileStream.CanSeek)
+            {
+                throw new InvalidOperationException("Direct GCS uploads require a seekable stream.");
+            }
+
+            var storagePath = $"employees/{Guid.NewGuid():N}/{fileName}";
+            var initiateRequest = new InitiateResumableUploadRequest(
+                Path: storagePath,
+                FileName: fileName,
+                ServiceName: "EmployeeService",
+                ContentType: contentType,
+                TotalSize: fileStream.Length,
+                Overwrite: false);
+
+            var initiateResponse = await _httpClient.PostAsJsonAsync(
+                "/upload/v1/uploads/resumable",
+                initiateRequest,
+                cancellationToken);
+            initiateResponse.EnsureSuccessStatusCode();
+
+            var session = await initiateResponse.Content.ReadFromJsonAsync<InitiateResumableUploadResponse>(
+                cancellationToken: cancellationToken)
+                ?? throw new InvalidOperationException("Upload Service returned null resumable session");
+
+            fileStream.Position = 0;
+            using var gcsClient = new HttpClient();
             using var streamContent = new StreamContent(fileStream);
             streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-            content.Add(streamContent, "file", fileName);
+            streamContent.Headers.ContentLength = fileStream.Length;
+            streamContent.Headers.ContentRange = new ContentRangeHeaderValue(0, fileStream.Length - 1, fileStream.Length);
 
-            var response = await _httpClient.PostAsync("/uploads/v1", content, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            var gcsResponse = await gcsClient.PutAsync(session.SessionUri, streamContent, cancellationToken);
+            gcsResponse.EnsureSuccessStatusCode();
 
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            var completeResponse = await _httpClient.PostAsJsonAsync(
+                $"/upload/v1/uploads/resumable/{session.UploadId}/complete",
+                new { },
+                cancellationToken);
+            completeResponse.EnsureSuccessStatusCode();
+
+            var responseBody = await completeResponse.Content.ReadAsStringAsync(cancellationToken);
             var result = JsonSerializer.Deserialize<UploadServiceResponse>(responseBody, _jsonOptions);
 
             if (result == null)
@@ -182,7 +216,24 @@ public class UploadServiceClient : IUploadServiceClient
     private class UploadServiceResponse
     {
         public string StoragePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("fileSize")]
         public long FileSizeBytes { get; set; }
+
         public string ContentType { get; set; } = string.Empty;
     }
+
+    private sealed record InitiateResumableUploadRequest(
+        string Path,
+        string FileName,
+        string ServiceName,
+        string ContentType,
+        long TotalSize,
+        bool Overwrite);
+
+    private sealed record InitiateResumableUploadResponse(
+        string UploadId,
+        string SessionUri,
+        DateTime ExpiresAt,
+        long TotalSize);
 }
