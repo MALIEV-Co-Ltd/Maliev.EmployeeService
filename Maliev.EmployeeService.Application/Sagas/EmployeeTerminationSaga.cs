@@ -3,7 +3,7 @@ using Maliev.MessagingContracts.Contracts.Compensation;
 using Maliev.MessagingContracts.Contracts.Employee;
 using Maliev.MessagingContracts.Contracts.Leave;
 using Maliev.MessagingContracts.Contracts.Lifecycle;
-using Maliev.MessagingContracts;
+using Maliev.MessagingContracts.Contracts.Shared;
 using MassTransit;
 
 namespace Maliev.EmployeeService.Application.Sagas;
@@ -90,7 +90,7 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
                 {
                     // Undo Step 1 (Leave Balance Closure)
                 })
-                .Publish(context => new UndoCloseLeaveBalanceCommand { EmployeeId = context.Saga.EmployeeId })
+                .Publish(context => CreateUndoCloseLeaveBalanceCommand(context.Saga.EmployeeId))
                 .TransitionTo(Faulted),
 
             When(AccessRevocationFaulted)
@@ -98,8 +98,8 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
                 {
                     // Undo Step 2 (Compensation Archival) and Step 1
                 })
-                .Publish(context => new UndoArchiveCompensationCommand { EmployeeId = context.Saga.EmployeeId })
-                .Publish(context => new UndoCloseLeaveBalanceCommand { EmployeeId = context.Saga.EmployeeId })
+                .Publish(context => CreateUndoArchiveCompensationCommand(context.Saga.EmployeeId))
+                .Publish(context => CreateUndoCloseLeaveBalanceCommand(context.Saga.EmployeeId))
                 .TransitionTo(Faulted)
         );
     }
@@ -117,13 +117,41 @@ public class EmployeeTerminationSaga : MassTransitStateMachine<EmployeeTerminati
     public State Processing { get; private set; } = null!;
     public State Completed { get; private set; } = null!;
     public State Faulted { get; private set; } = null!;
+
+    private static UndoArchiveCompensationCommand CreateUndoArchiveCompensationCommand(Guid employeeId)
+    {
+        return new UndoArchiveCompensationCommand(
+            MessageId: Guid.NewGuid(),
+            MessageName: nameof(UndoArchiveCompensationCommand),
+            MessageType: MessageType.Command,
+            MessageVersion: "1.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: ["CompensationService"],
+            CorrelationId: employeeId,
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: new UndoArchiveCompensationCommandPayload(employeeId));
+    }
+
+    private static UndoCloseLeaveBalanceCommand CreateUndoCloseLeaveBalanceCommand(Guid employeeId)
+    {
+        return new UndoCloseLeaveBalanceCommand(
+            MessageId: Guid.NewGuid(),
+            MessageName: nameof(UndoCloseLeaveBalanceCommand),
+            MessageType: MessageType.Command,
+            MessageVersion: "1.0",
+            PublishedBy: "EmployeeService",
+            ConsumedBy: ["LeaveService"],
+            CorrelationId: employeeId,
+            CausationId: null,
+            OccurredAtUtc: DateTimeOffset.UtcNow,
+            IsPublic: false,
+            Payload: new UndoCloseLeaveBalanceCommandPayload(employeeId));
+    }
 }
 
 // Internal command definitions for the Saga orchestration (compensation commands)
 public class CloseLeaveBalanceCommand { public Guid EmployeeId { get; set; } public DateTime TerminationDate { get; set; } }
 public class ArchiveCompensationCommand { public Guid EmployeeId { get; set; } }
 public class RevokeAccessCommand { public Guid EmployeeId { get; set; } }
-
-public class UndoCloseLeaveBalanceCommand { public Guid EmployeeId { get; set; } }
-public class UndoArchiveCompensationCommand { public Guid EmployeeId { get; set; } }
-public class UndoRevokeAccessCommand { public Guid EmployeeId { get; set; } }
