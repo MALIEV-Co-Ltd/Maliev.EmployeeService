@@ -28,8 +28,8 @@ public class HRControllerTests : WebApplicationTestBase
             WorkEmail = "hr.specialist@maliev.com",
             DepartmentId = department.Id,
             EmploymentType = EmploymentType.FullTime,
-            StartDate = DateTime.UtcNow,
-            DateOfBirth = DateTime.UtcNow.AddYears(-35),
+            StartDate = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Unspecified),
+            DateOfBirth = new DateTime(1990, 1, 1),
             NationalId = "1234567890123",
             JobTitle = "Senior HR",
             Nationality = "Thai"

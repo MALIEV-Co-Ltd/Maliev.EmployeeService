@@ -167,8 +167,12 @@ public class CreateEmployeeCommandHandler
             }
         }
 
+        var dateOfBirth = NormalizeUtcDateTime(dto.DateOfBirth);
+        var startDate = NormalizeUtcDateTime(dto.StartDate);
+        var probationEndDate = NormalizeUtcDateTime(dto.ProbationEndDate);
+
         // Validate start date
-        if (dto.StartDate > DateTime.UtcNow.AddYears(1))
+        if (startDate > DateTime.UtcNow.AddYears(1))
         {
             return new CreateEmployeeCommandResult(
                 false,
@@ -177,9 +181,9 @@ public class CreateEmployeeCommandHandler
         }
 
         // Validate probation end date if provided
-        if (dto.ProbationEndDate.HasValue)
+        if (probationEndDate.HasValue)
         {
-            if (dto.ProbationEndDate.Value <= dto.StartDate)
+            if (probationEndDate.Value <= startDate)
             {
                 return new CreateEmployeeCommandResult(
                     false,
@@ -187,7 +191,7 @@ public class CreateEmployeeCommandHandler
                     "Probation end date must be after start date");
             }
 
-            if (dto.ProbationEndDate.Value > dto.StartDate.AddDays(180))
+            if (probationEndDate.Value > startDate.AddDays(180))
             {
                 return new CreateEmployeeCommandResult(
                     false,
@@ -234,7 +238,7 @@ public class CreateEmployeeCommandHandler
                 MiddleName = dto.MiddleName
             },
             PreferredName = dto.PreferredName,
-            DateOfBirth = dto.DateOfBirth,
+            DateOfBirth = dateOfBirth,
             Nationality = dto.Nationality,
             ContactInformation = new ContactInformation
             {
@@ -248,8 +252,8 @@ public class CreateEmployeeCommandHandler
             DepartmentId = dto.DepartmentId,
             ManagerId = dto.ManagerId,
             WorkLocation = dto.WorkLocation,
-            StartDate = dto.StartDate,
-            ProbationEndDate = dto.ProbationEndDate,
+            StartDate = startDate,
+            ProbationEndDate = probationEndDate,
             NationalId = dto.NationalId, // Will be encrypted by interceptor
             JobApplicationId = dto.JobApplicationId,
             CreatedBy = _currentUserService.PrincipalId,
@@ -324,5 +328,20 @@ public class CreateEmployeeCommandHandler
         }
 
         return new CreateEmployeeCommandResult(true, employee.Id, null);
+    }
+
+    private static DateTime NormalizeUtcDateTime(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
+
+    private static DateTime? NormalizeUtcDateTime(DateTime? value)
+    {
+        return value.HasValue ? NormalizeUtcDateTime(value.Value) : null;
     }
 }
