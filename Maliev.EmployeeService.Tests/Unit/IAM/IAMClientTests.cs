@@ -42,7 +42,7 @@ public class IAMClientTests : IDisposable
             PrincipalId = Guid.NewGuid()
         };
 
-        _mockHandler.SetupResponse("/iam/v1/service-accounts/users", HttpStatusCode.OK, expectedResponse);
+        _mockHandler.SetupResponse("/iam/v1/principals", HttpStatusCode.OK, expectedResponse);
 
         // Act
         var result = await _client.CreatePrincipalAsync(request);
@@ -57,7 +57,7 @@ public class IAMClientTests : IDisposable
     {
         // Arrange
         var request = new CreatePrincipalRequest { Email = "test@example.com" };
-        _mockHandler.SetupResponse("/iam/v1/service-accounts/users", HttpStatusCode.InternalServerError);
+        _mockHandler.SetupResponse("/iam/v1/principals", HttpStatusCode.InternalServerError);
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() => _client.CreatePrincipalAsync(request));
