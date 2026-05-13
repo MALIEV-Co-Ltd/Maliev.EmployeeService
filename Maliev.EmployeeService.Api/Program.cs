@@ -164,7 +164,7 @@ try
     // HTTP Clients for External Services
     builder.AddServiceClient<ICareerServiceClient, CareerServiceClient>("CareerService");
     builder.AddServiceClient<IUploadServiceClient, UploadServiceClient>("UploadService");
-    builder.AddServiceClient<IIAMClient, IAMClient>("IAM");
+    builder.AddAuthenticatedServiceClient<IIAMClient, IAMClient>("IAMService", "employee");
 
     // Authorization
     builder.Services.AddPermissionAuthorization();
