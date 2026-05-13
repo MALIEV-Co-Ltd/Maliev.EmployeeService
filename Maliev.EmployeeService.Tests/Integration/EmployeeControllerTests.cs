@@ -1,9 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
-using Maliev.EmployeeService.Application.Commands;
 using Maliev.EmployeeService.Application.DTOs;
-using Maliev.EmployeeService.Domain.Entities;
 using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.EmployeeService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -118,15 +117,8 @@ public class EmployeeControllerTests : WebApplicationTestBase
     {
         // Arrange
         var email = "new.auto@maliev.com";
-        var command = new AutoProvisionEmployeeCommand
-        (
-            Email: email,
-            FirstName: "Auto",
-            LastName: "Provisioned",
-            PictureUrl: null
-        );
 
-        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" }, new[] { EmployeePermissions.ProfilesCreate });
+        AuthenticateAs(Guid.NewGuid(), new[] { "roles.employee.hr-generalist" }, new[] { EmployeePermissions.ProvisioningCreate });
 
         // Act
         var request = new { email = email, first_name = "Auto", last_name = "Provisioned" };
@@ -137,5 +129,19 @@ public class EmployeeControllerTests : WebApplicationTestBase
         var result = await response.Content.ReadFromJsonAsync<AutoProvisionEmployeeDto>();
         Assert.NotNull(result);
         Assert.Equal(email, result!.Email);
+    }
+
+    [Fact]
+    public async Task AutoProvision_AnonymousRequest_ReturnsUnauthorized()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Authorization = null;
+        var request = new { email = "anonymous.auto@maliev.com", first_name = "Anonymous", last_name = "Caller" };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/employee/v1/employees/auto-provision", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }

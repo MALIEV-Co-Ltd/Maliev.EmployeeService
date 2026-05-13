@@ -214,7 +214,10 @@ public class EmployeesController : ControllerBase
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The newly created employee data.</returns>
     [HttpPost("auto-provision")]
+    [RequirePermission(EmployeePermissions.ProvisioningCreate)]
     [ProducesResponseType(typeof(AutoProvisionEmployeeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AutoProvision([FromBody] AutoProvisionEmployeeCommand command, CancellationToken cancellationToken)
     {

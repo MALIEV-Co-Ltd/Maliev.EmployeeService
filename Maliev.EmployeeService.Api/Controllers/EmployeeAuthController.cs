@@ -1,5 +1,7 @@
 using Asp.Versioning;
+using Maliev.Aspire.ServiceDefaults.Authorization;
 using Maliev.EmployeeService.Api.Models;
+using Maliev.EmployeeService.Domain.Authorization;
 using Maliev.EmployeeService.Infrastructure.Data;
 using Maliev.EmployeeService.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +41,10 @@ public class EmployeeAuthController : ControllerBase
     /// <param name="request">Credential request</param>
     /// <returns>Validation result with principal identity</returns>
     [HttpPost("validate")]
+    [RequirePermission(EmployeePermissions.CredentialsValidate)]
     [ProducesResponseType(typeof(CredentialValidationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ValidateCredentials([FromBody] ValidateCredentialsRequest request)
     {
         var employee = await _context.Employees
