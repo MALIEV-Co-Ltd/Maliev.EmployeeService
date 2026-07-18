@@ -1,7 +1,6 @@
-name: Validate - Develop
+name: Pull Request Validation
 on:
-  push:
-    branches: [develop]
+  pull_request:
 permissions:
   contents: read
 jobs:
