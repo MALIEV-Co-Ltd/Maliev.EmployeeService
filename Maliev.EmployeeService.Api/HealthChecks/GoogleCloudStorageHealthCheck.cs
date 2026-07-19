@@ -1,0 +1,115 @@
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
+namespace Maliev.EmployeeService.Api.HealthChecks;
+
+/// <summary>
+/// Health check that verifies Google Cloud Storage connectivity via Upload Service
+/// Phase 16 - T398: Integration health checks
+/// </summary>
+public class GoogleCloudStorageHealthCheck : IHealthCheck
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<GoogleCloudStorageHealthCheck> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GoogleCloudStorageHealthCheck"/> class
+    /// </summary>
+    /// <param name="httpClientFactory">The HTTP client factory</param>
+    /// <param name="configuration">The configuration instance</param>
+    /// <param name="logger">The logger instance</param>
+    public GoogleCloudStorageHealthCheck(
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ILogger<GoogleCloudStorageHealthCheck> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Checks the health of the Google Cloud Storage connection
+    /// </summary>
+    /// <param name="context">The health check context</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the health check result</returns>
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Use Service Discovery URI
+            var uploadServiceUrl = "http://maliev-uploadservice-api";
+
+            // Create HTTP client with timeout
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(5);
+
+            // Attempt to call the upload service health endpoint
+            var healthEndpoint = $"{uploadServiceUrl}/health";
+            var response = await httpClient.GetAsync(healthEndpoint, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return HealthCheckResult.Healthy(
+                    "Google Cloud Storage (via Upload Service) is healthy",
+                    data: new Dictionary<string, object>
+                    {
+                        ["status"] = "healthy",
+                        ["upload_service_status"] = (int)response.StatusCode,
+                        ["upload_service_url"] = uploadServiceUrl
+                    });
+            }
+
+            return HealthCheckResult.Degraded(
+                $"Upload Service returned non-success status: {response.StatusCode}",
+                data: new Dictionary<string, object>
+                {
+                    ["status"] = "degraded",
+                    ["upload_service_status"] = (int)response.StatusCode,
+                    ["upload_service_url"] = uploadServiceUrl
+                });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Upload Service health check failed - service may be unavailable");
+
+            return HealthCheckResult.Unhealthy(
+                "Cannot reach Upload Service (Google Cloud Storage)",
+                ex,
+                data: new Dictionary<string, object>
+                {
+                    ["status"] = "unreachable",
+                    ["error"] = ex.Message
+                });
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Upload Service health check timed out");
+
+            return HealthCheckResult.Unhealthy(
+                "Upload Service health check timed out",
+                ex,
+                data: new Dictionary<string, object>
+                {
+                    ["status"] = "timeout",
+                    ["error"] = "Health check timed out after 5 seconds"
+                });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Google Cloud Storage health check failed");
+
+            return HealthCheckResult.Unhealthy(
+                "Google Cloud Storage health check failed with exception",
+                ex,
+                data: new Dictionary<string, object>
+                {
+                    ["status"] = "exception",
+                    ["error"] = ex.Message
+                });
+        }
+    }
+}

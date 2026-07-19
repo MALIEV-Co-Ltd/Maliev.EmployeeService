@@ -1,0 +1,355 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: employee-service-alerts
+  namespace: maliev-dev
+  labels:
+    app: maliev-employee-service
+    prometheus: kube-prometheus
+spec:
+  groups:
+    - name: employee-service-api-alerts
+      interval: 30s
+      rules:
+        # Alert: High Error Rate (>5%)
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_received_total{job="maliev-employee-service",code=~"[45].."}[5m]))
+              /
+              sum(rate(http_requests_received_total{job="maliev-employee-service"}[5m]))
+            ) * 100 > 5
+          for: 2m
+          labels:
+            severity: critical
+            component: api
+            service: employee-service
+          annotations:
+            summary: "High error rate detected in Employee Service"
+            description: "Error rate is {{ $value | humanize }}% (threshold: 5%). Check logs for details."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-error-rate"
+
+        # Alert: Critical Error Rate (>10%)
+        - alert: CriticalErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_received_total{job="maliev-employee-service",code=~"[45].."}[5m]))
+              /
+              sum(rate(http_requests_received_total{job="maliev-employee-service"}[5m]))
+            ) * 100 > 10
+          for: 1m
+          labels:
+            severity: critical
+            component: api
+            service: employee-service
+            page: "true"
+          annotations:
+            summary: "CRITICAL: Very high error rate in Employee Service"
+            description: "Error rate is {{ $value | humanize }}% (threshold: 10%). Immediate action required!"
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#critical-error-rate"
+
+        # Alert: High 5xx Error Rate (>2%)
+        - alert: High5xxErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_received_total{job="maliev-employee-service",code=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_received_total{job="maliev-employee-service"}[5m]))
+            ) * 100 > 2
+          for: 2m
+          labels:
+            severity: critical
+            component: api
+            service: employee-service
+          annotations:
+            summary: "High 5xx server error rate in Employee Service"
+            description: "5xx error rate is {{ $value | humanize }}% (threshold: 2%). Indicates server-side issues."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-5xx-errors"
+
+        # Alert: Slow API Response Time (p95 > 1s)
+        - alert: SlowApiResponseTime
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{job="maliev-employee-service"}[5m])) by (le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            component: api
+            service: employee-service
+          annotations:
+            summary: "Slow API response time in Employee Service"
+            description: "p95 response time is {{ $value | humanize }}s (threshold: 1s). Performance degradation detected."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#slow-response-time"
+
+        # Alert: Very Slow API Response Time (p95 > 3s)
+        - alert: VerySlowApiResponseTime
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{job="maliev-employee-service"}[5m])) by (le)
+            ) > 3
+          for: 2m
+          labels:
+            severity: critical
+            component: api
+            service: employee-service
+            page: "true"
+          annotations:
+            summary: "CRITICAL: Very slow API response time in Employee Service"
+            description: "p95 response time is {{ $value | humanize }}s (threshold: 3s). Severe performance issue!"
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#very-slow-response-time"
+
+        # Alert: High Request Rate (possible DDoS)
+        - alert: UnusuallyHighRequestRate
+          expr: |
+            sum(rate(http_requests_received_total{job="maliev-employee-service"}[5m])) > 1000
+          for: 5m
+          labels:
+            severity: warning
+            component: api
+            service: employee-service
+          annotations:
+            summary: "Unusually high request rate in Employee Service"
+            description: "Request rate is {{ $value | humanize }} req/s. Possible DDoS or traffic spike."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-request-rate"
+
+    - name: employee-service-database-alerts
+      interval: 30s
+      rules:
+        # Alert: Slow Database Queries (p95 > 500ms)
+        - alert: SlowDatabaseQueries
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(efcore_query_duration_seconds_bucket{job="maliev-employee-service"}[5m])) by (le)
+            ) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            component: database
+            service: employee-service
+          annotations:
+            summary: "Slow database queries in Employee Service"
+            description: "p95 query time is {{ $value | humanize }}s (threshold: 500ms). Database performance degraded."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#slow-database-queries"
+
+        # Alert: Very Slow Database Queries (p95 > 2s)
+        - alert: VerySlowDatabaseQueries
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(efcore_query_duration_seconds_bucket{job="maliev-employee-service"}[5m])) by (le)
+            ) > 2
+          for: 2m
+          labels:
+            severity: critical
+            component: database
+            service: employee-service
+          annotations:
+            summary: "CRITICAL: Very slow database queries in Employee Service"
+            description: "p95 query time is {{ $value | humanize }}s (threshold: 2s). Database severely degraded!"
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#very-slow-database-queries"
+
+        # Alert: High Connection Pool Utilization (>80%)
+        - alert: HighConnectionPoolUtilization
+          expr: |
+            (
+              npgsql_connection_pool_in_use{job="maliev-employee-service"}
+              /
+              npgsql_connection_pool_max{job="maliev-employee-service"}
+            ) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            component: database
+            service: employee-service
+          annotations:
+            summary: "High database connection pool utilization"
+            description: "Connection pool is {{ $value | humanize }}% utilized (threshold: 80%). May need to increase pool size."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-connection-pool-utilization"
+
+        # Alert: Connection Pool Exhausted (>95%)
+        - alert: ConnectionPoolExhausted
+          expr: |
+            (
+              npgsql_connection_pool_in_use{job="maliev-employee-service"}
+              /
+              npgsql_connection_pool_max{job="maliev-employee-service"}
+            ) * 100 > 95
+          for: 2m
+          labels:
+            severity: critical
+            component: database
+            service: employee-service
+            page: "true"
+          annotations:
+            summary: "CRITICAL: Database connection pool nearly exhausted"
+            description: "Connection pool is {{ $value | humanize }}% utilized (threshold: 95%). Connection exhaustion imminent!"
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#connection-pool-exhausted"
+
+        # Alert: High Database Query Rate
+        - alert: HighDatabaseQueryRate
+          expr: |
+            sum(rate(efcore_queries_total{job="maliev-employee-service"}[5m])) > 1000
+          for: 10m
+          labels:
+            severity: info
+            component: database
+            service: employee-service
+          annotations:
+            summary: "High database query rate in Employee Service"
+            description: "Query rate is {{ $value | humanize }} queries/s. Monitor for performance impact."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-query-rate"
+
+        # Alert: Optimistic Concurrency Failures
+        - alert: HighOptimisticConcurrencyFailures
+          expr: |
+            sum(rate(efcore_optimistic_concurrency_failures_total{job="maliev-employee-service"}[5m])) > 5
+          for: 5m
+          labels:
+            severity: warning
+            component: database
+            service: employee-service
+          annotations:
+            summary: "High rate of optimistic concurrency failures"
+            description: "Concurrency failure rate is {{ $value | humanize }}/s. Multiple users updating same data."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-concurrency-failures"
+
+    - name: employee-service-integration-alerts
+      interval: 30s
+      rules:
+        # Alert: RabbitMQ Publishing Failures
+        - alert: RabbitMQPublishingFailures
+          expr: |
+            sum(rate(rabbitmq_publish_failures_total{job="maliev-employee-service"}[5m])) > 0
+          for: 2m
+          labels:
+            severity: warning
+            component: integration
+            service: employee-service
+          annotations:
+            summary: "RabbitMQ publishing failures in Employee Service"
+            description: "RabbitMQ publish failure rate is {{ $value | humanize }}/s. Integration events not being published."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#rabbitmq-publish-failures"
+
+        # Alert: RabbitMQ Circuit Breaker Open
+        - alert: RabbitMQCircuitBreakerOpen
+          expr: |
+            rabbitmq_circuit_breaker_state{job="maliev-employee-service"} == 1
+          for: 1m
+          labels:
+            severity: critical
+            component: integration
+            service: employee-service
+          annotations:
+            summary: "RabbitMQ circuit breaker is OPEN"
+            description: "Circuit breaker for RabbitMQ is open. Publishing suspended due to repeated failures."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#rabbitmq-circuit-breaker-open"
+
+        # Alert: Redis Connection Failures
+        - alert: RedisConnectionFailures
+          expr: |
+            sum(rate(redis_connection_failures_total{job="maliev-employee-service"}[5m])) > 0
+          for: 2m
+          labels:
+            severity: warning
+            component: integration
+            service: employee-service
+          annotations:
+            summary: "Redis connection failures in Employee Service"
+            description: "Redis connection failure rate is {{ $value | humanize }}/s. Caching may be degraded."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#redis-connection-failures"
+
+        # Alert: Health Check Failures
+        - alert: HealthCheckFailure
+          expr: |
+            up{job="maliev-employee-service"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            component: health
+            service: employee-service
+            page: "true"
+          annotations:
+            summary: "CRITICAL: Employee Service is DOWN"
+            description: "Service health check failed. Service may be unreachable or crashed."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#service-down"
+
+        # Alert: Database Health Check Failed
+        - alert: DatabaseHealthCheckFailed
+          expr: |
+            health_check_status{job="maliev-employee-service",check="database"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            component: health
+            service: employee-service
+          annotations:
+            summary: "Database health check failed"
+            description: "Cannot connect to PostgreSQL database. Service degraded."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#database-health-check-failed"
+
+    - name: employee-service-resource-alerts
+      interval: 30s
+      rules:
+        # Alert: High Memory Usage
+        - alert: HighMemoryUsage
+          expr: |
+            (
+              container_memory_working_set_bytes{pod=~"maliev-employee-service-.*"}
+              /
+              container_spec_memory_limit_bytes{pod=~"maliev-employee-service-.*"}
+            ) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            component: resources
+            service: employee-service
+          annotations:
+            summary: "High memory usage in Employee Service pod"
+            description: "Memory usage is {{ $value | humanize }}% (threshold: 80%). May need to increase memory limits."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-memory-usage"
+
+        # Alert: High CPU Usage
+        - alert: HighCPUUsage
+          expr: |
+            (
+              rate(container_cpu_usage_seconds_total{pod=~"maliev-employee-service-.*"}[5m])
+              /
+              container_spec_cpu_quota{pod=~"maliev-employee-service-.*"}
+            ) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            component: resources
+            service: employee-service
+          annotations:
+            summary: "High CPU usage in Employee Service pod"
+            description: "CPU usage is {{ $value | humanize }}% (threshold: 80%). May need to increase CPU limits or scale horizontally."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#high-cpu-usage"
+
+        # Alert: Pod Restarts
+        - alert: FrequentPodRestarts
+          expr: |
+            rate(kube_pod_container_status_restarts_total{pod=~"maliev-employee-service-.*"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+            component: infrastructure
+            service: employee-service
+          annotations:
+            summary: "Frequent pod restarts detected"
+            description: "Pod {{ $labels.pod }} is restarting frequently. Check logs for crash reasons."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#frequent-pod-restarts"
+
+        # Alert: Pod Not Ready
+        - alert: PodNotReady
+          expr: |
+            kube_pod_status_ready{pod=~"maliev-employee-service-.*",condition="false"} == 1
+          for: 5m
+          labels:
+            severity: critical
+            component: infrastructure
+            service: employee-service
+          annotations:
+            summary: "Pod not ready"
+            description: "Pod {{ $labels.pod }} has been not ready for 5 minutes. Check readiness probe."
+            runbook_url: "https://github.com/MALIEV-Co-Ltd/maliev-employee-service/wiki/Runbooks#pod-not-ready"

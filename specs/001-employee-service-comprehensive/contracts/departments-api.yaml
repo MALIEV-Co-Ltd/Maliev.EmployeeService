@@ -1,0 +1,647 @@
+openapi: 3.0.3
+info:
+  title: Employee Service - Department Management API
+  description: |
+    API for managing organizational structure including departments, hierarchies,
+    and reporting relationships.
+  version: 1.0.0
+  contact:
+    name: Maliev Co. Ltd. - HR Technology Team
+    email: hr-tech@maliev.com
+
+servers:
+  - url: https://api.maliev.com/employees/v1
+    description: Production
+  - url: https://staging.api.maliev.com/employees/v1
+    description: Staging
+  - url: http://localhost:8080/employees/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /departments:
+    get:
+      summary: List all departments
+      description: |
+        Retrieve all departments with optional tree structure showing hierarchy.
+        All authenticated users can view departments.
+      operationId: listDepartments
+      tags:
+        - Departments
+      parameters:
+        - name: includeHierarchy
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include parent/child relationships in response
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Filter to active departments only
+      responses:
+        '200':
+          description: Departments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DepartmentDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Create new department
+      description: |
+        Create a new department. Only HR specialists can perform this operation.
+      operationId: createDepartment
+      tags:
+        - Departments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDepartmentCommand'
+      responses:
+        '201':
+          description: Department created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflict - Department code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /departments/{id}:
+    get:
+      summary: Get department details
+      description: |
+        Retrieve detailed information about a specific department including
+        employee count, budget, and hierarchy position.
+      operationId: getDepartment
+      tags:
+        - Departments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Department unique identifier
+      responses:
+        '200':
+          description: Department retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentDetailDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Update department
+      description: |
+        Update department information. Only HR specialists can perform this operation.
+        Validates that hierarchy changes don't create circular references.
+      operationId: updateDepartment
+      tags:
+        - Departments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Department unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDepartmentCommand'
+      responses:
+        '200':
+          description: Department updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentDto'
+        '400':
+          description: Validation failed (circular hierarchy, invalid department head, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Delete department
+      description: |
+        Delete a department. Only allowed if no active employees are assigned.
+        Soft delete operation - department marked as inactive.
+      operationId: deleteDepartment
+      tags:
+        - Departments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Department unique identifier
+      responses:
+        '204':
+          description: Department deleted successfully
+        '400':
+          description: Cannot delete - active employees still assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /departments/{id}/employees:
+    get:
+      summary: Get department employees
+      description: |
+        Retrieve all employees assigned to a specific department.
+        Optionally include employees from child departments.
+      operationId: getDepartmentEmployees
+      tags:
+        - Departments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Department unique identifier
+        - name: includeChildDepartments
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include employees from child departments
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Filter to active employees only
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Department employees retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeSearchResultDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /departments/{id}/hierarchy:
+    get:
+      summary: Get department hierarchy
+      description: |
+        Retrieve the complete hierarchy path for a department showing all ancestors and descendants.
+      operationId: getDepartmentHierarchy
+      tags:
+        - Departments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Department unique identifier
+      responses:
+        '200':
+          description: Department hierarchy retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentHierarchyDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /managers/team:
+    get:
+      summary: Get manager's team
+      description: |
+        Retrieve all direct and indirect reports for the authenticated manager.
+        Returns hierarchical team structure.
+      operationId: getManagerTeam
+      tags:
+        - Manager Operations
+      parameters:
+        - name: includeIndirectReports
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include indirect reports (reports of direct reports)
+      responses:
+        '200':
+          description: Team retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagerTeamDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User is not a manager
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Maliev Auth Service
+
+  schemas:
+    DepartmentDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        departmentCode:
+          type: string
+          example: "ENG"
+        departmentName:
+          type: string
+          example: "Engineering"
+        parentDepartmentId:
+          type: string
+          format: uuid
+          nullable: true
+        parentDepartmentName:
+          type: string
+          nullable: true
+        departmentHead:
+          $ref: '#/components/schemas/EmployeeSummaryDto'
+          nullable: true
+        costCenter:
+          type: string
+          example: "CC-1001"
+          nullable: true
+        budgetAllocation:
+          type: number
+          format: decimal
+          example: 5000000.00
+          nullable: true
+        headcountLimit:
+          type: integer
+          example: 50
+          nullable: true
+        currentHeadcount:
+          type: integer
+          example: 42
+        isActive:
+          type: boolean
+        childDepartments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartmentDto'
+          description: Child departments (only included if includeHierarchy=true)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - departmentCode
+        - departmentName
+        - isActive
+        - currentHeadcount
+
+    DepartmentDetailDto:
+      allOf:
+        - $ref: '#/components/schemas/DepartmentDto'
+        - type: object
+          properties:
+            employeeSummary:
+              type: object
+              properties:
+                totalEmployees:
+                  type: integer
+                activeEmployees:
+                  type: integer
+                onLeaveEmployees:
+                  type: integer
+                pendingStartEmployees:
+                  type: integer
+            hierarchyPath:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  level:
+                    type: integer
+              description: Full path from root to this department
+
+    CreateDepartmentCommand:
+      type: object
+      properties:
+        departmentCode:
+          type: string
+          minLength: 2
+          maxLength: 20
+          example: "ENG"
+        departmentName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "Engineering"
+        parentDepartmentId:
+          type: string
+          format: uuid
+          nullable: true
+        departmentHeadId:
+          type: string
+          format: uuid
+          nullable: true
+        costCenter:
+          type: string
+          maxLength: 50
+          nullable: true
+        budgetAllocation:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+        headcountLimit:
+          type: integer
+          minimum: 0
+          nullable: true
+      required:
+        - departmentCode
+        - departmentName
+
+    UpdateDepartmentCommand:
+      type: object
+      properties:
+        departmentName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          nullable: true
+        parentDepartmentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Set to null to make root department
+        departmentHeadId:
+          type: string
+          format: uuid
+          nullable: true
+        costCenter:
+          type: string
+          maxLength: 50
+          nullable: true
+        budgetAllocation:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+        headcountLimit:
+          type: integer
+          minimum: 0
+          nullable: true
+        isActive:
+          type: boolean
+          nullable: true
+
+    DepartmentHierarchyDto:
+      type: object
+      properties:
+        department:
+          $ref: '#/components/schemas/DepartmentDto'
+        ancestors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              depth:
+                type: integer
+          description: All ancestor departments (parents, grandparents, etc.)
+        descendants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              depth:
+                type: integer
+          description: All descendant departments (children, grandchildren, etc.)
+
+    ManagerTeamDto:
+      type: object
+      properties:
+        manager:
+          $ref: '#/components/schemas/EmployeeSummaryDto'
+        directReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMemberDto'
+        totalTeamSize:
+          type: integer
+          description: Total direct + indirect reports
+        spanOfControl:
+          type: integer
+          description: Number of direct reports
+
+    TeamMemberDto:
+      type: object
+      properties:
+        employee:
+          $ref: '#/components/schemas/EmployeeSummaryDto'
+        isDirectReport:
+          type: boolean
+        reportingLevel:
+          type: integer
+          description: 1 = direct report, 2 = report of direct report, etc.
+        directReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMemberDto'
+          description: Nested team structure
+
+    EmployeeSummaryDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+        fullName:
+          type: string
+        jobTitle:
+          type: string
+        department:
+          type: string
+        employmentStatus:
+          type: string
+        email:
+          type: string
+
+    EmployeeSearchResultDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeSummaryDto'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "ValidationError"
+        message:
+          type: string
+          example: "Circular hierarchy detected"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+  responses:
+    BadRequest:
+      description: Bad request - validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: Conflict - concurrency conflict or duplicate resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
