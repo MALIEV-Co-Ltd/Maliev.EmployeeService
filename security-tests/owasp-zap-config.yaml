@@ -1,0 +1,124 @@
+# OWASP ZAP Automation Framework Configuration
+# For Employee Service Security Testing
+
+env:
+  contexts:
+    - name: "Employee Service"
+      urls:
+        - "http://localhost:8080/employeeservice"
+      includePaths:
+        - "http://localhost:8080/employeeservice/.*"
+      excludePaths:
+        - "http://localhost:8080/employeeservice/swagger/.*"
+      authentication:
+        method: "bearer"
+        parameters:
+          token: "${JWT_TOKEN}"
+      sessionManagement:
+        method: "cookie"
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 10
+      scanOnlyInScope: true
+
+  - type: spider
+    parameters:
+      context: "Employee Service"
+      maxDuration: 10
+      maxDepth: 5
+      maxChildren: 10
+      acceptCookies: true
+      handleODataParametersVisited: false
+      parseComments: true
+      parseRobotsTxt: true
+      parseSitemapXml: false
+      parseSVNEntries: false
+      parseGit: false
+      postForm: true
+      processForm: true
+      requestWaitTime: 200
+      sendRefererHeader: true
+      subtreeOnly: false
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: activeScan
+    parameters:
+      context: "Employee Service"
+      policy: "API-Scan"
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 30
+      addQueryParam: false
+      defaultPolicy: "Default Policy"
+      delayInMs: 0
+      handleAntiCSRFTokens: true
+      injectPluginIdInHeader: false
+      scanHeadersAllRequests: true
+      threadPerHost: 2
+
+  - type: report
+    parameters:
+      template: "traditional-html"
+      reportDir: "./security-reports"
+      reportFile: "zap-report-${TIMESTAMP}"
+      reportTitle: "OWASP ZAP Security Report - Employee Service"
+      reportDescription: "Security test results for Maliev Employee Service"
+      displayReport: false
+
+  - type: report
+    parameters:
+      template: "traditional-json"
+      reportDir: "./security-reports"
+      reportFile: "zap-report-${TIMESTAMP}.json"
+
+# Alert filters for known false positives
+alertFilters:
+  - ruleId: 10021 # X-Content-Type-Options header missing
+    newRisk: "Info"
+    url: "http://localhost:8080/employeeservice/swagger/.*"
+    urlRegex: true
+
+# Custom scan policy for API testing
+policies:
+  - name: "API-Scan"
+    defaultStrength: "Medium"
+    defaultThreshold: "Medium"
+    rules:
+      - id: 40012 # Cross-Site Scripting (Reflected)
+        strength: "High"
+        threshold: "Low"
+      - id: 40014 # Cross-Site Scripting (Persistent)
+        strength: "High"
+        threshold: "Low"
+      - id: 40018 # SQL Injection
+        strength: "High"
+        threshold: "Low"
+      - id: 90019 # Server Side Code Injection
+        strength: "High"
+        threshold: "Low"
+      - id: 90020 # Remote OS Command Injection
+        strength: "High"
+        threshold: "Low"
+      - id: 40003 # CRLF Injection
+        strength: "Medium"
+        threshold: "Medium"
+      - id: 10202 # Absence of Anti-CSRF Tokens
+        strength: "High"
+        threshold: "Low"
+      - id: 10023 # Information Disclosure - Debug Error Messages
+        strength: "Medium"
+        threshold: "Low"
+      - id: 10027 # Information Disclosure - Suspicious Comments
+        strength: "Low"
+        threshold: "Medium"
+      - id: 10105 # Weak Authentication Method
+        strength: "High"
+        threshold: "Low"
+      - id: 10096 # Timestamp Disclosure
+        strength: "Low"
+        threshold: "High"

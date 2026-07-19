@@ -1,0 +1,655 @@
+openapi: 3.0.3
+info:
+  title: Employee Service - Leave Management API
+  description: |
+    API for managing leave balances, leave requests, and approval workflows.
+    Supports employee leave request submission, manager approvals, and HR administration.
+  version: 1.0.0
+  contact:
+    name: Maliev Co. Ltd. - HR Technology Team
+    email: hr-tech@maliev.com
+
+servers:
+  - url: https://api.maliev.com/employees/v1
+    description: Production
+  - url: https://staging.api.maliev.com/employees/v1
+    description: Staging
+  - url: http://localhost:8080/employees/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /leave/balances/{employeeId}:
+    get:
+      summary: Get leave balances
+      description: |
+        Retrieve all leave balances for an employee showing accrued, used, pending, and available amounts.
+        Employees can view their own balances, managers can view direct reports, HR can view all.
+      operationId: getLeaveBalances
+      tags:
+        - Leave Balances
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+        - name: year
+          in: query
+          schema:
+            type: integer
+            example: 2025
+          description: Calendar year (defaults to current year)
+      responses:
+        '200':
+          description: Leave balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaveBalanceDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /leave/requests:
+    post:
+      summary: Submit leave request
+      description: |
+        Submit a new leave request. System validates sufficient balance, blackout periods,
+        and minimum notice requirements before routing to manager for approval.
+      operationId: submitLeaveRequest
+      tags:
+        - Leave Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitLeaveRequestCommand'
+      responses:
+        '201':
+          description: Leave request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestDto'
+        '400':
+          description: Validation failed (insufficient balance, blackout period, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: List leave requests
+      description: |
+        List leave requests with filtering and pagination.
+        Employees see their own requests, managers see team requests, HR sees all.
+      operationId: listLeaveRequests
+      tags:
+        - Leave Requests
+      parameters:
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by employee
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PendingApproval, Approved, Denied, Cancelled]
+          description: Filter by status
+        - name: startDateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter by start date range (from)
+        - name: startDateTo
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter by start date range (to)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Leave requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestSearchResultDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+  /leave/requests/{id}:
+    get:
+      summary: Get leave request details
+      description: Get detailed information about a specific leave request including approval history
+      operationId: getLeaveRequest
+      tags:
+        - Leave Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Leave request unique identifier
+      responses:
+        '200':
+          description: Leave request retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestDetailDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Cancel leave request
+      description: |
+        Cancel a leave request. Only allowed if status is PendingApproval.
+        Can be cancelled by employee or HR.
+      operationId: cancelLeaveRequest
+      tags:
+        - Leave Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Leave request unique identifier
+      responses:
+        '204':
+          description: Leave request cancelled successfully
+        '400':
+          description: Cannot cancel (already approved or denied)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /leave/requests/{id}/approve:
+    post:
+      summary: Approve leave request
+      description: |
+        Approve a leave request at the current approval level.
+        Only managers or HR specialists can approve.
+        If multi-level approval required, moves to next level.
+      operationId: approveLeaveRequest
+      tags:
+        - Leave Approvals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Leave request unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveLeaveRequestCommand'
+      responses:
+        '200':
+          description: Leave request approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestDetailDto'
+        '400':
+          description: Cannot approve (invalid state or not authorized approver)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /leave/requests/{id}/deny:
+    post:
+      summary: Deny leave request
+      description: |
+        Deny a leave request with required comments.
+        Only managers or HR specialists can deny.
+      operationId: denyLeaveRequest
+      tags:
+        - Leave Approvals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Leave request unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DenyLeaveRequestCommand'
+      responses:
+        '200':
+          description: Leave request denied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequestDetailDto'
+        '400':
+          description: Cannot deny (invalid state or not authorized approver)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /leave/policies:
+    get:
+      summary: Get leave policies
+      description: |
+        Retrieve leave policies including accrual rates, carryover limits,
+        minimum notice requirements, and blackout periods.
+      operationId: getLeavePolicies
+      tags:
+        - Leave Policies
+      responses:
+        '200':
+          description: Leave policies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeavePolicyDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Maliev Auth Service
+
+  schemas:
+    LeaveBalanceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        leaveType:
+          type: string
+          enum: [AnnualLeave, SickLeave, ParentalLeave, UnpaidLeave]
+        accruedAmount:
+          type: number
+          format: decimal
+          example: 15.0
+          description: Total accrued days
+        usedAmount:
+          type: number
+          format: decimal
+          example: 5.0
+          description: Total used days
+        pendingAmount:
+          type: number
+          format: decimal
+          example: 2.0
+          description: Days in pending requests
+        availableAmount:
+          type: number
+          format: decimal
+          example: 8.0
+          description: Available for new requests (accrued - used - pending)
+        accrualRate:
+          type: number
+          format: decimal
+          example: 1.25
+          description: Days accrued per period
+        carryoverLimit:
+          type: number
+          format: decimal
+          example: 5.0
+          nullable: true
+          description: Max days to carry to next year
+        expirationDate:
+          type: string
+          format: date
+          nullable: true
+          description: When unused balance expires
+        year:
+          type: integer
+          example: 2025
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - employeeId
+        - leaveType
+        - accruedAmount
+        - usedAmount
+        - pendingAmount
+        - availableAmount
+        - year
+
+    SubmitLeaveRequestCommand:
+      type: object
+      properties:
+        leaveType:
+          type: string
+          enum: [AnnualLeave, SickLeave, ParentalLeave, UnpaidLeave]
+        startDate:
+          type: string
+          format: date
+          example: "2025-11-15"
+        endDate:
+          type: string
+          format: date
+          example: "2025-11-19"
+        reason:
+          type: string
+          maxLength: 1000
+          example: "Family vacation"
+          nullable: true
+      required:
+        - leaveType
+        - startDate
+        - endDate
+
+    LeaveRequestDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        employeeName:
+          type: string
+        leaveType:
+          type: string
+          enum: [AnnualLeave, SickLeave, ParentalLeave, UnpaidLeave]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalDays:
+          type: number
+          format: decimal
+          example: 5.0
+        reason:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [PendingApproval, Approved, Denied, Cancelled]
+        submittedAt:
+          type: string
+          format: date-time
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvalLevel:
+          type: integer
+          description: Current approval stage
+        requiredApprovalLevels:
+          type: integer
+          description: Total approval stages needed
+      required:
+        - id
+        - employeeId
+        - employeeName
+        - leaveType
+        - startDate
+        - endDate
+        - totalDays
+        - status
+        - submittedAt
+
+    LeaveRequestDetailDto:
+      allOf:
+        - $ref: '#/components/schemas/LeaveRequestDto'
+        - type: object
+          properties:
+            approvals:
+              type: array
+              items:
+                $ref: '#/components/schemas/LeaveApprovalDto'
+              description: Approval history
+
+    LeaveApprovalDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        leaveRequestId:
+          type: string
+          format: uuid
+        approverId:
+          type: string
+          format: uuid
+        approverName:
+          type: string
+        approvalLevel:
+          type: integer
+          description: Stage in approval chain (1, 2, 3, etc.)
+        status:
+          type: string
+          enum: [Approved, Denied]
+        comments:
+          type: string
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - leaveRequestId
+        - approverId
+        - approverName
+        - approvalLevel
+        - status
+        - approvedAt
+
+    ApproveLeaveRequestCommand:
+      type: object
+      properties:
+        comments:
+          type: string
+          maxLength: 1000
+          nullable: true
+          example: "Approved. Ensure handover is complete."
+
+    DenyLeaveRequestCommand:
+      type: object
+      properties:
+        comments:
+          type: string
+          maxLength: 1000
+          example: "Denied due to business critical period."
+      required:
+        - comments
+
+    LeaveRequestSearchResultDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveRequestDto'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    LeavePolicyDto:
+      type: object
+      properties:
+        leaveType:
+          type: string
+          enum: [AnnualLeave, SickLeave, ParentalLeave, UnpaidLeave]
+        description:
+          type: string
+          example: "Annual leave accrual based on tenure"
+        accrualRate:
+          type: number
+          format: decimal
+          example: 1.25
+          description: Days accrued per period
+        accrualPeriod:
+          type: string
+          enum: [Monthly, Quarterly, Annually]
+        carryoverLimit:
+          type: number
+          format: decimal
+          nullable: true
+          description: Max days to carry to next year
+        minimumNoticeDays:
+          type: integer
+          example: 30
+          description: Minimum advance notice required
+        blackoutPeriods:
+          type: array
+          items:
+            type: object
+            properties:
+              startDate:
+                type: string
+                format: date
+              endDate:
+                type: string
+                format: date
+              reason:
+                type: string
+        requiresApproval:
+          type: boolean
+          default: true
+        maxConsecutiveDays:
+          type: integer
+          nullable: true
+          description: Maximum consecutive days allowed
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "ValidationError"
+        message:
+          type: string
+          example: "Insufficient leave balance"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

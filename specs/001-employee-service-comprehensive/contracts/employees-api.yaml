@@ -1,0 +1,753 @@
+openapi: 3.0.3
+info:
+  title: Employee Service - Employee Management API
+  description: |
+    API for managing employee profiles, emergency contacts, and personal information.
+    Supports employee self-service and HR administrative operations.
+  version: 1.0.0
+  contact:
+    name: Maliev Co. Ltd. - HR Technology Team
+    email: hr-tech@maliev.com
+
+servers:
+  - url: https://api.maliev.com/employees/v1
+    description: Production
+  - url: https://staging.api.maliev.com/employees/v1
+    description: Staging
+  - url: http://localhost:8080/employees/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /employees/{id}:
+    get:
+      summary: Get employee profile
+      description: |
+        Retrieve employee profile information. Employees can view their own profile,
+        managers can view direct reports, HR can view all employees.
+      operationId: getEmployeeProfile
+      tags:
+        - Employee Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+      responses:
+        '200':
+          description: Employee profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeProfileDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Update employee profile
+      description: |
+        Update employee profile information. HR can update all fields,
+        employees can only update specific fields (preferred name, personal contact).
+      operationId: updateEmployeeProfile
+      tags:
+        - Employee Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeCommand'
+      responses:
+        '200':
+          description: Employee profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeProfileDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      security:
+        - BearerAuth: []
+
+  /employees:
+    post:
+      summary: Create new employee
+      description: |
+        Create a new employee record. Only HR specialists can perform this operation.
+        Typically triggered automatically via CandidateAccepted event from Career Service.
+      operationId: createEmployee
+      tags:
+        - Employee Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeCommand'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeProfileDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflict - Employee number already exists
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: Search employees
+      description: |
+        Search and filter employees. Returns paginated results.
+        Managers see their team, HR sees all employees.
+      operationId: searchEmployees
+      tags:
+        - Employee Management
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name, employee number, or email
+        - name: departmentId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by department
+        - name: employmentStatus
+          in: query
+          schema:
+            type: string
+            enum: [PendingStart, Active, OnLeave, Suspended, Terminated]
+          description: Filter by employment status
+        - name: managerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by manager
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Page number
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: Items per page
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeSearchResultDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+  /employees/{id}/emergency-contacts:
+    get:
+      summary: List emergency contacts
+      description: Get all emergency contacts for an employee
+      operationId: getEmergencyContacts
+      tags:
+        - Emergency Contacts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+      responses:
+        '200':
+          description: Emergency contacts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmergencyContactDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Add emergency contact
+      description: Add a new emergency contact for an employee
+      operationId: addEmergencyContact
+      tags:
+        - Emergency Contacts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmergencyContactCommand'
+      responses:
+        '201':
+          description: Emergency contact added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmergencyContactDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+  /employees/{id}/emergency-contacts/{contactId}:
+    put:
+      summary: Update emergency contact
+      description: Update an existing emergency contact
+      operationId: updateEmergencyContact
+      tags:
+        - Emergency Contacts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Emergency contact unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmergencyContactCommand'
+      responses:
+        '200':
+          description: Emergency contact updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmergencyContactDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Delete emergency contact
+      description: Remove an emergency contact
+      operationId: deleteEmergencyContact
+      tags:
+        - Emergency Contacts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Employee unique identifier
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Emergency contact unique identifier
+      responses:
+        '204':
+          description: Emergency contact deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Maliev Auth Service
+
+  schemas:
+    EmployeeProfileDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+          example: "EMP-0501"
+        legalFirstName:
+          type: string
+          example: "Somchai"
+        legalLastName:
+          type: string
+          example: "Prasert"
+        legalMiddleName:
+          type: string
+          nullable: true
+        preferredName:
+          type: string
+          example: "Som"
+          nullable: true
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [Male, Female, Other, PreferNotToSay]
+          nullable: true
+        nationality:
+          type: string
+          example: "Thai"
+        employmentType:
+          type: string
+          enum: [FullTime, PartTime, Contractor, Intern, Consultant]
+        employmentStatus:
+          type: string
+          enum: [PendingStart, Active, OnLeave, Suspended, Terminated]
+        jobTitle:
+          type: string
+          example: "Software Engineer"
+        department:
+          $ref: '#/components/schemas/DepartmentSummaryDto'
+        manager:
+          $ref: '#/components/schemas/EmployeeSummaryDto'
+          nullable: true
+        workLocation:
+          type: string
+          example: "Bangkok Office"
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        probationEndDate:
+          type: string
+          format: date
+          nullable: true
+        contractEndDate:
+          type: string
+          format: date
+          nullable: true
+        terminationDate:
+          type: string
+          format: date
+          nullable: true
+        email:
+          type: string
+          format: email
+          example: "somchai@maliev.com"
+        phoneNumber:
+          type: string
+          example: "+66812345678"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - employeeNumber
+        - legalFirstName
+        - legalLastName
+        - dateOfBirth
+        - nationality
+        - employmentType
+        - employmentStatus
+        - jobTitle
+        - department
+        - startDate
+        - email
+
+    CreateEmployeeCommand:
+      type: object
+      properties:
+        employeeNumber:
+          type: string
+          example: "EMP-0501"
+        legalFirstName:
+          type: string
+          example: "Somchai"
+        legalLastName:
+          type: string
+          example: "Prasert"
+        legalMiddleName:
+          type: string
+          nullable: true
+        preferredName:
+          type: string
+          example: "Som"
+          nullable: true
+        thaiNationalId:
+          type: string
+          pattern: '^\d{13}$'
+          example: "1234567890123"
+          nullable: true
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [Male, Female, Other, PreferNotToSay]
+          nullable: true
+        nationality:
+          type: string
+          example: "Thai"
+        employmentType:
+          type: string
+          enum: [FullTime, PartTime, Contractor, Intern, Consultant]
+        jobTitle:
+          type: string
+          example: "Software Engineer"
+        departmentId:
+          type: string
+          format: uuid
+        managerId:
+          type: string
+          format: uuid
+          nullable: true
+        workLocationId:
+          type: string
+          format: uuid
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        probationEndDate:
+          type: string
+          format: date
+          nullable: true
+        email:
+          type: string
+          format: email
+          example: "somchai@maliev.com"
+        phoneNumber:
+          type: string
+          example: "+66812345678"
+          nullable: true
+      required:
+        - employeeNumber
+        - legalFirstName
+        - legalLastName
+        - dateOfBirth
+        - nationality
+        - employmentType
+        - jobTitle
+        - departmentId
+        - startDate
+        - email
+
+    UpdateEmployeeCommand:
+      type: object
+      properties:
+        preferredName:
+          type: string
+          nullable: true
+        jobTitle:
+          type: string
+          nullable: true
+        departmentId:
+          type: string
+          format: uuid
+          nullable: true
+        managerId:
+          type: string
+          format: uuid
+          nullable: true
+        employmentStatus:
+          type: string
+          enum: [PendingStart, Active, OnLeave, Suspended, Terminated]
+          nullable: true
+        phoneNumber:
+          type: string
+          nullable: true
+        terminationDate:
+          type: string
+          format: date
+          nullable: true
+        terminationReason:
+          type: string
+          enum: [Resignation, Termination, Retirement, ContractEnd, Other]
+          nullable: true
+      description: |
+        Employees can only update: preferredName, phoneNumber.
+        HR can update all fields.
+
+    EmployeeSearchResultDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeSummaryDto'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    EmployeeSummaryDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+        fullName:
+          type: string
+          example: "Somchai Prasert"
+        jobTitle:
+          type: string
+        department:
+          type: string
+        employmentStatus:
+          type: string
+        email:
+          type: string
+
+    DepartmentSummaryDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        departmentCode:
+          type: string
+        departmentName:
+          type: string
+
+    EmergencyContactDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        contactName:
+          type: string
+          example: "Nittaya Prasert"
+        relationship:
+          type: string
+          example: "Spouse"
+        primaryPhone:
+          type: string
+          example: "+66812345678"
+          nullable: true
+        secondaryPhone:
+          type: string
+          example: "+66898765432"
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        priority:
+          type: integer
+          minimum: 1
+          description: Contact priority (1 = primary, 2 = secondary, etc.)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - employeeId
+        - contactName
+        - relationship
+        - priority
+
+    CreateEmergencyContactCommand:
+      type: object
+      properties:
+        contactName:
+          type: string
+          example: "Nittaya Prasert"
+        relationship:
+          type: string
+          example: "Spouse"
+        primaryPhone:
+          type: string
+          example: "+66812345678"
+          nullable: true
+        secondaryPhone:
+          type: string
+          example: "+66898765432"
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        priority:
+          type: integer
+          minimum: 1
+          default: 1
+      required:
+        - contactName
+        - relationship
+
+    UpdateEmergencyContactCommand:
+      type: object
+      properties:
+        contactName:
+          type: string
+          nullable: true
+        relationship:
+          type: string
+          nullable: true
+        primaryPhone:
+          type: string
+          nullable: true
+        secondaryPhone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        priority:
+          type: integer
+          minimum: 1
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "ValidationError"
+        message:
+          type: string
+          example: "Employee number already exists"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+  responses:
+    BadRequest:
+      description: Bad request - validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: Conflict - concurrency conflict or duplicate resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

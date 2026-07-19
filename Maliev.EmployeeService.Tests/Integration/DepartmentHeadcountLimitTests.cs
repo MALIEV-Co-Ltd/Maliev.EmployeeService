@@ -1,0 +1,282 @@
+using Maliev.EmployeeService.Application.Commands;
+using Maliev.EmployeeService.Domain.Entities;
+using Maliev.EmployeeService.Domain.Enums;
+using Maliev.EmployeeService.Domain.ValueObjects;
+using Maliev.EmployeeService.Infrastructure.Data;
+using Maliev.EmployeeService.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Moq;
+using Maliev.EmployeeService.Application.Interfaces;
+using Maliev.EmployeeService.Domain.Authorization;
+using Maliev.Aspire.ServiceDefaults.IAM;
+using Xunit;
+
+namespace Maliev.EmployeeService.Tests.Integration;
+
+/// <summary>
+/// Integration tests for department headcount limit warnings and enforcement (User Story 5)
+/// </summary>
+[Collection("IntegrationTests")]
+public class DepartmentHeadcountLimitTests : PostgreSqlIntegrationTestBase
+{
+    private DepartmentRepository _departmentRepository = null!;
+    private EmployeeRepository _employeeRepository = null!;
+    private UnitOfWork _unitOfWork = null!;
+    private UpdateDepartmentCommandHandler _handler = null!;
+
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+
+        _departmentRepository = new DepartmentRepository(Context);
+        _employeeRepository = new EmployeeRepository(Context);
+        _unitOfWork = new UnitOfWork(Context);
+
+        var mockIamClient = new Mock<IIamServiceClient>();
+        mockIamClient.Setup(x => x.CheckPermissionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var mockConfiguration = new Mock<IConfiguration>();
+        var mockCurrentUserService = new Mock<ICurrentUserService>();
+        var principalId = Guid.NewGuid();
+        mockCurrentUserService.Setup(x => x.PrincipalId).Returns(principalId);
+        mockCurrentUserService.Setup(x => x.PrincipalIdentifier).Returns(principalId.ToString());
+
+        _handler = new UpdateDepartmentCommandHandler(
+            _departmentRepository,
+            _employeeRepository,
+            _unitOfWork,
+            mockIamClient.Object,
+            mockConfiguration.Object,
+            mockCurrentUserService.Object);
+    }
+
+    [Fact]
+    public async Task UpdateDepartment_HeadcountLimitAt80Percent_ShouldWarn()
+    {
+        // Arrange
+        var department = new Department
+        {
+            Id = Guid.NewGuid(),
+            Name = "Engineering",
+            HeadcountLimit = 10,
+            IsActive = true,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        Context.Departments.Add(department);
+
+        // Add 8 employees (80% capacity)
+        for (int i = 0; i < 8; i++)
+        {
+            Context.Employees.Add(CreateTestEmployee($"EMP{i:D3}", department.Id));
+        }
+
+        await Context.SaveChangesAsync();
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = department.Id,
+            Name = "Engineering",
+            HeadcountLimit = 10,
+            IsActive = true
+        };
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("80.0% capacity", result.Warnings[0]);
+        Assert.Contains("8/10", result.Warnings[0]);
+    }
+
+    [Fact]
+    public async Task UpdateDepartment_HeadcountLimitAt95Percent_ShouldWarn()
+    {
+        // Arrange
+        var department = new Department
+        {
+            Id = Guid.NewGuid(),
+            Name = "Engineering",
+            HeadcountLimit = 20,
+            IsActive = true,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        Context.Departments.Add(department);
+
+        // Add 19 employees (95% capacity)
+        for (int i = 0; i < 19; i++)
+        {
+            Context.Employees.Add(CreateTestEmployee($"EMP{i:D3}", department.Id));
+        }
+
+        await Context.SaveChangesAsync();
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = department.Id,
+            Name = "Engineering",
+            HeadcountLimit = 20,
+            IsActive = true
+        };
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("95.0% capacity", result.Warnings[0]);
+        Assert.Contains("19/20", result.Warnings[0]);
+    }
+
+    [Fact]
+    public async Task UpdateDepartment_HeadcountLimitAt100Percent_ShouldWarn()
+    {
+        // Arrange
+        var department = new Department
+        {
+            Id = Guid.NewGuid(),
+            Name = "Engineering",
+            HeadcountLimit = 15,
+            IsActive = true,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        Context.Departments.Add(department);
+
+        // Add 15 employees (100% capacity)
+        for (int i = 0; i < 15; i++)
+        {
+            Context.Employees.Add(CreateTestEmployee($"EMP{i:D3}", department.Id));
+        }
+
+        await Context.SaveChangesAsync();
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = department.Id,
+            Name = "Engineering",
+            HeadcountLimit = 15,
+            IsActive = true
+        };
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Single(result.Warnings);
+        Assert.Contains("100.0% capacity", result.Warnings[0]);
+        Assert.Contains("15/15", result.Warnings[0]);
+    }
+
+    [Fact]
+    public async Task UpdateDepartment_ReduceHeadcountLimitBelowCurrent_ShouldPrevent()
+    {
+        // Arrange
+        var department = new Department
+        {
+            Id = Guid.NewGuid(),
+            Name = "Engineering",
+            HeadcountLimit = 20,
+            IsActive = true,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        Context.Departments.Add(department);
+
+        // Add 15 employees
+        for (int i = 0; i < 15; i++)
+        {
+            Context.Employees.Add(CreateTestEmployee($"EMP{i:D3}", department.Id));
+        }
+
+        await Context.SaveChangesAsync();
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = department.Id,
+            Name = "Engineering",
+            HeadcountLimit = 10, // Trying to reduce below current 15
+            IsActive = true
+        };
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("Cannot set headcount limit (10) below current headcount (15)", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task UpdateDepartment_HeadcountLimitBelow80Percent_NoWarning()
+    {
+        // Arrange
+        var department = new Department
+        {
+            Id = Guid.NewGuid(),
+            Name = "Engineering",
+            HeadcountLimit = 20,
+            IsActive = true,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        Context.Departments.Add(department);
+
+        // Add 10 employees (50% capacity)
+        for (int i = 0; i < 10; i++)
+        {
+            Context.Employees.Add(CreateTestEmployee($"EMP{i:D3}", department.Id));
+        }
+
+        await Context.SaveChangesAsync();
+
+        var command = new UpdateDepartmentCommand
+        {
+            DepartmentId = department.Id,
+            Name = "Engineering",
+            HeadcountLimit = 20,
+            IsActive = true
+        };
+
+        // Act
+        var result = await _handler.HandleAsync(command);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Empty(result.Warnings);
+    }
+
+    /// <summary>
+    /// Helper method to create a test employee
+    /// </summary>
+    private Employee CreateTestEmployee(string employeeNumber, Guid departmentId)
+    {
+        return new Employee
+        {
+            Id = Guid.NewGuid(),
+            PrincipalId = Guid.NewGuid(),
+            EmployeeNumber = employeeNumber,
+            LegalName = new LegalName
+            {
+                FirstName = $"First{employeeNumber}",
+                LastName = $"Last{employeeNumber}"
+            },
+            ContactInformation = new ContactInformation
+            {
+                WorkEmail = $"{employeeNumber}@company.com"
+            },
+            EmploymentStatus = EmploymentStatus.Active,
+            EmploymentType = EmploymentType.FullTime,
+            DepartmentId = departmentId,
+            StartDate = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow
+        };
+    }
+}
