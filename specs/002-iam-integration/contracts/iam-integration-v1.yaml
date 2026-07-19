@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: EmployeeService IAM Integration API
+  description: API for managing the principal-first identity migration.
+  version: 1.0.0
+paths:
+  /employee/v1/employees/by-principal/{principalId}:
+    get:
+      summary: Get employee profile by IAM Principal ID
+      tags:
+        - Employee
+      parameters:
+        - name: principalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeProfileResponse'
+        '404':
+          description: Employee not found
+  /employee/v1/auth/validate:
+    post:
+      summary: Validate employee credentials (Legacy -> Principal fallback)
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCredentialsRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialValidationResponse'
+components:
+  schemas:
+    EmployeeProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        principalId:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+    ValidateCredentialsRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    CredentialValidationResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+        principalId:
+          type: string
+          format: uuid
+          description: Returns IAM principalId. Falls back to legacy userId if PrincipalId is null.
+        email:
+          type: string
+        name:
+          type: string

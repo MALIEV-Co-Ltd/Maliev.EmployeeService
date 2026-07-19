@@ -1,9 +1,17 @@
 name: Validate - Develop
+
 on:
   push:
-    branches: [develop]
+    branches:
+      - develop
+
 permissions:
   contents: read
+
 jobs:
-  validate:
-    uses: ./.github/workflows/_validate.yml
+  build-and-test:
+    uses: ./.github/workflows/_build-and-test.yml
+    with:
+      solution_file: Maliev.EmployeeService.slnx
+    secrets:
+      gitops_pat: ${{ secrets.GITOPS_PAT }}
