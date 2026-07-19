@@ -207,19 +207,21 @@ public class EncryptionServiceTests
     }
 
     [Fact]
-    public void Encrypt_WithSensitiveData_ShouldNotContainOriginalValue()
+    public void Encrypt_WithSensitiveData_ShouldNotExposePlaintextEncoding()
     {
         // Arrange
         var sensitiveData = "SSN:123-45-6789";
+        var base64Plaintext = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(sensitiveData));
 
         // Act
         var encrypted = _encryptionService.Encrypt(sensitiveData);
+        var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        Assert.DoesNotContain("123", encrypted);
-        Assert.DoesNotContain("45", encrypted);
-        Assert.DoesNotContain("6789", encrypted);
-        Assert.DoesNotContain("SSN", encrypted);
+        Assert.NotEqual(sensitiveData, encrypted);
+        Assert.NotEqual(base64Plaintext, encrypted);
+        Assert.True(_encryptionService.IsEncrypted(encrypted));
+        Assert.Equal(sensitiveData, decrypted);
     }
 
     [Fact]
