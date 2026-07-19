@@ -2,6 +2,30 @@ namespace Maliev.EmployeeService.Tests.WorkflowContracts;
 
 public class PullRequestWorkflowContractTests
 {
+    [Theory]
+    [InlineData("ci-develop.yml")]
+    [InlineData("ci-staging.yml")]
+    [InlineData("ci-main.yml")]
+    public void BranchPushWorkflow_IsValidationOnly(string workflowName)
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var workflow = File.ReadAllText(
+            Path.Combine(repositoryRoot, ".github", "workflows", workflowName));
+
+        Assert.Contains("permissions:", workflow, StringComparison.Ordinal);
+        Assert.Contains("contents: read", workflow, StringComparison.Ordinal);
+        Assert.Contains("build-and-test:", workflow, StringComparison.Ordinal);
+        Assert.Contains(
+            "uses: ./.github/workflows/_build-and-test.yml",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("deploy:", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("google-github-actions/auth", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("gcloud", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("docker push", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("maliev-gitops", workflow, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void PullRequestWorkflow_ExposesProtectedMainAggregateGate()
     {
