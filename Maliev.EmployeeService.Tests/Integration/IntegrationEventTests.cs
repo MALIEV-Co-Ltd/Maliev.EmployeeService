@@ -34,7 +34,7 @@ public class IntegrationEventTests : IAsyncLifetime
     [Obsolete]
     public async Task InitializeAsync()
     {
-        _postgresContainer = 
+        _postgresContainer =
 #pragma warning disable CS0618
         new PostgreSqlBuilder().WithImage("postgres:18-alpine")
             .WithDatabase("employee_test_db")
