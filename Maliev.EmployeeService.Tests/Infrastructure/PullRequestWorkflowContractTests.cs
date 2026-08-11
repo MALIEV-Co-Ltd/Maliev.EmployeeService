@@ -2,6 +2,20 @@ namespace Maliev.EmployeeService.Tests.WorkflowContracts;
 
 public class PullRequestWorkflowContractTests
 {
+    [Fact]
+    public void BuildWorkflow_UsesCredentialFreePinnedSharedSources()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var workflow = File.ReadAllText(
+            Path.Combine(repositoryRoot, ".github", "workflows", "_build-and-test.yml"));
+
+        Assert.Contains("repository: MALIEV-Co-Ltd/Maliev.Aspire", workflow, StringComparison.Ordinal);
+        Assert.Contains("repository: MALIEV-Co-Ltd/Maliev.MessagingContracts", workflow, StringComparison.Ordinal);
+        Assert.Contains("-p:GITHUB_ACTIONS=false", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("NUGET_PASSWORD", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("secrets.gitops_pat", workflow, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("ci-develop.yml")]
     [InlineData("ci-staging.yml")]
