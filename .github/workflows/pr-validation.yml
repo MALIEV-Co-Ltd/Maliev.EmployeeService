@@ -33,9 +33,6 @@ jobs:
     with:
       solution_file: Maliev.EmployeeService.slnx
       extra_args: -p:SharedLibraryVersion=${{ needs.prep.outputs.version_format }}
-    secrets:
-      gitops_pat: ${{ secrets.GITOPS_PAT }}
-
   protected-branch-gate:
     name: validate
     needs: [prep, build-and-test]
